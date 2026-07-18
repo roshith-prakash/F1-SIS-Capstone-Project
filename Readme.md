@@ -14,8 +14,6 @@
 - [**Rushil Patel**](https://github.com/rushilpatel11)
 - [**Achal Chhag**](https://github.com/achalchhag)
 - [**Soumyadeep Das**](https://github.com/s-h-u-v)
-- [**Shlok Sukhija**](https://github.com/shlokk25)
-- [**Tamanna Jain**](https://github.com/Tamanna950)
 
 ---
 
