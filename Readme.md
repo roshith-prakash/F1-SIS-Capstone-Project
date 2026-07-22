@@ -46,9 +46,10 @@ The project serves as a foundation for exploring how AI-driven decision intellig
 
 ## Contributors
 
-* [@pratham-parmar-37](https://github.com/pratham-parmar-37)
-* [@roshith-prakash](https://github.com/roshith-prakash)
-* [@RushilPatel11](https://github.com/RushilPatel11)
+* [Pratham Parma](https://github.com/pratham-parmar-37)
+* [Roshith Prakash](https://github.com/roshith-prakash)
+* [Rushil Patel](https://github.com/RushilPatel11)
+* [Soumyadeep Das](https://github.com/s-h-u-v)
 
 ---
 
