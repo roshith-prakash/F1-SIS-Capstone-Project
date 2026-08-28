@@ -4,3 +4,4 @@ Research papers/F1-StratLab
 test files
 f1_cache
 */timing
+__pycache__
