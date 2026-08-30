@@ -60,14 +60,14 @@ Safety car: False
 
 ```bash
 # Default view (top 10 drivers)
-python view_race_state.py data_fastf1_v1/laps/2024/British_Grand_Prix.csv
+python -m src.race_state.view_race_state data_fastf1_v1/laps/2024/British_Grand_Prix.csv
 
 # Show all 20 drivers
-python view_race_state.py data_fastf1_v1/laps/2024/British_Grand_Prix.csv --limit 0
+python -m src.race_state.view_race_state data_fastf1_v1/laps/2024/British_Grand_Price.csv --limit 0
 
 # Inspect single driver card
-python view_race_state.py data_fastf1_v1/laps/2024/British_Grand_Prix.csv --driver VER
+python -m src.race_state.view_race_state data_fastf1_v1/laps/2024/British_Grand_Price.csv --driver VER
 
 # Run compact mode
-python view_race_state.py data_fastf1_v1/laps/2024/British_Grand_Prix.csv --compact
+python -m src.race_state.view_race_state data_fastf1_v1/laps/2024/British_Grand_Price.csv --compact
 ```
