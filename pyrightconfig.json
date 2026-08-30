@@ -1,0 +1,11 @@
+{
+  "include": [
+    "src",
+    "tests",
+    "view_race_state.py",
+    "run_tests.py"
+  ],
+  "extraPaths": [
+    "src"
+  ]
+}
