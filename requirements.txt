@@ -8,6 +8,12 @@ scikit-learn==1.4.2
 xgboost==1.7.4
 joblib==1.5.3
 
+# ── New Ensemble Model Dependencies ─────────────────────────────────
+lightgbm>=4.0
+catboost>=1.2
+shap>=0.42
+scipy>=1.11
+
 # ── F1 Data ─────────────────────────────────────────────────────────
 fastf1==3.8.1
 
