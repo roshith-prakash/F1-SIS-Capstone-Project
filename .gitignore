@@ -4,3 +4,6 @@ __pycache__
 *.pdf
 *.pptx
 documents/
+
+# Large model files (exceed GitHub 100MB limit)
+models/laptime_model.pkl
