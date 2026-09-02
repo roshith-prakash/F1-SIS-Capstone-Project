@@ -5,3 +5,6 @@ test files
 f1_cache
 */timing
 __pycache__
+.gemini
+catboost_info
+Learnings
