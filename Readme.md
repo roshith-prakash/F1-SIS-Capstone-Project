@@ -98,8 +98,9 @@ f1-strategy-simulator/
 │   ├── tyre_deg_model.pkl             # Tyre degradation model
 │   └── tyre_deg_metadata.pkl          # Tyre degradation metadata
 ├── papers/                            # Academic reference papers
-│   └── ieee/                          # 6 IEEE research paper PDFs
-├── IEEE_RESEARCH_REFERENCES.md        # Comprehensive paper citation guide
+│   ├── ieee/                          # 6 IEEE research paper PDFs
+│   │   └── IEEE_RESEARCH_REFERENCES.md  # Comprehensive paper citation guide
+│   └── general/                       # 14 general research papers
 ├── static/                            # CSS & JS UI web assets
 ├── templates/                         # HTML layouts (index.html)
 ├── datasets/                          # Cleaned historical race datasets
