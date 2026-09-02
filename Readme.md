@@ -85,16 +85,28 @@ The web dashboard (powered by Flask) provides a "Mission Control" experience for
 ## 📂 Project Structure
 
 ```text
-Mini Project/
-├── app.py                      # Flask web server & API
-├── simulation_engine.py        # Core simulation & ML logic (ASCII-Safe)
-├── models/                     # Serialized ML models (.pkl)
-│   ├── laptime_model.pkl       # Lap-by-lap time predictor
-│   └── tyre_deg_model.pkl      # Tyre wear forecast model
-├── static/                     # CSS, JS, and Asset files
-├── templates/                  # Flask HTML layouts (Mission Control)
-├── datasets/                   # Cleaned historical race data
-└── Readme.md                   # Comprehensive documentation
+f1-strategy-simulator/
+├── app.py                             # Flask web server & API
+├── f1_strategy_simulation_engine.py   # Core simulation & ML logic
+├── lap_time_predictor.py              # Single stint / lap predictor API
+├── feature_engineering.py             # Feature engineering pipeline
+├── model_training.py                  # Stacked Ensemble trainer
+├── model_evaluation.py                # Model evaluation & SHAP metrics
+├── data_collector_v2.py               # FastF1 telemetry dataset builder
+├── f1_strategy_simulation_demo.ipynb  # Interactive demonstration notebook
+├── models/                            # Serialized ML models (.pkl)
+│   ├── laptime_model.pkl              # Lap-by-lap time predictor
+│   ├── laptime_metadata.pkl           # Laptime model metadata & encoders
+│   ├── tyre_deg_model.pkl             # Tyre degradation model
+│   └── tyre_deg_metadata.pkl          # Tyre degradation metadata
+├── paper_references/                  # Academic reference paper repository
+│   └── IEEE/                          # 6 IEEE research paper PDFs
+├── IEEE_RESEARCH_REFERENCES.md        # Comprehensive paper citation guide
+├── static/                            # CSS & JS UI web assets
+├── templates/                         # HTML layouts (index.html)
+├── datasets/                          # Cleaned historical race datasets
+│   └── f1_consolidated_data.csv       # Multi-season consolidated dataset
+└── Readme.md                          # Project documentation
 ```
 
 ---
@@ -103,16 +115,18 @@ Mini Project/
 
 1. **Install Dependencies**: 
    ```bash
-   pip install flask pandas numpy xgboost scikit-learn joblib fastf1
+   pip install -r requirements.txt
    ```
-2. **Run the Dashboard**:
+2. **Run the Interactive Web Dashboard**:
    ```bash
    python app.py
    ```
-3. **Run the CLI Simulator**:
+3. **Run the Simulation Engine**:
    ```bash
-   python simulation_engine.py
+   python f1_strategy_simulation_engine.py
    ```
+4. **Explore Demonstration Notebook**:
+   Open `f1_strategy_simulation_demo.ipynb` in VS Code or Jupyter Notebook.
 
 ---
 
