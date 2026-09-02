@@ -1,17 +1,32 @@
-cache
-__pycache__
+# Python
+__pycache__/
+*.pyc
 
-*.pdf
-*.pptx
-documents/
+# Cache
+cache/
+f1_cache/
 
 # Large model files (exceed GitHub 100MB limit)
 models/laptime_model.pkl
 
-# Master-side ignores
+# Documents
+*.pptx
+documents/
+
+# Notebook checkpoints
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Project-specific
 .agents
 Presentations
 Research papers/F1-StratLab
 test files
-f1_cache
 */timing
