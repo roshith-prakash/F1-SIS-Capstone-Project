@@ -7,3 +7,11 @@ documents/
 
 # Large model files (exceed GitHub 100MB limit)
 models/laptime_model.pkl
+
+# Master-side ignores
+.agents
+Presentations
+Research papers/F1-StratLab
+test files
+f1_cache
+*/timing

@@ -1,7 +1,5 @@
 # 🏎️ F1 Strategy Simulator
 
-![F1 Strategy Dashboard Dashboard](file:///C:/Users/roshi/.gemini/antigravity/brain/5823e70c-606c-4c84-bb17-21b1bd5e6d9a/f1_strategy_simulator_hero_1776087542823.png)
-
 > [!IMPORTANT]
 > **PROJECT STATUS: CORE ENGINE & ML MODELS COMPLETED ✅**
 > Both the **Tyre Degradation Model** and the **Race Simulation Engine** have been successfully developed, integrated, and validated. This repository serves as a complete strategy recommendation platform for Formula 1.
@@ -10,9 +8,9 @@
 
 ## 👥 Contributors
 
+- [**Pratham Parma**](https://github.com/pratham-parmar-37)
 - [**Roshith Prakash**](https://github.com/roshith-prakash)
-- [**Rushil Patel**](https://github.com/rushilpatel11)
-- [**Achal Chhag**](https://github.com/achalchhag)
+- [**Rushil Patel**](https://github.com/RushilPatel11)
 - [**Soumyadeep Das**](https://github.com/s-h-u-v)
 
 ---
@@ -99,13 +97,15 @@ f1-strategy-simulator/
 │   ├── laptime_metadata.pkl           # Laptime model metadata & encoders
 │   ├── tyre_deg_model.pkl             # Tyre degradation model
 │   └── tyre_deg_metadata.pkl          # Tyre degradation metadata
-├── paper_references/                  # Academic reference paper repository
-│   └── IEEE/                          # 6 IEEE research paper PDFs
+├── papers/                            # Academic reference papers
+│   └── ieee/                          # 6 IEEE research paper PDFs
 ├── IEEE_RESEARCH_REFERENCES.md        # Comprehensive paper citation guide
 ├── static/                            # CSS & JS UI web assets
 ├── templates/                         # HTML layouts (index.html)
 ├── datasets/                          # Cleaned historical race datasets
-│   └── f1_consolidated_data.csv       # Multi-season consolidated dataset
+│   ├── f1_consolidated_data.csv       # Multi-season consolidated dataset
+│   ├── download_race_data.py          # FastF1 API race data downloader
+│   └── download_all_races.py          # Batch download all GP races
 └── Readme.md                          # Project documentation
 ```
 
