@@ -8,6 +8,7 @@ f1_cache/
 
 # Large model files (exceed GitHub 100MB limit)
 models/laptime_model.pkl
+models/Lap Time Estimation/laptime_model.pkl
 
 # Documents
 *.pptx

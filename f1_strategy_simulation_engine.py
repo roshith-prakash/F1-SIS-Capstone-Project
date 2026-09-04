@@ -32,13 +32,19 @@ PITSTOP_TIME: dict[str, float] = {  # pit loss time (seconds) per circuit
 DEG_THRESHOLD:    float = 95.0   # % degradation that triggers a pit stop
 TOP_N_STRATEGIES: int   = 3      # number of top strategies printed in summary
 
-# Paths to model artefacts — place the 4 .pkl files alongside this script,
-# or update these paths to wherever they are stored.
+# Paths to model artefacts — place laptime_model.pkl and laptime_metadata.pkl
+# in the model subfolder.
 MODEL_DIR          = Path(__file__).parent
-LAPTIME_MODEL_PATH = MODEL_DIR / "models/laptime_model.pkl"
-LAPTIME_META_PATH  = MODEL_DIR / "models/laptime_metadata.pkl"
-TYREDEG_MODEL_PATH = MODEL_DIR / "models/tyre_deg_model.pkl"
-TYREDEG_META_PATH  = MODEL_DIR / "models/tyre_deg_metadata.pkl"
+MODEL_SUBDIR       = MODEL_DIR / "models" / "Lap Time Estimation"
+if not MODEL_SUBDIR.exists():
+    MODEL_SUBDIR   = MODEL_DIR / "models"
+
+LAPTIME_MODEL_PATH = MODEL_SUBDIR / "laptime_model.pkl"
+LAPTIME_META_PATH  = MODEL_SUBDIR / "laptime_metadata.pkl"
+
+# Optional tyre degradation model (built by teammate; empirical wear model used if absent)
+TYREDEG_MODEL_PATH = MODEL_SUBDIR / "tyre_deg_model.pkl"
+TYREDEG_META_PATH  = MODEL_SUBDIR / "tyre_deg_metadata.pkl"
 
 
 # ---------------------------------------------------------------------------
@@ -93,23 +99,32 @@ class StrategySimulator:
     # ------------------------------------------------------------------
 
     def _load_models(self) -> None:
-        """Load both models and their metadata from disk."""
-        print("Loading models...")
+        """Load the core lap time prediction model and metadata."""
+        print("Loading lap time model...")
         self.lt_model = joblib.load(LAPTIME_MODEL_PATH)
         self.lt_meta  = joblib.load(LAPTIME_META_PATH)
-        self.td_model = joblib.load(TYREDEG_MODEL_PATH)
-        self.td_meta  = joblib.load(TYREDEG_META_PATH)
 
         # Cache feature column order from metadata
         self.lt_feature_cols = self.lt_meta["feature_cols"]
-        self.td_feature_cols = self.td_meta["feature_cols"]
 
         # Pre-encode driver and track — constant for the whole simulation run
         self._driver_enc    = int(self.lt_meta["le_driver"].transform([self.driver])[0])
         self._lt_track_enc  = int(self.lt_meta["le_track"].transform([self.race])[0])
-        self._td_track_enc  = int(self.td_meta["le_track"].transform([self.race])[0])
 
-        print("Models loaded successfully.\n")
+        # Optional tyre degradation model (built by teammate; empirical wear model used if absent)
+        self.td_model = None
+        self.td_meta = None
+        if TYREDEG_MODEL_PATH.exists() and TYREDEG_META_PATH.exists():
+            try:
+                self.td_model = joblib.load(TYREDEG_MODEL_PATH)
+                self.td_meta  = joblib.load(TYREDEG_META_PATH)
+                self.td_feature_cols = self.td_meta["feature_cols"]
+                self._td_track_enc  = int(self.td_meta["le_track"].transform([self.race])[0])
+            except Exception:
+                self.td_model = None
+                self.td_meta = None
+
+        print("Lap time prediction model loaded successfully.\n")
 
     # ------------------------------------------------------------------
     # Strategy generation
@@ -172,21 +187,28 @@ class StrategySimulator:
         initial_life: int,
         compound: str,
     ) -> float:
-        """Return predicted tyre degradation (%) for the current lap."""
-        comp_enc    = int(self.td_meta["le_comp"].transform([compound])[0])
-        stint_usage = tyre_life - initial_life
+        """Return tyre degradation (%) for the current lap."""
+        if self.td_model is not None and self.td_meta is not None:
+            comp_enc    = int(self.td_meta["le_comp"].transform([compound])[0])
+            stint_usage = tyre_life - initial_life
 
-        row = {
-            "TyreLife":     tyre_life,
-            "Initial_Life": initial_life,
-            "Stint_Usage":  stint_usage,
-            "LapNumber":    lap_number,
-            "Compound_Enc": comp_enc,
-            "Track_Enc":    self._td_track_enc,
-            "Year":         self.year,
-        }
-        X = pd.DataFrame([row])[self.td_feature_cols]
-        return float(self.td_model.predict(X)[0])
+            row = {
+                "TyreLife":     tyre_life,
+                "Initial_Life": initial_life,
+                "Stint_Usage":  stint_usage,
+                "LapNumber":    lap_number,
+                "Compound_Enc": comp_enc,
+                "Track_Enc":    self._td_track_enc,
+                "Year":         self.year,
+            }
+            X = pd.DataFrame([row])[self.td_feature_cols]
+            return float(self.td_model.predict(X)[0])
+        else:
+            # Physics-based empirical degradation based on tyre compound life limits
+            # Reference maximum stint life (laps): Soft ~22, Medium ~32, Hard ~45
+            compound_max_life = {"SOFT": 22.0, "MEDIUM": 32.0, "HARD": 45.0}
+            max_life = compound_max_life.get(compound.upper(), 30.0)
+            return min(100.0, ((tyre_life - initial_life) / max_life) * 100.0)
 
     # ------------------------------------------------------------------
     # Single strategy simulation
@@ -384,11 +406,21 @@ class StrategySimulator:
             Keys: strategy (list), total_time (float), total_time_str (str).
             None if data file or driver not found.
         """
-        # Path: datasets/{race}/{year}_{race}_Laps.csv
-        data_file = MODEL_DIR / "datasets" / self.race / f"{self.year}_{self.race}_Laps.csv"
+        # Check fastf1 laps: data_fastf1_v1/laps/{year}/{GP_Name}_Grand_Prix.csv
+        race_file_names = {
+            "Australia": "Australian_Grand_Prix.csv",
+            "Italy": "Italian_Grand_Prix.csv",
+            "Hungary": "Hungarian_Grand_Prix.csv",
+            "Saudi_Arabia": "Saudi_Arabian_Grand_Prix.csv",
+        }
+        gp_filename = race_file_names.get(self.race, f"{self.race}_Grand_Prix.csv")
+        data_file = MODEL_DIR / "data_fastf1_v1" / "laps" / str(self.year) / gp_filename
         
         if not data_file.exists():
-            print(f"Historical data file not found: {data_file}")
+            data_file = MODEL_DIR / "datasets" / self.race / f"{self.year}_{self.race}_Laps.csv"
+        
+        if not data_file.exists():
+            print(f"Historical data file not found for {self.race} {self.year}")
             return None
             
         try:
