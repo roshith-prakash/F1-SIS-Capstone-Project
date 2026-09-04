@@ -88,7 +88,7 @@ The engine performs a **Monte Carlo-style exhaustive search** over all valid com
 
 ```text
 f1-strategy-simulator/
-├── researchpaper/                     # Academic reference papers
+├── Research papers/                   # Academic reference papers
 │   ├── ieee/                          # 6 IEEE research paper PDFs & references
 │   │   └── IEEE_RESEARCH_REFERENCES.md  # Comprehensive paper citation guide
 │   └── general/                       # 14 general research papers
@@ -99,8 +99,7 @@ f1-strategy-simulator/
 │   └── Lap Time Estimation/           # Lap time prediction model & encoders (.pkl)
 │       ├── laptime_model.pkl          # Lap-by-lap time predictor
 │       └── laptime_metadata.pkl       # Laptime model metadata & encoders
-├── f1_strategy_simulation_engine.py   # Primary Strategy Simulation & Runner File
-├── Lap_Time_Prediction.ipynb          # End-to-end interactive development notebook
+├── Lap_Time_Prediction.ipynb          # End-to-end interactive development & simulation notebook
 ├── project_spec.md                    # Complete F1 Strategic AI Project Specification
 ├── requirements.txt                   # Pinned project dependencies
 ├── .gitignore                         # Git exclusion rules
@@ -115,12 +114,8 @@ f1-strategy-simulator/
    ```bash
    pip install -r requirements.txt
    ```
-2. **Run the Simulation Engine (CLI Runner)**:
-   ```bash
-   python f1_strategy_simulation_engine.py
-   ```
-3. **Explore Interactive Development Notebook**:
-   Open `Lap_Time_Prediction.ipynb` in VS Code or Jupyter Notebook.
+2. **Explore Interactive Development & Simulation Notebook**:
+   Open `Lap_Time_Prediction.ipynb` in VS Code or Jupyter Notebook to run the end-to-end modeling pipeline, academic benchmark comparisons, and race strategy simulations.
 
 ---
 
