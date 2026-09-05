@@ -263,7 +263,7 @@ def render_grid_summary_html(state: RaceState, limit: int | None = 10) -> str:
     <div class="f1-container">
         <div class="f1-header">
             <div>
-                <div class="f1-title">🏁 {state.grand_prix or 'Grand Prix'} ({state.year or ''})</div>
+                <div class="f1-title">{state.grand_prix or 'Grand Prix'} ({state.year or ''})</div>
                 <div style="font-size: 13px; color: #94a3b8; margin-top: 3px;">
                     Tracked Drivers: <b>{len(state.participants)}</b>
                 </div>
@@ -281,12 +281,12 @@ def render_grid_summary_html(state: RaceState, limit: int | None = 10) -> str:
             <span>Safety Car: {sc_badge}</span>
         </div>
 
-        <div class="f1-section-title">📊 Table 1: Classification & Timing</div>
+        <div class="f1-section-title">Table 1: Classification & Timing</div>
         <div class="f1-table-wrapper">
             {df_timing.to_html(index=False, classes='f1-table')}
         </div>
 
-        <div class="f1-section-title">🛞 Table 2: Tyre, Strategy & Telemetry</div>
+        <div class="f1-section-title">Table 2: Tyre, Strategy & Telemetry</div>
         <div class="f1-table-wrapper">
             {df_strategy.to_html(index=False, classes='f1-table')}
         </div>
@@ -324,7 +324,7 @@ def render_driver_card_html(state: RaceState, driver_code: str) -> str:
         <div class="driver-card">
             <div class="driver-card-header">
                 <div>
-                    <div class="driver-name">🏎️ {participant.driver_full_name or code} <span style="color:#e10600;">#{participant.driver_number or ''}</span></div>
+                    <div class="driver-name">{participant.driver_full_name or code} <span style="color:#e10600;">#{participant.driver_number or ''}</span></div>
                     <div class="driver-team">{participant.team or 'Unknown Constructor'} &bull; Status: <b style="color: #48bb78;">{'ACTIVE' if participant.is_active else 'RETIRED'}</b></div>
                 </div>
                 <div class="f1-badge" style="text-align: right;">
@@ -336,7 +336,7 @@ def render_driver_card_html(state: RaceState, driver_code: str) -> str:
             <div class="card-grid">
                 <!-- Track Position & Gaps -->
                 <div class="card-block">
-                    <div class="card-block-title">⏱️ Track Position & Gaps</div>
+                    <div class="card-block-title">Track Position & Gaps</div>
                     <div class="stat-row"><span class="stat-label">Position</span><span class="stat-val">P{participant.position or '-'}</span></div>
                     <div class="stat-row"><span class="stat-label">Position Delta</span><span class="stat-val">{pos_delta}</span></div>
                     <div class="stat-row"><span class="stat-label">Gap to Leader</span><span class="stat-val">{format_gap(participant.gap_to_leader_seconds, is_leader=(participant.position == 1)) or 'Leader'}</span></div>
@@ -347,7 +347,7 @@ def render_driver_card_html(state: RaceState, driver_code: str) -> str:
 
                 <!-- Tyre & Pit Strategy -->
                 <div class="card-block">
-                    <div class="card-block-title">🛞 Tyre & Pit Strategy</div>
+                    <div class="card-block-title">Tyre & Pit Strategy</div>
                     <div class="stat-row"><span class="stat-label">Compound</span><span class="stat-val">{participant.compound or 'UNK'}</span></div>
                     <div class="stat-row"><span class="stat-label">Tyre Life</span><span class="stat-val">{int(participant.tyre_life) if participant.tyre_life is not None else 0} laps</span></div>
                     <div class="stat-row"><span class="stat-label">Fresh Tyre Set</span><span class="stat-val">{fresh_str}</span></div>
@@ -358,7 +358,7 @@ def render_driver_card_html(state: RaceState, driver_code: str) -> str:
 
                 <!-- Lap Timing & Rolling Pace -->
                 <div class="card-block">
-                    <div class="card-block-title">⚡ Lap Timing & Sectors</div>
+                    <div class="card-block-title">Lap Timing & Sectors</div>
                     <div class="stat-row"><span class="stat-label">Last Lap Time</span><span class="stat-val" style="color: #68d391;">{format_lap_time(participant.last_lap_time_seconds)}</span></div>
                     <div class="stat-row"><span class="stat-label">Sector 1</span><span class="stat-val">{f"{participant.sector_1_time_seconds:.2f}s" if participant.sector_1_time_seconds else "-"}</span></div>
                     <div class="stat-row"><span class="stat-label">Sector 2</span><span class="stat-val">{f"{participant.sector_2_time_seconds:.2f}s" if participant.sector_2_time_seconds else "-"}</span></div>
@@ -369,7 +369,7 @@ def render_driver_card_html(state: RaceState, driver_code: str) -> str:
 
                 <!-- Speed Traps & Recent Laps -->
                 <div class="card-block">
-                    <div class="card-block-title">🚀 Speeds & Recent History</div>
+                    <div class="card-block-title">Speeds & Recent History</div>
                     <div class="stat-row"><span class="stat-label">Speed I1</span><span class="stat-val">{speed_i1}</span></div>
                     <div class="stat-row"><span class="stat-label">Speed I2</span><span class="stat-val">{speed_i2}</span></div>
                     <div class="stat-row"><span class="stat-label">Speed FL</span><span class="stat-val">{speed_fl}</span></div>
