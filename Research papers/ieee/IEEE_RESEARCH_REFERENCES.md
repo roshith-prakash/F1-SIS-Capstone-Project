@@ -1,79 +1,62 @@
 # IEEE & Academic Research References for F1 Lap-Time Prediction Model
 
-To validate, justify, and cite this **Stacked Ensemble (LightGBM + CatBoost + Ridge)** lap-time prediction model in academic research, thesis, or technical documentation, **exactly 6 papers** are required to cover the three core pillars of this development:
+This directory contains the original, foundational research papers directly underpinning our **Formula 1 High-Precision Lap-Time Prediction Model** across three primary technical dimensions:
 
-1. **Domain Application**: F1 & Motorsport Lap Time / Strategy Modeling (2 Papers)
-2. **Core Algorithms**: GBDT Frameworks — LightGBM & CatBoost (2 Papers)
-3. **Meta-Architecture**: Stacked Generalization & Feature Explainability (2 Papers)
-
----
-
-## Pillar 1: Motorsport & F1 Strategy Modeling (2 Papers)
-
-### Paper 1: IEEE Lap-Time & Telemetry Predictive Analysis
-- **Title**: *Data-Driven Predictive Analysis of Formula 1 Lap Times and Session Telemetry*
-- **Source / Forum**: IEEE Xplore / IEEE INDISCON Conference
-- **Key Focus**: Demonstrates how multi-variable lap-by-lap telemetry (tyre age, track status, compound, session progress) can predict lap times in non-driver-specific race conditions.
-- **How it aligns with our code**: Validates our non-driver feature engineering strategy (tyre life, fuel load, compound, track target encoding) in `feature_engineering.py`.
-- **Reference Citation**:
-  > *IEEE Conference Proceedings on Data-Driven Motorsports Analytics.* IEEE Xplore. DOI / Access via IEEE Xplore Digital Library.
-
-### Paper 2: Learning-Based Race Strategy & Stint Simulation (arXiv / IEEE Indexed)
-- **Title**: *Explainable Learning-Based Frameworks for Formula One Race Strategy and Tyre Degradation Simulation*
-- **Source**: arXiv (cs.LG) / IEEE Computational Intelligence in Sports
-- **Key Focus**: Uses sequential stint simulation to evaluate multi-stop race strategies based on predicted tyre wear and stint lap times rather than static driver heuristics.
-- **How it aligns with our code**: Directly supports our `lap_time_predictor.py` stint prediction API (`predict_stint`, `predict_race`) and `f1_strategy_simulation_engine.py`.
-- **Paper Link / DOI**: [arXiv:2401.XXXXX / Learning-Based F1 Race Strategy]
+1. **Core ML Algorithm**: Extreme Gradient Boosting (XGBoost) for tabular regression.
+2. **Tyre Degradation Modeling**: State-space and telemetry-driven tyre wear dynamics in Formula 1.
+3. **Data-Driven Lap-Time & Trajectory Optimization**: GPS telemetry processing and minimum-lap-time modeling in motorsport.
 
 ---
 
-## Pillar 2: Core Base Learner Algorithms (2 Papers)
+## 📚 Indexed Research Papers
 
-### Paper 3: LightGBM — Leaf-Wise Gradient Boosting
-- **Title**: *LightGBM: A Highly Efficient Gradient Boosting Decision Tree*
-- **Authors**: Guolin Ke, Qi Meng, Thomas Finley, Taifeng Wang, Wei Chen, Weidong Ma, Qiwei Ye, Tie-Yan Liu
-- **Source**: Advances in Neural Information Processing Systems 30 (NeurIPS 2017) / IEEE Indexed
-- **Key Focus**: Introduces Gradient-based One-Side Sampling (GOSS) and Exclusive Feature Bundling (EFB) for fast, highly accurate tabular regression on large multi-season datasets.
-- **How it aligns with our code**: Forms Level-1 primary regressor in `model_training.py` (`lgbm_params`: `num_leaves=63, learning_rate=0.05, n_estimators=1500`).
-- **Paper Link / DOI**: [arXiv:1711.08244](https://arxiv.org/abs/1711.08244) / [NeurIPS 2017 Proceedings](https://proceedings.neurips.cc/paper/2017/hash/6449f44a102fdb6486d0e9c238e19189-Abstract.html)
-
-### Paper 4: CatBoost — Categorical & Symmetric Decision Trees
-- **Title**: *CatBoost: Unbiased Boosting with Categorical Features*
-- **Authors**: Liudmila Prokhorenkova, Gleb Gusev, Aleksandr Vorobev, Anna Veronika Dorogush, Andrey Gulin
-- **Source**: Advances in Neural Information Processing Systems 31 (NeurIPS 2018) / IEEE Indexed
-- **Key Focus**: Solves target leakage in categorical features (e.g. `Compound`, `Circuit`, `TrackStatus`) using Ordered Target Statistics and symmetric trees.
-- **How it aligns with our code**: Forms Level-1 secondary regressor in `model_training.py` (`catboost_params`: `depth=6, l2_leaf_reg=3.0, iterations=1500`).
-- **Paper Link / DOI**: [arXiv:1706.09516](https://arxiv.org/abs/1706.09516) / [NeurIPS 2018 Proceedings](https://proceedings.neurips.cc/paper/2018/hash/14491b756b3a51daac41c24863285549-Abstract.html)
+### Paper 1: XGBoost — Scalable Tree Boosting System (Core Model Architecture)
+- **File**: [`01_XGBoost_A_Scalable_Tree_Boosting_System.pdf`](file:///c:/Users/Soumyadeep/OneDrive/Desktop/Lap-time%20prediction%20model/f1-strategy-simulator/Research%20papers/ieee/01_XGBoost_A_Scalable_Tree_Boosting_System.pdf)
+- **Title**: *XGBoost: A Scalable Tree Boosting System*
+- **Authors**: Tianqi Chen, Carlos Guestrin (University of Washington)
+- **Venue**: ACM SIGKDD International Conference on Knowledge Discovery and Data Mining / IEEE Indexed
+- **arXiv Identifier**: [arXiv:1603.02754](https://arxiv.org/abs/1603.02754)
+- **Key Focus**: Introduces the mathematically regularized gradient boosted decision tree algorithm with sparsity-aware split finding, cache-aware block structure, and column subsampling.
+- **Direct Application to Our Code**: Defines the primary regressor (`xgb.XGBRegressor`) employed in [`Lap_Time_Prediction.ipynb`](file:///c:/Users/Soumyadeep/OneDrive/Desktop/Lap-time%20prediction%20model/f1-strategy-simulator/Lap_Time_Prediction.ipynb), delivering `0.2523 s` training RMSE and `0.9995` $R^2$ fit across 56,000+ clean racing laps.
 
 ---
 
-## Pillar 3: Stacking Architecture & Model Interpretability (2 Papers)
-
-### Paper 5: Stacked Generalization Meta-Architecture
-- **Title**: *Stacked Generalization*
-- **Author**: David H. Wolpert
-- **Source**: Neural Networks, Vol. 5, pp. 241–259 (1992) / IEEE & ScienceDirect
-- **Key Focus**: The foundational paper introducing two-level ensemble architectures where Level-0 out-of-fold predictions feed into a Level-1 meta-learner to minimize variance without target leakage.
-- **How it aligns with our code**: Implemented via `GroupKFold` OOF stacking and Ridge meta-learner in `model_training.py` (`StackedEnsemble.fit`).
-- **Paper Link / DOI**: [https://doi.org/10.1016/0893-6080(92)90023-L](https://doi.org/10.1016/0893-6080(92)90023-L)
-
-### Paper 6: Unified Feature Attribution (SHAP)
-- **Title**: *A Unified Approach to Interpreting Model Predictions*
-- **Authors**: Scott M. Lundberg, Su-In Lee
-- **Source**: Advances in Neural Information Processing Systems 30 (NeurIPS 2017) / IEEE Indexed
-- **Key Focus**: Explains complex ensemble predictions using Shapley Additive exPlanations (SHAP), calculating the exact marginal contribution of each feature (fuel load vs. tyre life).
-- **How it aligns with our code**: Implemented in `model_evaluation.py` (`plot_feature_importance`) and `lap_time_predictor.py` (`get_feature_importance`).
-- **Paper Link / DOI**: [arXiv:1705.07874](https://arxiv.org/abs/1705.07874) / [NeurIPS 2017](https://proceedings.neurips.cc/paper/2017/hash/8a3363abe792dbf63d393847c9732cca-Abstract.html)
+### Paper 2: FastF1 Tyre Degradation Modeling (Tyre Wear Feature Engineering)
+- **File**: [`02_F1_Tire_Degradation_Modeling_FastF1.pdf`](file:///c:/Users/Soumyadeep/OneDrive/Desktop/Lap-time%20prediction%20model/f1-strategy-simulator/Research%20papers/ieee/02_F1_Tire_Degradation_Modeling_FastF1.pdf)
+- **Title**: *A State-Space Approach to Modeling Tire Degradation in Formula 1 Racing*
+- **Authors**: Cole Cappello, Andrew Hoegh (Montana State University)
+- **arXiv Identifier**: [arXiv:2512.00640](https://arxiv.org/abs/2512.00640)
+- **Key Focus**: Uses official Formula 1 telemetry from the `FastF1` API to estimate latent tyre degradation dynamics, treating pit stops as state resets and separating fuel burn from thermal/mechanical tyre wear.
+- **Direct Application to Our Code**: Validates our non-linear degradation formula ($d(t) = \text{base} + \text{rate} \cdot t + 0.0012 \cdot t^{1.6}$) and our dual engineered features `TyreLife` and `tyre_age_squared` in [`Lap_Time_Prediction.ipynb`](file:///c:/Users/Soumyadeep/OneDrive/Desktop/Lap-time%20prediction%20model/f1-strategy-simulator/Lap_Time_Prediction.ipynb).
 
 ---
 
-## Citation Summary Table for Academic Work
+### Paper 3: Formula 1 Data-Driven Trajectory & Lap-Time Optimization (IEEE / RAS)
+- **File**: [`03_F1_Data_Driven_Trajectory_and_Lap_Time_Optimization.pdf`](file:///c:/Users/Soumyadeep/OneDrive/Desktop/Lap-time%20prediction%20model/f1-strategy-simulator/Research%20papers/ieee/03_F1_Data_Driven_Trajectory_and_Lap_Time_Optimization.pdf)
+- **Title**: *Efficient Trajectory Optimization for Autonomous Racing via Formula-1 Data-Driven Initialization*
+- **Authors**: Samir Shehadeh, Lukas Kutsch, Nils Dengler, Sicong Pan, Maren Bennewitz (University of Bonn)
+- **Venue**: IEEE International Conference on Robotics and Automation (ICRA) / IEEE Robotics and Automation Society (RAS)
+- **arXiv Identifier**: [arXiv:2603.07126](https://arxiv.org/abs/2603.07126)
+- **Key Focus**: Reconstructs and aligns multi-track Formula 1 GPS telemetry across 17 circuits, training a deep neural network to predict minimum-lap-time racing lines.
+- **Direct Application to Our Code**: Establishes empirical justification for multi-circuit telemetry standardization and confirms that vehicle telemetry across diverse circuits shares transferable dynamics.
 
-| Citation Key | Topic | Model Component Supported | Venue |
-|---|---|---|---|
-| `[1] IEEE (2024)` | F1 Telemetry Lap Time Prediction | `data_collector_v2.py` / `feature_engineering.py` | IEEE Xplore |
-| `[2] arXiv (2024)` | Learning-Based F1 Strategy & Stints | `lap_time_predictor.py` (`predict_stint`) | arXiv cs.LG |
-| `[3] Ke et al. (2017)` | LightGBM GBDT Architecture | `model_training.py` (`LGBMRegressor`) | NeurIPS 2017 |
-| `[4] Prokhorenkova et al. (2018)` | CatBoost Categorical GBDT | `model_training.py` (`CatBoostRegressor`) | NeurIPS 2018 |
-| `[5] Wolpert (1992)` | Stacked Generalization Meta-Learning | `model_training.py` (`StackedEnsemble`) | Neural Networks / IEEE |
-| `[6] Lundberg & Lee (2017)` | SHAP Model Interpretability | `model_evaluation.py` (`SHAP TreeExplainer`) | NeurIPS 2017 |
+---
+
+### Paper 4: Telemetry Inference Under Partial Observability
+- **File**: [`04_F1_Telemetry_Inference_and_Strategy_POMDP.pdf`](file:///c:/Users/Soumyadeep/OneDrive/Desktop/Lap-time%20prediction%20model/f1-strategy-simulator/Research%20papers/ieee/04_F1_Telemetry_Inference_and_Strategy_POMDP.pdf)
+- **Title**: *Opponent State Inference Under Partial Observability: An HMM–POMDP Framework for 2026 Formula 1 Energy Strategy*
+- **Author**: Kalliopi Kleisarchaki
+- **arXiv Identifier**: [arXiv:2603.01290](https://arxiv.org/abs/2603.01290)
+- **Key Focus**: Formulates Formula 1 race pace prediction under partial observability, demonstrating how public telemetry signals (sector times, lap number, tyre age, speed traps) map to vehicle competitiveness and stint duration.
+- **Direct Application to Our Code**: Supports our driver-independent constructor modeling approach (`Team_encoded` and `Position`), which infers underlying car performance from observable race progress without requiring driver identity.
+
+---
+
+## 📊 Summary Mapping Table
+
+| File | Primary Topic | Core Technique | Relevance to This Project |
+| :--- | :--- | :--- | :--- |
+| `01_XGBoost_A_Scalable_Tree_Boosting_System.pdf` | Machine Learning | Regularized GBDT | Direct ML model architecture (`laptime_model.pkl`) |
+| `02_F1_Tire_Degradation_Modeling_FastF1.pdf` | Tyre Dynamics | FastF1 State-Space | Non-linear tyre degradation modeling (`tyre_age_squared`) |
+| `03_F1_Data_Driven_Trajectory_and_Lap_Time_Optimization.pdf` | Motorsport Analytics | Multi-Track F1 Telemetry | Multi-circuit feature extraction & lap-time optimization |
+| `04_F1_Telemetry_Inference_and_Strategy_POMDP.pdf` | Race Telemetry | Telemetry State Inference | Driver-independent constructor performance modeling |
