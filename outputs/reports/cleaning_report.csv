@@ -1,0 +1,60 @@
+Metric,Category,Laps_Excluded,Percentage
+flag_missing_target,Overall,1539.0,1.5193997433112845
+flag_missing_tyre,Overall,1055.0,1.0415638266363907
+is_pit_in,Overall,3469.0,3.4248198242669567
+is_pit_out,Overall,3467.0,3.422845295685655
+flag_lap_1,Overall,1826.0,1.8027445947280087
+flag_wet_compound,Overall,6406.0,6.32441504590779
+is_safety_car,Overall,5365.0,5.296672919340508
+is_vsc,Overall,2012.0,1.9863757527890218
+is_red_flag,Overall,224.0,0.22114720110573602
+is_yellow_flag,Overall,516.0,0.5094283739757133
+is_deleted,Overall,1273.0,1.256787441998223
+flag_rainfall,Overall,4011.0,3.959917069799585
+flag_outlier,Overall,7520.0,7.424227465692566
+flag_inaccurate,Overall,13768.0,13.59265475367756
+Total_Clean,Overall,21425.0,78.84786257281074
+2022,Year,6352.0,26.941510794418292
+2023,Year,4399.0,18.01392301392302
+2024,Year,5324.0,20.0120282664261
+2025,Year,5350.0,20.04571171643748
+Abu Dhabi Grand Prix,GrandPrix,486.0,10.884658454647251
+Australian Grand Prix,GrandPrix,1500.0,37.75484520513466
+Austrian Grand Prix,GrandPrix,1063.0,20.406987905548092
+Azerbaijan Grand Prix,GrandPrix,452.0,11.913547706905632
+Bahrain Grand Prix,GrandPrix,730.0,16.448850833708875
+Belgian Grand Prix,GrandPrix,787.0,23.647836538461547
+British Grand Prix,GrandPrix,1478.0,41.38896667600112
+Canadian Grand Prix,GrandPrix,1602.0,30.79584775086505
+Chinese Grand Prix,GrandPrix,348.0,16.595135908440625
+Dutch Grand Prix,GrandPrix,1315.0,23.800904977375566
+Emilia Romagna Grand Prix,GrandPrix,702.0,19.625384400335477
+French Grand Prix,GrandPrix,135.0,14.091858037578291
+Hungarian Grand Prix,GrandPrix,818.0,15.266890630832393
+Italian Grand Prix,GrandPrix,474.0,12.1227621483376
+Japanese Grand Prix,GrandPrix,905.0,26.990754548165825
+Las Vegas Grand Prix,GrandPrix,463.0,16.71480144404333
+Mexico City Grand Prix,GrandPrix,550.0,10.702471297917882
+Miami Grand Prix,GrandPrix,915.0,21.224773834377174
+Monaco Grand Prix,GrandPrix,1500.0,28.005974607916357
+Qatar Grand Prix,GrandPrix,624.0,20.689655172413794
+Saudi Arabian Grand Prix,GrandPrix,531.0,14.90735541830432
+Singapore Grand Prix,GrandPrix,983.0,22.144627168281133
+Spanish Grand Prix,GrandPrix,613.0,12.126607319485657
+São Paulo Grand Prix,GrandPrix,1791.0,37.689393939393945
+United States Grand Prix,GrandPrix,660.0,15.972894482090993
+Alpine,CanonicalTeam,2031.0,20.58376406202494
+Aston Martin,CanonicalTeam,2140.0,21.131628320331785
+Ferrari,CanonicalTeam,2054.0,20.23246650906225
+Haas,CanonicalTeam,2170.0,21.398284192880396
+McLaren,CanonicalTeam,2279.0,21.45546977970251
+Mercedes,CanonicalTeam,2253.0,21.379768457012716
+Red Bull,CanonicalTeam,2237.0,21.491017388798156
+Sauber,CanonicalTeam,2096.0,21.163166397415196
+VCARB,CanonicalTeam,2145.0,21.3369143539242
+Williams,CanonicalTeam,2020.0,21.314762055502797
+HARD,Compound,5475.0,12.341087368136328
+INTERMEDIATE,Compound,5945.0,100.0
+MEDIUM,Compound,5978.0,16.165494862087613
+SOFT,Compound,2786.0,21.83385579937304
+WET,Compound,461.0,100.0
