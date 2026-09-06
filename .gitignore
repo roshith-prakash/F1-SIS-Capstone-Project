@@ -9,3 +9,7 @@ __pycache__
 *.pyc
 my papers (race-state)/
 PROJECT_IMPLEMENTATION.md
+.gemini
+catboost_info
+Learnings
+scratch
