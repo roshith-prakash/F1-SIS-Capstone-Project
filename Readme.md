@@ -116,16 +116,10 @@ f1-strategy-simulator/
 └── Readme.md                          # Project documentation
 ```
 
----
-
-## 🚀 Getting Started
-
-1. **Install Dependencies**: 
-   ```bash
-   pip install -r requirements.txt
-   ```
-2. **Explore Interactive Modeling & Evaluation Notebook**:
-   Open `Lap_Time_Prediction.ipynb` in VS Code or Jupyter Notebook to run the end-to-end modeling pipeline, academic benchmark comparisons, per-circuit accuracy charts, and multi-team stint pace comparisons.
+* [Pratham Parmar](https://github.com/pratham-parmar-37)
+* [Roshith Prakash](https://github.com/roshith-prakash)
+* [Rushil Patel](https://github.com/RushilPatel11)
+* [Soumyadeep Das](https://github.com/s-h-u-v)
 
 ---
 
