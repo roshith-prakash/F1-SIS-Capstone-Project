@@ -7,4 +7,15 @@ f1_cache
 __pycache__
 .venv/
 *.pyc
-my papers (race-state)/
+my papers (race-state)/
+.agents
+Presentations
+Research papers/F1-StratLab
+test files
+f1_cache
+*/timing
+__pycache__
+.gemini
+catboost_info
+Learnings
+scratch
