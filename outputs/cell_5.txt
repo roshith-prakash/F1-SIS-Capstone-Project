@@ -1,0 +1,97 @@
+# 1. Outlier Filtering per Circuit
+circuits = df_raw['Circuit'].unique()
+clean_dfs = []
+for trk in circuits:
+    sub = df_raw[df_raw['Circuit'] == trk].copy()
+    if len(sub) == 0:
+        continue
+    med = sub['LapTime'].median()
+    valid = sub[(sub['LapTime'] >= med * 0.96) & (sub['LapTime'] <= med * 1.06)]
+    clean_dfs.append(valid)
+df_clean = pd.concat(clean_dfs, ignore_index=True)
+
+# 2. Label Encoding
+le_track = LabelEncoder()
+df_clean['Track_encoded'] = le_track.fit_transform(df_clean['Circuit'])
+
+le_team = LabelEncoder()
+df_clean['Team_clean'] = df_clean['Team']
+df_clean['Team_encoded'] = le_team.fit_transform(df_clean['Team_clean'])
+
+# 3. Feature Engineering
+df_clean['Compound_HARD'] = (df_clean['Compound'] == 'HARD').astype(int)
+df_clean['Compound_MEDIUM'] = (df_clean['Compound'] == 'MEDIUM').astype(int)
+df_clean['Compound_SOFT'] = (df_clean['Compound'] == 'SOFT').astype(int)
+df_clean['tyre_age_squared'] = df_clean['TyreLife'] ** 2
+
+feature_cols = [
+    'Track_encoded', 'Team_encoded', 'LapNumber', 'TyreLife', 'tyre_age_squared', 'Year',
+    'Compound_HARD', 'Compound_MEDIUM', 'Compound_SOFT', 'fuel_load', 'race_progress_pct',
+    'stint_number', 'is_fresh_tyre', 'Position'
+]
+
+for col in feature_cols:
+    if col not in df_clean.columns:
+        df_clean[col] = 0
+    df_clean[col] = pd.to_numeric(df_clean[col], errors='coerce').fillna(0)
+
+# 4. Train / Test Split (2022-2024 Train | 2025 Test)
+train_mask = df_clean['Year'] <= 2024
+test_mask = df_clean['Year'] >= 2025
+
+X_train = df_clean.loc[train_mask, feature_cols]
+y_train = df_clean.loc[train_mask, 'LapTime']
+X_test = df_clean.loc[test_mask, feature_cols]
+y_test = df_clean.loc[test_mask, 'LapTime']
+
+print(f"Training set: {len(X_train):,} laps (2022?2024) | Test set: {len(X_test):,} laps (2025)")
+
+# 5. XGBoost Regressor Training
+model = xgb.XGBRegressor(
+    n_estimators=2500,
+    max_depth=9,
+    learning_rate=0.025,
+    tree_method='hist',
+    random_state=42,
+    n_jobs=-1
+)
+
+print("Training driver-independent XGBoost Regressor model...")
+model.fit(X_train, y_train, eval_set=[(X_train, y_train), (X_test, y_test)], verbose=500)
+
+# 6. Artifact Serialization (Save Model & Metadata)
+output_dir = 'models/Lap Time Estimation'
+os.makedirs(output_dir, exist_ok=True)
+model_save_path = os.path.join(output_dir, 'laptime_model.pkl')
+meta_save_path = os.path.join(output_dir, 'laptime_metadata.pkl')
+
+race_laps_dict = df_clean.groupby('Circuit')['LapNumber'].max().to_dict()
+pitstop_times_dict = {c: 22.0 for c in le_track.classes_}
+
+preds_train = model.predict(X_train)
+train_rmse = float(np.sqrt(mean_squared_error(y_train, preds_train)))
+train_mae = float(mean_absolute_error(y_train, preds_train))
+train_r2 = float(r2_score(y_train, preds_train))
+
+meta = {
+    'le_track': le_track,
+    'le_team': le_team,
+    'feature_cols': feature_cols,
+    'race_laps': race_laps_dict,
+    'pitstop_times': pitstop_times_dict,
+    'circuits': list(le_track.classes_),
+    'teams': list(le_team.classes_),
+    'drivers': list(df_clean['Driver'].unique()),
+    'years': list(df_clean['Year'].unique()),
+    'metrics': {
+        'overall': {'rmse': train_rmse, 'mae': train_mae, 'r2': train_r2, 'test_laps': len(y_train)},
+        'train': {'rmse': train_rmse, 'mae': train_mae, 'r2': train_r2, 'laps': len(y_train)}
+    },
+    'model_type': 'XGBoost_driver_independent',
+    'description': 'Driver-independent lap time predictor (Team-based) on all F1 circuits (2022-2025)'
+}
+
+joblib.dump(model, model_save_path)
+joblib.dump(meta, meta_save_path)
+print(f"Successfully saved model to '{model_save_path}' ({os.path.getsize(model_save_path)/1e6:.2f} MB)")
+print(f"Successfully saved metadata to '{meta_save_path}' ({os.path.getsize(meta_save_path)/1e3:.2f} KB)")

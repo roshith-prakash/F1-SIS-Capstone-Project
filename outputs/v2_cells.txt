@@ -1,0 +1,1120 @@
+
+=== [v2] Cell 2 ===
+# ─────────────────────────────────────────────────────────────────────────────
+# SECTION 0: Setup & Configuration
+# ─────────────────────────────────────────────────────────────────────────────
+import os
+import glob
+import json
+import warnings
+import joblib
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+import xgboost as xgb
+import lightgbm as lgb
+import shap
+
+from sklearn.linear_model import Ridge
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.model_selection import GroupKFold
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+
+warnings.filterwarnings('ignore')
+
+# ── Plotting style ────────────────────────────────────────────────────────────
+try:
+    plt.style.use('seaborn-v0_8-darkgrid')
+except OSError:
+    plt.style.use('ggplot')
+plt.rcParams.update({'figure.figsize': (14, 6), 'font.size': 11,
+                     'axes.spines.top': False, 'axes.spines.right': False})
+
+# ── Path Configuration ────────────────────────────────────────────────────────
+DATA_ROOT  = 'data_fastf1_v1/laps'
+MODEL_OUT  = 'models/Lap Time Estimation v2'
+OUTPUT_DIR = 'outputs/lap_time_v2'
+
+os.makedirs(MODEL_OUT,  exist_ok=True)
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+# ── Year splits ───────────────────────────────────────────────────────────────
+TRAIN_YEARS = [2022, 2023, 2024]
+TEST_YEAR   = 2025
+ALL_YEARS   = TRAIN_YEARS + [TEST_YEAR]
+
+RANDOM_SEED = 42
+np.random.seed(RANDOM_SEED)
+
+print('✅ Environment initialised.')
+print(f'   Training years : {TRAIN_YEARS}')
+print(f'   Holdout year   : {TEST_YEAR}')
+print(f'   Model output   : {MODEL_OUT}')
+
+
+=== [v2] Cell 4 ===
+# ─────────────────────────────────────────────────────────────────────────────
+# SECTION 1: Data Loading & Audit
+# ─────────────────────────────────────────────────────────────────────────────
+
+dfs = []
+load_log = []
+
+for year in ALL_YEARS:
+    pattern = os.path.join(DATA_ROOT, str(year), '*.csv')
+    files = sorted(glob.glob(pattern))
+    year_rows = 0
+    for fpath in files:
+        race_name = os.path.splitext(os.path.basename(fpath))[0].replace('_', ' ')
+        try:
+            df_race = pd.read_csv(fpath, low_memory=False)
+            df_race['_source_file'] = race_name
+            dfs.append(df_race)
+            year_rows += len(df_race)
+        except Exception as e:
+            print(f'  WARNING: Failed to load {fpath}: {e}')
+    load_log.append({'Year': year, 'Races': len(files), 'Laps': year_rows})
+    print(f'  {year}: {len(files):>2} races | {year_rows:>6,} laps loaded')
+
+df_raw = pd.concat(dfs, ignore_index=True)
+print(f'\n📦 Raw dataset shape : {df_raw.shape}')
+print(f'   Memory usage      : {df_raw.memory_usage(deep=True).sum() / 1e6:.1f} MB')
+
+# ── Load summary ─────────────────────────────────────────────────────────────
+print('\n📊 Per-Year Load Summary:')
+display(pd.DataFrame(load_log).set_index('Year'))
+
+# ── Null audit ───────────────────────────────────────────────────────────────
+null_pct = (df_raw.isnull().sum() / len(df_raw) * 100).sort_values(ascending=False)
+null_pct = null_pct[null_pct > 0]
+print(f'\n  Columns with missing values ({len(null_pct)} columns):')
+display(null_pct.to_frame('Null %').round(2))
+
+
+=== [v2] Cell 6 ===
+# ─────────────────────────────────────────────────────────────────────────────
+# SECTION 2: Constructor Harmonisation
+# ─────────────────────────────────────────────────────────────────────────────
+
+CONSTRUCTOR_MAP = {
+    # Red Bull junior team
+    'AlphaTauri'        : 'Racing Bulls',
+    'RB'                : 'Racing Bulls',
+    'Racing Bulls'      : 'Racing Bulls',
+    'Toro Rosso'        : 'Racing Bulls',
+    # Sauber / Alfa Romeo lineage
+    'Alfa Romeo Racing' : 'Sauber',
+    'Alfa Romeo'        : 'Sauber',
+    'Kick Sauber'       : 'Sauber',
+    'Sauber'            : 'Sauber',
+    # Stroll ownership
+    'Racing Point'      : 'Aston Martin',
+    'Force India'       : 'Aston Martin',
+    # Stable names
+    'Red Bull Racing'   : 'Red Bull Racing',
+    'Ferrari'           : 'Ferrari',
+    'Mercedes'          : 'Mercedes',
+    'McLaren'           : 'McLaren',
+    'Aston Martin'      : 'Aston Martin',
+    'Alpine'            : 'Alpine',
+    'Williams'          : 'Williams',
+    'Haas F1 Team'      : 'Haas',
+    'Haas'              : 'Haas',
+    'Renault'           : 'Alpine',
+}
+
+df_raw['constructor'] = df_raw['Team'].map(CONSTRUCTOR_MAP)
+
+unmapped = df_raw[df_raw['constructor'].isnull()]['Team'].unique()
+if len(unmapped) > 0:
+    print(f'  WARNING: Unmapped teams ({len(unmapped)}): {list(unmapped)}')
+    df_raw['constructor'] = df_raw['constructor'].fillna(df_raw['Team'])
+else:
+    print('✅ All team names successfully mapped to canonical constructors.')
+
+print('\n📋 Constructor mapping summary:')
+mapping_summary = (
+    df_raw.groupby('constructor')['Team']
+    .apply(lambda x: sorted(x.unique().tolist()))
+    .reset_index()
+)
+mapping_summary.columns = ['Canonical Constructor', 'Raw Team Names']
+display(mapping_summary)
+
+print('\n📊 Laps per constructor per year (raw, before quality filtering):')
+pivot = (
+    df_raw.groupby(['constructor', 'Year'])
+    .size().unstack(fill_value=0)
+)
+display(pivot)
+
+
+=== [v2] Cell 8 ===
+# ─────────────────────────────────────────────────────────────────────────────
+# SECTION 3: Data Cleaning & Quality Filtering
+# ─────────────────────────────────────────────────────────────────────────────
+
+df = df_raw.copy()
+filter_log = []
+
+def apply_filter(df, mask, description):
+    before = len(df)
+    df = df[mask].copy()
+    after = len(df)
+    removed = before - after
+    filter_log.append({'Filter': description, 'Before': before, 'Removed': removed, 'After': after})
+    print(f'  [{description:<55}]  -{removed:>6,}  =>  {after:>6,} rows')
+    return df
+
+print(f'Starting rows: {len(df):,}\n')
+
+# Filter 1: FastF1 accuracy flag
+df = apply_filter(df, df['IsAccurate'] == True,  'IsAccurate == True')
+# Filter 2: Not deleted by stewards
+df = apply_filter(df, df['Deleted'] == False,     'Not deleted (Deleted == False)')
+# Filter 3: Target variable must exist
+df = apply_filter(df, df['LapTimeSeconds'].notna(),'LapTimeSeconds not null')
+# Filter 4: Remove out-laps
+df = apply_filter(df, df['PitOutTime'].isna(),    'Remove out-laps (PitOutTime is null)')
+# Filter 5: Remove in-laps
+df = apply_filter(df, df['PitInTime'].isna(),     'Remove in-laps (PitInTime is null)')
+# Filter 6: Remove Safety Car laps
+df = apply_filter(df, df['HasSafetyCar'] == False,'No Safety Car laps')
+# Filter 7: Remove VSC laps
+df = apply_filter(df, df['HasVSC'] == False,      'No VSC laps')
+# Filter 8: Remove Red Flag laps
+df = apply_filter(df, df['HasRedFlag'] == False,  'No Red Flag laps')
+# Filter 9: Remove Lap 1 (standing start chaos)
+df = apply_filter(df, df['LapNumber'] > 1,        'Remove Lap 1 (standing start)')
+# Filter 10: Valid compound
+VALID_COMPOUNDS = {'SOFT', 'MEDIUM', 'HARD', 'INTERMEDIATE', 'WET'}
+df = apply_filter(df, df['Compound'].isin(VALID_COMPOUNDS), 'Valid compound')
+# Filter 11: Valid position
+df = apply_filter(
+    df,
+    df['Position'].notna() & (df['Position'] >= 1) & (df['Position'] <= 20),
+    'Valid Position (1-20)'
+)
+# Filter 12: IQR outlier removal per (circuit, year)
+before_iqr = len(df)
+clean_dfs = []
+for (circuit, year), grp in df.groupby(['GrandPrix', 'Year']):
+    q1 = grp['LapTimeSeconds'].quantile(0.25)
+    q3 = grp['LapTimeSeconds'].quantile(0.75)
+    iqr = q3 - q1
+    lower = q1 - 1.5 * iqr
+    upper = q3 + 1.5 * iqr
+    clean_dfs.append(grp[(grp['LapTimeSeconds'] >= lower) & (grp['LapTimeSeconds'] <= upper)])
+df = pd.concat(clean_dfs, ignore_index=True)
+after_iqr = len(df)
+filter_log.append({'Filter': 'IQR outlier removal per (circuit, year)', 'Before': before_iqr,
+                   'Removed': before_iqr - after_iqr, 'After': after_iqr})
+print(f'  [{"IQR outlier removal per (circuit, year)":<55}]  -{before_iqr-after_iqr:>6,}  =>  {after_iqr:>6,} rows')
+
+print(f'\n{chr(8212)*80}')
+print(f'  Final clean dataset: {len(df):,} laps  ({len(df)/len(df_raw)*100:.1f}% of raw data retained)')
+print(f'{chr(8212)*80}')
+display(pd.DataFrame(filter_log).style.format({'Before': '{:,}', 'Removed': '{:,}', 'After': '{:,}'}))
+
+print('\n📊 Clean laps 
+
+=== [v2] Cell 10 ===
+# ─────────────────────────────────────────────────────────────────────────────
+# SECTION 4a: Constructor Pace Ranking per Season
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Normalise within each circuit-year to remove circuit length effect
+df['circuit_year_median'] = df.groupby(['GrandPrix', 'Year'])['LapTimeSeconds'].transform('median')
+df['delta_from_median']   = df['LapTimeSeconds'] - df['circuit_year_median']
+
+fig, axes = plt.subplots(1, len(ALL_YEARS), figsize=(22, 7), sharey=True)
+
+for ax, year in zip(axes, ALL_YEARS):
+    yr_df = df[df['Year'] == year]
+    order = yr_df.groupby('constructor')['delta_from_median'].median().sort_values().index
+    sns.boxplot(
+        data=yr_df, y='constructor', x='delta_from_median',
+        order=order, ax=ax, palette='coolwarm', width=0.55,
+        flierprops=dict(marker='.', markersize=1, alpha=0.3)
+    )
+    ax.axvline(0, color='black', linewidth=0.8, linestyle='--', alpha=0.6)
+    ax.set_title(str(year), fontsize=13, fontweight='bold')
+    ax.set_xlabel('Delta from circuit median (s)', fontsize=9)
+    ax.set_ylabel('Constructor' if ax == axes[0] else '', fontsize=9)
+
+fig.suptitle('Constructor Pace Distribution (Delta from Circuit Median) by Season',
+             fontsize=15, fontweight='bold', y=1.01)
+plt.tight_layout()
+plt.savefig(f'{OUTPUT_DIR}/01_constructor_pace_ranking.png', dpi=150, bbox_inches='tight')
+plt.show()
+print('Saved: 01_constructor_pace_ranking.png')
+
+
+=== [v2] Cell 11 ===
+# ─────────────────────────────────────────────────────────────────────────────
+# SECTION 4b: Tyre Degradation Curves per Compound (top-4 constructors)
+# ─────────────────────────────────────────────────────────────────────────────
+
+top_constructors = (
+    df[df['Year'].isin(TRAIN_YEARS)]
+    .groupby('constructor')['delta_from_median'].median()
+    .sort_values().head(4).index.tolist()
+)
+print('Top 4 constructors (fastest median pace 2022-2024):', top_constructors)
+
+deg_df = df[
+    df['constructor'].isin(top_constructors) &
+    df['Compound'].isin(['SOFT', 'MEDIUM', 'HARD']) &
+    (df['TyreLife'] <= 40)
+].copy()
+
+fig, axes = plt.subplots(1, 3, figsize=(18, 6))
+compound_edge = {'SOFT': '#990000', 'MEDIUM': '#888800', 'HARD': '#444444'}
+
+for ax, compound in zip(axes, ['SOFT', 'MEDIUM', 'HARD']):
+    sub = deg_df[deg_df['Compound'] == compound]
+    for constructor in top_constructors:
+        c_sub = sub[sub['constructor'] == constructor]
+        agg = c_sub.groupby('TyreLife')['delta_from_median'].median().reset_index()
+        ax.plot(agg['TyreLife'], agg['delta_from_median'], label=constructor, linewidth=2)
+    ax.set_title(f'{compound} Compound', fontsize=12, fontweight='bold',
+                 color=compound_edge[compound])
+    ax.set_xlabel('Tyre Life (laps)', fontsize=10)
+    ax.set_ylabel('Delta from circuit median (s)' if ax == axes[0] else '', fontsize=10)
+    ax.axhline(0, color='grey', linewidth=0.7, linestyle='--')
+    ax.legend(fontsize=8)
+
+fig.suptitle('Tyre Degradation Curves — Top 4 Constructors (2022-2024 Clean Laps)',
+             fontsize=14, fontweight='bold')
+plt.tight_layout()
+plt.savefig(f'{OUTPUT_DIR}/02_tyre_degradation_curves.png', dpi=150, bbox_inches='tight')
+plt.show()
+print('Saved: 02_tyre_degradation_curves.png')
+
+
+=== [v2] Cell 12 ===
+# ─────────────────────────────────────────────────────────────────────────────
+# SECTION 4c: Weather Correlation with Lap Time Delta
+# ─────────────────────────────────────────────────────────────────────────────
+
+weather_cols = ['AirTemp', 'TrackTemp', 'Humidity', 'Rainfall', 'WindSpeed']
+corr_df = df[weather_cols + ['delta_from_median']].dropna()
+
+fig, axes = plt.subplots(1, len(weather_cols), figsize=(20, 5))
+for ax, col in zip(axes, weather_cols):
+    sample = corr_df.sample(min(5000, len(corr_df)), random_state=42)
+    ax.scatter(sample[col], sample['delta_from_median'], alpha=0.15, s=5, color='steelblue')
+    r = corr_df[col].corr(corr_df['delta_from_median'])
+    ax.set_title(f'{col}\nr = {r:.3f}', fontsize=10)
+    ax.set_xlabel(col, fontsize=9)
+    ax.set_ylabel('Delta Lap Time (s)' if ax == axes[0] else '', fontsize=9)
+    ax.axhline(0, color='red', linewidth=0.7, linestyle='--')
+
+fig.suptitle('Weather Features vs. Lap Time Delta (sample n=5,000)',
+             fontsize=13, fontweight='bold')
+plt.tight_layout()
+plt.savefig(f'{OUTPUT_DIR}/03_weather_correlations.png', dpi=150, bbox_inches='tight')
+plt.show()
+print('Saved: 03_weather_correlations.png')
+
+
+=== [v2] Cell 13 ===
+# ─────────────────────────────────────────────────────────────────────────────
+# SECTION 4d: Lap Time Distribution Shift — Train vs Test Year
+# ─────────────────────────────────────────────────────────────────────────────
+
+train_circuits = set(df[df['Year'].isin(TRAIN_YEARS)]['GrandPrix'].unique())
+test_circuits  = set(df[df['Year'] == TEST_YEAR]['GrandPrix'].unique())
+common = sorted(train_circuits & test_circuits)
+print(f'Common circuits (train+test): {len(common)} circuits')
+
+fig, axes = plt.subplots(2, 4, figsize=(20, 8))
+for ax, circuit in zip(axes.flatten(), common[:8]):
+    train_lts = df[(df['GrandPrix'] == circuit) & df['Year'].isin(TRAIN_YEARS)]['LapTimeSeconds']
+    test_lts  = df[(df['GrandPrix'] == circuit) & (df['Year'] == TEST_YEAR)]['LapTimeSeconds']
+    ax.hist(train_lts, bins=40, alpha=0.6, color='steelblue',
+            label=f'Train ({TRAIN_YEARS[0]}-{TRAIN_YEARS[-1]})', density=True)
+    ax.hist(test_lts,  bins=40, alpha=0.6, color='tomato',
+            label=f'Test ({TEST_YEAR})', density=True)
+    ax.set_title(circuit, fontsize=9, fontweight='bold')
+    ax.set_xlabel('Lap Time (s)', fontsize=8)
+    ax.legend(fontsize=7)
+
+fig.suptitle('Lap Time Distributions: Train vs Test Year (first 8 circuits)',
+             fontsize=13, fontweight='bold')
+plt.tight_layout()
+plt.savefig(f'{OUTPUT_DIR}/04_lap_time_distribution_shift.png', dpi=150, bbox_inches='tight')
+plt.show()
+print('Saved: 04_lap_time_distribution_shift.png')
+
+
+=== [v2] Cell 15 ===
+# ─────────────────────────────────────────────────────────────────────────────
+# SECTION 5: Feature Engineering
+# ─────────────────────────────────────────────────────────────────────────────
+
+fe = df.copy()
+
+# ── 5.1 Label Encoding (fit on TRAIN only) ────────────────────────────────────
+train_mask_fe = fe['Year'].isin(TRAIN_YEARS)
+
+le_circuit     = LabelEncoder()
+le_constructor = LabelEncoder()
+le_driver      = LabelEncoder()
+
+le_circuit.fit(fe.loc[train_mask_fe, 'GrandPrix'])
+le_constructor.fit(fe.loc[train_mask_fe, 'constructor'])
+le_driver.fit(fe.loc[train_mask_fe, 'Driver'])
+
+def safe_transform(le, series):
+    known = set(le.classes_)
+    return series.apply(lambda x: le.transform([x])[0] if x in known else -1)
+
+fe['circuit_encoded']     = safe_transform(le_circuit,     fe['GrandPrix'])
+fe['constructor_encoded'] = safe_transform(le_constructor, fe['constructor'])
+fe['driver_encoded']      = safe_transform(le_driver,      fe['Driver'])
+
+# ── 5.2 Compound Encoding ─────────────────────────────────────────────────────
+compound_order_map = {'WET': 0, 'INTERMEDIATE': 1, 'HARD': 2, 'MEDIUM': 3, 'SOFT': 4}
+fe['compound_ordinal'] = fe['Compound'].map(compound_order_map).fillna(2)
+fe['is_soft']         = (fe['Compound'] == 'SOFT').astype(int)
+fe['is_medium']       = (fe['Compound'] == 'MEDIUM').astype(int)
+fe['is_hard']         = (fe['Compound'] == 'HARD').astype(int)
+fe['is_intermediate'] = (fe['Compound'] == 'INTERMEDIATE').astype(int)
+fe['is_wet']          = (fe['Compound'] == 'WET').astype(int)
+
+# ── 5.3 Tyre Features ─────────────────────────────────────────────────────────
+fe['tyre_life']    = fe['TyreLife'].fillna(1).clip(lower=1)
+fe['tyre_life_sq'] = fe['tyre_life'] ** 2
+fe['tyre_life_cb'] = fe['tyre_life'] ** 3
+fe['is_fresh']     = fe['FreshTyre'].astype(int)
+
+# ── 5.4 Race State & Fuel Load ────────────────────────────────────────────────
+fe['position'] = fe['Position'].fillna(10.0).clip(1, 20)
+
+max_laps = fe.groupby(['GrandPrix', 'Year'])['LapNumber'].max().reset_index()
+max_laps.columns = ['GrandPrix', 'Year', 'total_laps']
+fe = fe.merge(max_laps, on=['GrandPrix', 'Year'], how='left')
+
+fe['fuel_load_est'] = 110.0 * (1 - (fe['LapNumber'] - 1) / fe['total_laps'].clip(lower=1))
+fe['race_progress'] = (fe['LapNumber'] - 1) / fe['total_laps'].clip(lower=1)
+fe['lap_number']    = fe['LapNumber']
+fe['stint_number']  = fe['Stint'].fillna(1).clip(lower=1)
+
+# ── 5.5 Weather Features ──────────────────────────────────────────────────────
+for col in ['AirTemp', 'TrackTemp', 'Humidity', 'WindSpeed']:
+    fe[col] = fe.groupby(['GrandPrix', 'Year'])[col].transform(
+        lambda x: x.fillna(x.mean())
+    )
+fe['air_temp']   = fe['AirTemp'].fillna(25.0)
+fe['track_temp'] = fe['TrackTemp'].fillna(35.0)
+fe['humidity']   = fe['Humidity'].fillna(50.0)
+fe['wind_speed'] = fe['WindSpeed'].fillna(0.0)
+fe['rainfall']   = fe['Rainfall'].astype(float).fillna(0.0)
+
+# ── 5.6 Speed Traps ───────────────────────────────────────────────────────────
+for sp_col in ['Speed
+
+=== [v2] Cell 17 ===
+# ─────────────────────────────────────────────────────────────────────────────
+# SECTION 6: Train / Test Split & Validation Strategy
+# ─────────────────────────────────────────────────────────────────────────────
+
+train_df = fe[fe['Year'].isin(TRAIN_YEARS)].copy().reset_index(drop=True)
+test_df  = fe[fe['Year'] == TEST_YEAR].copy().reset_index(drop=True)
+
+X_train = train_df[FEATURE_COLS].values
+y_train = train_df[TARGET_COL].values
+X_test  = test_df[FEATURE_COLS].values
+y_test  = test_df[TARGET_COL].values
+
+# Leak assertion
+assert set(test_df['Year'].unique()) == {TEST_YEAR}, 'ERROR: Test set contains non-2025 data!'
+print('✅ Temporal split verified — no 2025 data in training set.')
+
+print(f'''
+📊 Dataset Sizes:
+   Training : {len(X_train):>7,} laps  ({TRAIN_YEARS[0]}-{TRAIN_YEARS[-1]},
+               {train_df["GrandPrix"].nunique()} unique circuits,
+               {train_df["constructor"].nunique()} constructors)
+   Test     : {len(X_test):>7,} laps  ({TEST_YEAR},
+               {test_df["GrandPrix"].nunique()} unique circuits,
+               {test_df["constructor"].nunique()} constructors)
+''')
+
+# GroupKFold: groups = unique race (Year x GrandPrix)
+train_df['race_group'] = train_df['Year'].astype(str) + '_' + train_df['GrandPrix']
+group_encoder = LabelEncoder()
+groups = group_encoder.fit_transform(train_df['race_group'])
+
+N_FOLDS = 5
+gkf = GroupKFold(n_splits=N_FOLDS)
+
+unique_groups = train_df['race_group'].nunique()
+print(f'   GroupKFold: {N_FOLDS} folds over {unique_groups} unique races')
+print(f'   ~{unique_groups // N_FOLDS} races per validation fold')
+
+print('\n📋 Fold race assignment (first 3 validation races shown):')
+for fold_i, (tr_idx, val_idx) in enumerate(gkf.split(X_train, y_train, groups)):
+    val_races = sorted(train_df.iloc[val_idx]['race_group'].unique())
+    print(f'   Fold {fold_i+1}: {len(val_races):>2} races  [{chr(44).join(val_races[:3])} ...]')
+
+
+=== [v2] Cell 19 ===
+# ─────────────────────────────────────────────────────────────────────────────
+# SECTION 7a: Ridge Regression Baseline
+# ─────────────────────────────────────────────────────────────────────────────
+
+print('Training Ridge Regression baseline...')
+
+ridge_pipeline = Pipeline([
+    ('scaler', StandardScaler()),
+    ('ridge',  Ridge(alpha=1.0))
+])
+
+ridge_cv_scores = []
+for fold_i, (tr_idx, val_idx) in enumerate(gkf.split(X_train, y_train, groups)):
+    Xtr, Xval = X_train[tr_idx], X_train[val_idx]
+    ytr, yval = y_train[tr_idx], y_train[val_idx]
+    ridge_pipeline.fit(Xtr, ytr)
+    preds = ridge_pipeline.predict(Xval)
+    mae   = mean_absolute_error(yval, preds)
+    ridge_cv_scores.append(mae)
+    print(f'   Fold {fold_i+1}: MAE = {mae:.4f} s')
+
+ridge_pipeline.fit(X_train, y_train)
+ridge_test_preds = ridge_pipeline.predict(X_test)
+ridge_test_mae   = mean_absolute_error(y_test, ridge_test_preds)
+ridge_test_rmse  = float(np.sqrt(mean_squared_error(y_test, ridge_test_preds)))
+ridge_test_r2    = r2_score(y_test, ridge_test_preds)
+
+print(f'\nRidge CV MAE    : {np.mean(ridge_cv_scores):.4f} +/- {np.std(ridge_cv_scores):.4f} s')
+print(f'Ridge Test MAE  : {ridge_test_mae:.4f} s')
+print(f'Ridge Test RMSE : {ridge_test_rmse:.4f} s')
+print(f'Ridge Test R2   : {ridge_test_r2:.4f}')
+
+
+=== [v2] Cell 20 ===
+# ─────────────────────────────────────────────────────────────────────────────
+# SECTION 7b: XGBoost Regressor (Primary Model)
+# ─────────────────────────────────────────────────────────────────────────────
+
+print('Training XGBoost Regressor (primary model)...')
+
+XGB_PARAMS = dict(
+    n_estimators=3000, max_depth=8, learning_rate=0.025,
+    subsample=0.8, colsample_bytree=0.8, min_child_weight=5,
+    reg_lambda=1.5, reg_alpha=0.1, tree_method='hist',
+    eval_metric='mae', random_state=RANDOM_SEED, n_jobs=-1,
+    early_stopping_rounds=50,
+)
+
+xgb_cv_scores  = []
+xgb_best_iters = []
+
+for fold_i, (tr_idx, val_idx) in enumerate(gkf.split(X_train, y_train, groups)):
+    Xtr, Xval = X_train[tr_idx], X_train[val_idx]
+    ytr, yval = y_train[tr_idx], y_train[val_idx]
+    xgb_fold = xgb.XGBRegressor(**XGB_PARAMS)
+    xgb_fold.fit(Xtr, ytr, eval_set=[(Xval, yval)], verbose=False)
+    preds    = xgb_fold.predict(Xval)
+    mae      = mean_absolute_error(yval, preds)
+    xgb_cv_scores.append(mae)
+    xgb_best_iters.append(xgb_fold.best_iteration)
+    print(f'   Fold {fold_i+1}: MAE = {mae:.4f} s  |  best_iter = {xgb_fold.best_iteration}')
+
+# Final fit with optimal iterations
+optimal_iters = max(int(np.mean(xgb_best_iters) * 1.05), 100)
+print(f'\n   Optimal iterations: {optimal_iters}')
+
+xgb_model = xgb.XGBRegressor(
+    **{k: v for k, v in XGB_PARAMS.items() if k not in ('early_stopping_rounds', 'n_estimators')},
+    n_estimators=optimal_iters
+)
+print('   Fitting final XGBoost on full training set...')
+xgb_model.fit(X_train, y_train, verbose=False)
+
+xgb_test_preds = xgb_model.predict(X_test)
+xgb_test_mae   = mean_absolute_error(y_test, xgb_test_preds)
+xgb_test_rmse  = float(np.sqrt(mean_squared_error(y_test, xgb_test_preds)))
+xgb_test_r2    = r2_score(y_test, xgb_test_preds)
+
+print(f'\nXGBoost CV MAE    : {np.mean(xgb_cv_scores):.4f} +/- {np.std(xgb_cv_scores):.4f} s')
+print(f'XGBoost Test MAE  : {xgb_test_mae:.4f} s')
+print(f'XGBoost Test RMSE : {xgb_test_rmse:.4f} s')
+print(f'XGBoost Test R2   : {xgb_test_r2:.4f}')
+print(f'Target MAE < 2.0s : {"PASS" if xgb_test_mae < 2.0 else "FAIL"}')
+
+
+=== [v2] Cell 21 ===
+# ─────────────────────────────────────────────────────────────────────────────
+# SECTION 7c: LightGBM Regressor (Secondary Model)
+# ─────────────────────────────────────────────────────────────────────────────
+
+print('Training LightGBM Regressor (secondary model)...')
+
+LGBM_PARAMS = dict(
+    n_estimators=3000, num_leaves=63, learning_rate=0.025,
+    subsample=0.8, colsample_bytree=0.8, min_child_samples=20,
+    reg_lambda=1.0, reg_alpha=0.05, random_state=RANDOM_SEED, n_jobs=-1, verbose=-1,
+)
+
+lgbm_cv_scores  = []
+lgbm_best_iters = []
+
+for fold_i, (tr_idx, val_idx) in enumerate(gkf.split(X_train, y_train, groups)):
+    Xtr, Xval = X_train[tr_idx], X_train[val_idx]
+    ytr, yval = y_train[tr_idx], y_train[val_idx]
+    lgbm_fold = lgb.LGBMRegressor(**LGBM_PARAMS)
+    lgbm_fold.fit(
+        Xtr, ytr,
+        eval_set=[(Xval, yval)],
+        callbacks=[lgb.early_stopping(50, verbose=False), lgb.log_evaluation(-1)]
+    )
+    preds = lgbm_fold.predict(Xval)
+    mae   = mean_absolute_error(yval, preds)
+    lgbm_cv_scores.append(mae)
+    lgbm_best_iters.append(lgbm_fold.best_iteration_)
+    print(f'   Fold {fold_i+1}: MAE = {mae:.4f} s  |  best_iter = {lgbm_fold.best_iteration_}')
+
+lgbm_optimal_iters = max(int(np.mean(lgbm_best_iters) * 1.05), 100)
+print(f'\n   Optimal iterations: {lgbm_optimal_iters}')
+
+lgbm_model = lgb.LGBMRegressor(**{k: v for k, v in LGBM_PARAMS.items() if k != 'n_estimators'}, n_estimators=lgbm_optimal_iters)
+lgbm_model.fit(X_train, y_train)
+
+lgbm_test_preds = lgbm_model.predict(X_test)
+lgbm_test_mae   = mean_absolute_error(y_test, lgbm_test_preds)
+lgbm_test_rmse  = float(np.sqrt(mean_squared_error(y_test, lgbm_test_preds)))
+lgbm_test_r2    = r2_score(y_test, lgbm_test_preds)
+
+print(f'\nLightGBM CV MAE    : {np.mean(lgbm_cv_scores):.4f} +/- {np.std(lgbm_cv_scores):.4f} s')
+print(f'LightGBM Test MAE  : {lgbm_test_mae:.4f} s')
+print(f'LightGBM Test RMSE : {lgbm_test_rmse:.4f} s')
+print(f'LightGBM Test R2   : {lgbm_test_r2:.4f}')
+
+
+=== [v2] Cell 22 ===
+# ─────────────────────────────────────────────────────────────────────────────
+# SECTION 7d: Model Comparison Table
+# ─────────────────────────────────────────────────────────────────────────────
+
+comparison = pd.DataFrame([
+    {
+        'Model'        : 'Ridge (baseline)',
+        'CV MAE'       : f'{np.mean(ridge_cv_scores):.3f} +/- {np.std(ridge_cv_scores):.3f} s',
+        'Test MAE (s)' : round(ridge_test_mae,  3),
+        'Test RMSE (s)': round(ridge_test_rmse, 3),
+        'Test R2'      : round(ridge_test_r2,   4),
+    },
+    {
+        'Model'        : 'XGBoost (primary) *',
+        'CV MAE'       : f'{np.mean(xgb_cv_scores):.3f} +/- {np.std(xgb_cv_scores):.3f} s',
+        'Test MAE (s)' : round(xgb_test_mae,  3),
+        'Test RMSE (s)': round(xgb_test_rmse, 3),
+        'Test R2'      : round(xgb_test_r2,   4),
+    },
+    {
+        'Model'        : 'LightGBM (secondary)',
+        'CV MAE'       : f'{np.mean(lgbm_cv_scores):.3f} +/- {np.std(lgbm_cv_scores):.3f} s',
+        'Test MAE (s)' : round(lgbm_test_mae,  3),
+        'Test RMSE (s)': round(lgbm_test_rmse, 3),
+        'Test R2'      : round(lgbm_test_r2,   4),
+    },
+])
+
+print('\n📊 Model Comparison — 2025 Holdout Test Set')
+display(comparison.set_index('Model'))
+
+
+=== [v2] Cell 24 ===
+# ─────────────────────────────────────────────────────────────────────────────
+# SECTION 8a: Global Residuals Analysis
+# ─────────────────────────────────────────────────────────────────────────────
+
+test_df['predicted_s'] = xgb_test_preds
+test_df['residual']    = test_df['predicted_s'] - test_df[TARGET_COL]
+test_df['abs_error']   = test_df['residual'].abs()
+
+fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+
+# Actual vs Predicted (sample, colour by constructor)
+ax = axes[0]
+sample = test_df.sample(min(8000, len(test_df)), random_state=42)
+constructors = sorted(test_df['constructor'].unique())
+palette = sns.color_palette('tab10', n_colors=len(constructors))
+cmap_dict = dict(zip(constructors, palette))
+
+for constructor in constructors:
+    sub = sample[sample['constructor'] == constructor]
+    ax.scatter(sub[TARGET_COL], sub['predicted_s'],
+               alpha=0.25, s=5, color=cmap_dict[constructor], label=constructor)
+
+lo = test_df[TARGET_COL].min() * 0.995
+hi = test_df[TARGET_COL].max() * 1.005
+ax.plot([lo, hi], [lo, hi], 'k--', linewidth=1.5, label='Perfect prediction')
+ax.set_xlabel('Actual Lap Time (s)')
+ax.set_ylabel('Predicted Lap Time (s)')
+ax.set_title(f'Actual vs Predicted\nMAE={xgb_test_mae:.3f} s | R2={xgb_test_r2:.4f}', fontweight='bold')
+ax.legend(fontsize=6, markerscale=3, ncol=2)
+
+# Residuals Histogram
+ax = axes[1]
+ax.hist(test_df['residual'], bins=100, color='steelblue', edgecolor='none', alpha=0.8)
+ax.axvline(0, color='red', linewidth=1.5, linestyle='--')
+ax.axvline(test_df['residual'].mean(), color='orange', linewidth=1.5,
+           label=f'Mean = {test_df["residual"].mean():.3f} s')
+ax.set_xlabel('Residual (Predicted - Actual) (s)')
+ax.set_ylabel('Count')
+ax.set_title('Residuals Distribution\n(XGBoost, 2025 Holdout)', fontweight='bold')
+ax.legend()
+
+# Residuals vs Predicted
+ax = axes[2]
+ax.scatter(sample['predicted_s'], sample['residual'], alpha=0.2, s=4, color='teal')
+ax.axhline(0, color='red', linewidth=1.0, linestyle='--')
+ax.set_xlabel('Predicted Lap Time (s)')
+ax.set_ylabel('Residual (s)')
+ax.set_title('Residuals vs Predicted', fontweight='bold')
+
+plt.suptitle('XGBoost Model — 2025 Holdout Residuals Analysis', fontsize=14, fontweight='bold')
+plt.tight_layout()
+plt.savefig(f'{OUTPUT_DIR}/05_residuals_analysis.png', dpi=150, bbox_inches='tight')
+plt.show()
+print('Saved: 05_residuals_analysis.png')
+
+
+=== [v2] Cell 25 ===
+# ─────────────────────────────────────────────────────────────────────────────
+# SECTION 8b: Per-Constructor Error Analysis
+# ─────────────────────────────────────────────────────────────────────────────
+
+constructor_errors = (
+    test_df.groupby('constructor')
+    .agg(
+        Laps      = ('abs_error', 'count'),
+        MAE       = ('abs_error', 'mean'),
+        RMSE      = ('residual',  lambda x: np.sqrt((x**2).mean())),
+        Bias      = ('residual',  'mean'),
+        P90_Error = ('abs_error', lambda x: x.quantile(0.9)),
+    )
+    .sort_values('MAE')
+    .round(4)
+)
+
+print('📊 Per-Constructor Error Analysis (2025 Holdout — XGBoost):')
+display(constructor_errors)
+
+fig, ax = plt.subplots(figsize=(12, 6))
+colors = ['#2ecc71' if v < 1.0 else '#e74c3c' if v > 2.0 else '#f39c12'
+          for v in constructor_errors['MAE']]
+bars = ax.barh(constructor_errors.index, constructor_errors['MAE'], color=colors, alpha=0.85)
+ax.axvline(xgb_test_mae, color='navy', linewidth=2, linestyle='--',
+           label=f'Overall MAE = {xgb_test_mae:.3f} s')
+ax.set_xlabel('MAE (seconds)', fontsize=11)
+ax.set_title('Per-Constructor MAE — 2025 Holdout Set (XGBoost)', fontsize=13, fontweight='bold')
+ax.legend()
+for bar, val in zip(bars, constructor_errors['MAE']):
+    ax.text(val + 0.01, bar.get_y() + bar.get_height()/2,
+            f'{val:.3f} s', va='center', fontsize=9)
+plt.tight_layout()
+plt.savefig(f'{OUTPUT_DIR}/06_per_constructor_mae.png', dpi=150, bbox_inches='tight')
+plt.show()
+print('Saved: 06_per_constructor_mae.png')
+
+
+=== [v2] Cell 26 ===
+# ─────────────────────────────────────────────────────────────────────────────
+# SECTION 8c: Per-Circuit Error Analysis
+# ─────────────────────────────────────────────────────────────────────────────
+
+circuit_errors = (
+    test_df.groupby('GrandPrix')
+    .agg(Laps=('abs_error','count'), MAE=('abs_error','mean'), Bias=('residual','mean'))
+    .sort_values('MAE', ascending=False)
+    .round(3)
+)
+
+fig, ax = plt.subplots(figsize=(14, 8))
+colors = ['#e74c3c' if v > 2.0 else '#f39c12' if v > 1.0 else '#2ecc71'
+          for v in circuit_errors['MAE']]
+ax.barh(circuit_errors.index, circuit_errors['MAE'], color=colors, alpha=0.85)
+ax.axvline(xgb_test_mae, color='navy', linewidth=2, linestyle='--',
+           label=f'Overall MAE = {xgb_test_mae:.3f} s')
+ax.set_xlabel('MAE (seconds)', fontsize=11)
+ax.set_title('Per-Circuit MAE — 2025 Holdout Set (XGBoost)', fontsize=13, fontweight='bold')
+ax.legend()
+plt.tight_layout()
+plt.savefig(f'{OUTPUT_DIR}/07_per_circuit_mae.png', dpi=150, bbox_inches='tight')
+plt.show()
+print('Saved: 07_per_circuit_mae.png')
+display(circuit_errors)
+
+
+=== [v2] Cell 27 ===
+# ─────────────────────────────────────────────────────────────────────────────
+# SECTION 8d: Compound & Tyre Life Error Analysis
+# ─────────────────────────────────────────────────────────────────────────────
+
+fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+
+ax = axes[0]
+compound_mae = test_df.groupby('Compound')['abs_error'].mean().sort_values()
+compound_colors_map = {'SOFT': '#E8002D', 'MEDIUM': '#DDCC00', 'HARD': '#AAAAAA',
+                       'INTERMEDIATE': '#39B54A', 'WET': '#0067FF'}
+bar_colors = [compound_colors_map.get(c, 'grey') for c in compound_mae.index]
+bars = ax.bar(compound_mae.index, compound_mae.values, color=bar_colors, edgecolor='black', linewidth=0.5)
+ax.set_ylabel('MAE (s)')
+ax.set_title('MAE by Tyre Compound (2025 Holdout)', fontweight='bold')
+for bar in bars:
+    ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01,
+            f'{bar.get_height():.3f}', ha='center', fontsize=9)
+
+ax = axes[1]
+test_df['tyre_life_bin'] = pd.cut(
+    test_df['tyre_life'], bins=[0,5,10,15,20,30,50],
+    labels=['1-5','6-10','11-15','16-20','21-30','31+']
+)
+tyre_age_mae = test_df.groupby('tyre_life_bin', observed=True)['abs_error'].mean()
+ax.bar(tyre_age_mae.index.astype(str), tyre_age_mae.values, color='steelblue', alpha=0.85)
+ax.set_xlabel('Tyre Age (laps)')
+ax.set_ylabel('MAE (s)')
+ax.set_title('MAE by Tyre Age (2025 Holdout)', fontweight='bold')
+
+plt.suptitle('Error Analysis by Compound & Tyre Age', fontsize=13, fontweight='bold')
+plt.tight_layout()
+plt.savefig(f'{OUTPUT_DIR}/08_compound_tyre_age_mae.png', dpi=150, bbox_inches='tight')
+plt.show()
+print('Saved: 08_compound_tyre_age_mae.png')
+
+
+=== [v2] Cell 29 ===
+# ─────────────────────────────────────────────────────────────────────────────
+# SECTION 9a: SHAP Values — Global Feature Importance
+# ─────────────────────────────────────────────────────────────────────────────
+
+print('Computing SHAP values for XGBoost model...')
+
+shap_sample_size = min(3000, len(X_test))
+shap_idx = np.random.choice(len(X_test), shap_sample_size, replace=False)
+X_shap   = X_test[shap_idx]
+
+explainer   = shap.TreeExplainer(xgb_model)
+shap_values = explainer.shap_values(X_shap)
+
+fig, ax = plt.subplots(figsize=(10, 9))
+shap.summary_plot(
+    shap_values, X_shap,
+    feature_names=FEATURE_COLS,
+    plot_type='bar',
+    max_display=20,
+    show=False,
+    ax=ax
+)
+ax.set_title('SHAP Feature Importance (Mean |SHAP Value|)\nXGBoost — 2025 Holdout',
+             fontsize=12, fontweight='bold')
+plt.tight_layout()
+plt.savefig(f'{OUTPUT_DIR}/09_shap_importance_bar.png', dpi=150, bbox_inches='tight')
+plt.show()
+print('Saved: 09_shap_importance_bar.png')
+
+
+=== [v2] Cell 30 ===
+# ─────────────────────────────────────────────────────────────────────────────
+# SECTION 9b: SHAP Beeswarm Plot
+# ─────────────────────────────────────────────────────────────────────────────
+
+plt.figure(figsize=(10, 10))
+shap.summary_plot(
+    shap_values, X_shap,
+    feature_names=FEATURE_COLS,
+    max_display=20,
+    show=False
+)
+plt.title('SHAP Beeswarm — Feature Impact Direction\n'
+          '(Red=high value increases prediction; Blue=low value)',
+          fontsize=11, fontweight='bold')
+plt.tight_layout()
+plt.savefig(f'{OUTPUT_DIR}/10_shap_beeswarm.png', dpi=150, bbox_inches='tight')
+plt.show()
+print('Saved: 10_shap_beeswarm.png')
+
+
+=== [v2] Cell 31 ===
+# ─────────────────────────────────────────────────────────────────────────────
+# SECTION 9c: Tyre Life SHAP Dependence Plot
+# ─────────────────────────────────────────────────────────────────────────────
+
+fig, ax = plt.subplots(figsize=(12, 6))
+shap.dependence_plot(
+    'tyre_life', shap_values, X_shap,
+    feature_names=FEATURE_COLS,
+    interaction_index='compound_ordinal',
+    ax=ax, show=False
+)
+ax.set_title('SHAP Dependence: Tyre Life vs Lap Time Impact\n(coloured by compound ordinal)',
+             fontsize=12, fontweight='bold')
+plt.tight_layout()
+plt.savefig(f'{OUTPUT_DIR}/11_shap_tyre_life_dependence.png', dpi=150, bbox_inches='tight')
+plt.show()
+print('Saved: 11_shap_tyre_life_dependence.png')
+
+
+=== [v2] Cell 32 ===
+# ─────────────────────────────────────────────────────────────────────────────
+# SECTION 9d: Constructor SHAP Contribution
+# ─────────────────────────────────────────────────────────────────────────────
+
+constructor_idx  = FEATURE_COLS.index('constructor_encoded')
+shap_sample_df   = test_df.iloc[shap_idx].copy()
+shap_sample_df['shap_constructor'] = shap_values[:, constructor_idx]
+
+constructor_shap = (
+    shap_sample_df.groupby('constructor')['shap_constructor']
+    .mean()
+    .sort_values()
+)
+
+fig, ax = plt.subplots(figsize=(10, 6))
+colors  = ['#2ecc71' if v <= 0 else '#e74c3c' for v in constructor_shap.values]
+ax.barh(constructor_shap.index, constructor_shap.values, color=colors, alpha=0.85)
+ax.axvline(0, color='black', linewidth=1.0)
+ax.set_xlabel('Mean SHAP contribution of constructor_encoded (s)')
+ax.set_title('Constructor SHAP Contribution to Predicted Lap Time\n'
+             '(Negative = faster than average; Positive = slower)',
+             fontsize=12, fontweight='bold')
+plt.tight_layout()
+plt.savefig(f'{OUTPUT_DIR}/12_constructor_shap_contribution.png', dpi=150, bbox_inches='tight')
+plt.show()
+print('Saved: 12_constructor_shap_contribution.png')
+
+
+=== [v2] Cell 34 ===
+# ─────────────────────────────────────────────────────────────────────────────
+# SECTION 10a: Predicted vs Actual Constructor Pace Ranking (2025)
+# ─────────────────────────────────────────────────────────────────────────────
+
+pace_rows = []
+for circuit, grp in test_df.groupby('GrandPrix'):
+    actual_min = grp[TARGET_COL].min()
+    pred_min   = grp['predicted_s'].min()
+    for constructor, c_grp in grp.groupby('constructor'):
+        pace_rows.append({
+            'GrandPrix'    : circuit,
+            'constructor'  : constructor,
+            'actual_median': c_grp[TARGET_COL].median(),
+            'pred_median'  : c_grp['predicted_s'].median(),
+            'actual_index' : c_grp[TARGET_COL].median() / actual_min,
+            'pred_index'   : c_grp['predicted_s'].median() / pred_min,
+        })
+pace_df = pd.DataFrame(pace_rows)
+
+season_rank = (
+    pace_df.groupby('constructor')
+    .agg(
+        Actual_Median_s = ('actual_median', 'mean'),
+        Pred_Median_s   = ('pred_median',   'mean'),
+        Actual_Index    = ('actual_index',  'mean'),
+        Pred_Index      = ('pred_index',    'mean'),
+    )
+    .sort_values('Actual_Median_s')
+    .round(4)
+)
+
+print('📊 2025 Season — Constructor Pace Ranking (Actual vs Predicted):')
+display(season_rank)
+
+
+=== [v2] Cell 35 ===
+# ─────────────────────────────────────────────────────────────────────────────
+# SECTION 10b: Constructor x Circuit Pace Gap Heatmap
+# ─────────────────────────────────────────────────────────────────────────────
+
+pivot_pred  = pace_df.pivot_table(index='constructor', columns='GrandPrix', values='pred_median')
+circuit_mins = pivot_pred.min(axis=0)
+pivot_delta  = pivot_pred.subtract(circuit_mins, axis=1)
+pivot_delta  = pivot_delta.loc[pivot_delta.mean(axis=1).sort_values().index]
+
+fig, ax = plt.subplots(figsize=(22, 8))
+sns.heatmap(
+    pivot_delta, cmap='RdYlGn_r', annot=True, fmt='.2f',
+    linewidths=0.3, ax=ax,
+    cbar_kws={'label': 'Predicted gap to fastest (s)'}
+)
+ax.set_title('Constructor vs Circuit — Predicted Pace Gap Heatmap (2025)\n'
+             '(Green=faster, Red=slower; value=gap in seconds to fastest at that circuit)',
+             fontsize=12, fontweight='bold')
+ax.set_xlabel('Circuit')
+ax.set_ylabel('Constructor')
+plt.xticks(rotation=45, ha='right', fontsize=8)
+plt.tight_layout()
+plt.savefig(f'{OUTPUT_DIR}/13_constructor_circuit_pace_heatmap.png', dpi=150, bbox_inches='tight')
+plt.show()
+print('Saved: 13_constructor_circuit_pace_heatmap.png')
+
+
+=== [v2] Cell 37 ===
+# ─────────────────────────────────────────────────────────────────────────────
+# SECTION 11: Inference API Function
+# ─────────────────────────────────────────────────────────────────────────────
+
+def predict_lap_time(
+    circuit,
+    constructor,
+    lap_number,
+    tyre_life,
+    compound,
+    driver=None,
+    stint_number=1,
+    position=5,
+    gap_to_leader_s=10.0,
+    air_temp=28.0,
+    track_temp=40.0,
+    humidity=50.0,
+    wind_speed=2.0,
+    rainfall=0.0,
+    speed_i1=None,
+    speed_i2=None,
+    speed_fl=None,
+    speed_st=None,
+    total_race_laps=60,
+    year=2025,
+    model=None,
+):
+    """
+    Predict the lap time for a given car/track/tyre state.
+
+    Parameters
+    ----------
+    circuit         : Grand Prix name (e.g. 'Bahrain Grand Prix')
+    constructor     : Constructor name — raw OR canonical (auto-harmonised)
+    lap_number      : Current lap number
+    tyre_life       : Tyre age in laps
+    compound        : 'SOFT', 'MEDIUM', 'HARD', 'INTERMEDIATE', or 'WET'
+    driver          : Driver code (optional, within-team delta signal)
+    stint_number    : Current stint number
+    position        : Track position (1-20)
+    gap_to_leader_s : Gap to leader in seconds
+    air_temp        : Air temperature (Celsius)
+    track_temp      : Track surface temperature (Celsius)
+    humidity        : Humidity (%)
+    wind_speed      : Wind speed (m/s)
+    rainfall        : 1.0 = raining, 0.0 = dry
+    speed_i1/i2/fl/st : Speed trap readings (kph); uses circuit median if None
+    total_race_laps : Total scheduled laps in race
+    year            : Season year
+    model           : Trained model (defaults to xgb_model)
+
+    Returns
+    -------
+    dict: predicted_s, predicted_str, circuit, constructor, compound, tyre_life,
+          lap_number, unseen_circuit, unseen_constructor
+    """
+    if model is None:
+        model = xgb_model
+
+    canonical = CONSTRUCTOR_MAP.get(constructor, constructor)
+
+    known_circuits     = set(le_circuit.classes_)
+    known_constructors = set(le_constructor.classes_)
+    known_drivers      = set(le_driver.classes_)
+
+    circuit_enc     = le_circuit.transform([circuit])[0]     if circuit in known_circuits     else 0
+    constructor_enc = le_constructor.transform([canonical])[0] if canonical in known_constructors else 0
+    driver_enc      = 0
+    if driver and driver in known_drivers:
+        driver_enc  = le_driver.transform([driver])[0]
+
+    compound_upper = compound.upper()
+    compound_ord_map = {'WET': 0, 'INTERMEDIATE': 1, 'HARD': 2, 'MEDIUM': 3, 'SOFT': 4}
+    compound_ordinal = compound_ord_map.get(compound_upper, 2)
+
+    tl     = max(1.0, float(tyre_life))
+    tl_sq  = tl ** 2
+    tl_cb  = tl ** 3
+
+    total_laps_safe = max(1, total_race_laps)
+    fuel_load_est   = 110.0 * (1 - (lap_number - 1) / total_laps_safe)
+    race_progress   = (lap_number - 1) / total_laps_safe
+
+    def circuit_speed_median(col):
+        if col in train_df.columns and circuit in train_df['GrandPrix'].values:
+            retur
+
+=== [v2] Cell 39 ===
+# ─────────────────────────────────────────────────────────────────────────────
+# SECTION 12: Model Artifact Serialisation
+# ─────────────────────────────────────────────────────────────────────────────
+
+os.makedirs(MODEL_OUT, exist_ok=True)
+
+metadata = {
+    'le_circuit'      : le_circuit,
+    'le_constructor'  : le_constructor,
+    'le_driver'       : le_driver,
+    'feature_cols'    : FEATURE_COLS,
+    'target_col'      : TARGET_COL,
+    'constructor_map' : CONSTRUCTOR_MAP,
+    'circuits'        : sorted(le_circuit.classes_.tolist()),
+    'constructors'    : sorted(le_constructor.classes_.tolist()),
+    'drivers'         : sorted(le_driver.classes_.tolist()),
+    'train_years'     : TRAIN_YEARS,
+    'test_year'       : TEST_YEAR,
+    'n_train_laps'    : int(len(X_train)),
+    'n_test_laps'     : int(len(X_test)),
+    'metrics': {
+        'ridge': {
+            'cv_mae_mean': float(np.mean(ridge_cv_scores)),
+            'cv_mae_std' : float(np.std(ridge_cv_scores)),
+            'test_mae'   : float(ridge_test_mae),
+            'test_rmse'  : float(ridge_test_rmse),
+            'test_r2'    : float(ridge_test_r2),
+        },
+        'xgboost': {
+            'cv_mae_mean' : float(np.mean(xgb_cv_scores)),
+            'cv_mae_std'  : float(np.std(xgb_cv_scores)),
+            'test_mae'    : float(xgb_test_mae),
+            'test_rmse'   : float(xgb_test_rmse),
+            'test_r2'     : float(xgb_test_r2),
+            'n_estimators': int(optimal_iters),
+        },
+        'lightgbm': {
+            'cv_mae_mean' : float(np.mean(lgbm_cv_scores)),
+            'cv_mae_std'  : float(np.std(lgbm_cv_scores)),
+            'test_mae'    : float(lgbm_test_mae),
+            'test_rmse'   : float(lgbm_test_rmse),
+            'test_r2'     : float(lgbm_test_r2),
+            'n_estimators': int(lgbm_optimal_iters),
+        },
+    },
+    'data_source' : 'data_fastf1_v1/laps/',
+    'n_features'  : len(FEATURE_COLS),
+    'design'      : 'constructor-centric',
+    'description' : (
+        'Constructor-centric lap time predictor. '
+        'Trained on 2022-2024 per-race FastF1 CSVs (65 features, 68 races). '
+        '2025 season used as held-out test set. '
+        'Constructor harmonisation normalises team name changes across seasons.'
+    ),
+}
+
+paths = {
+    'xgb_model' : os.path.join(MODEL_OUT, 'xgb_laptime_v2.pkl'),
+    'lgbm_model': os.path.join(MODEL_OUT, 'lgbm_laptime_v2.pkl'),
+    'ridge'     : os.path.join(MODEL_OUT, 'ridge_laptime_v2.pkl'),
+    'metadata'  : os.path.join(MODEL_OUT, 'laptime_v2_metadata.pkl'),
+    'results'   : os.path.join(MODEL_OUT, 'laptime_v2_results.csv'),
+}
+
+joblib.dump(xgb_model,      paths['xgb_model'],  compress=3)
+joblib.dump(lgbm_model,     paths['lgbm_model'],  compress=3)
+joblib.dump(ridge_pipeline, paths['ridge'],        compress=3)
+joblib.dump(metadata,       paths['metadata'],     compress=3)
+
+results_df = test_df[[
+    'Year', 'GrandPrix', 'Round', 'Driver', 'constructor', 'Compound',
+    'tyre_life', 'LapNumber', 'Positio

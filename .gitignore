@@ -1,3 +1,35 @@
+# Python
+__pycache__/
+*.pyc
+
+# Cache
+cache/
+f1_cache/
+
+# Large model files (exceed GitHub 100MB limit)
+models/laptime_model.pkl
+
+# Documents
+*.pptx
+documents/
+
+# Notebook checkpoints
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Project-specific
+.agents
+Presentations
+Research papers/F1-StratLab
+test files
+*/timing
 .agents
 Presentations
 Research papers/F1-StratLab
@@ -5,3 +37,19 @@ test files
 f1_cache
 */timing
 __pycache__
+.venv/
+*.pyc
+my papers (race-state)/
+.agents
+Presentations
+Research papers/F1-StratLab
+test files
+f1_cache
+*/timing
+__pycache__
+.gemini
+catboost_info
+Learnings
+scratch
+
+tests

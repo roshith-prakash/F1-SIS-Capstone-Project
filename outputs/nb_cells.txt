@@ -1,0 +1,68 @@
+0 markdown: # ?? Formula 1 High-Precision Lap-Time Prediction Model
+
+> **Multi-Circuit & Driver-Independent XGBoost Architecture**
+>
+1 code: import os
+import json
+import joblib
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seabor
+2 markdown: ## 1. Data Loading & Telemetry Inspection
+
+Loading the consolidated multi-season telemetry dataset spanning ground-effec
+3 code: # Load canonical consolidated dataset
+data_path = 'data_fastf1_v1/f1_consolidated_data.csv'
+df_raw = pd.read_csv(data_pa
+4 markdown: ## 2. Driver-Independent Model Training Pipeline (XGBoost)
+
+This section trains our **XGBoost Regressor** from raw telem
+5 code: # 1. Outlier Filtering per Circuit
+circuits = df_raw['Circuit'].unique()
+clean_dfs = []
+for trk in circuits:
+    sub = d
+6 markdown: ## 3. Model Performance Evaluation vs. Research Paper Benchmarks
+
+Evaluating our finalized lap-time prediction architect
+7 code: # Load trained model & metadata for validation
+meta = joblib.load('models/Lap Time Estimation/laptime_metadata.pkl')
+mod
+8 markdown: ## 4. Predicted vs. Actual Lap Times & Residual Analysis
+9 code: fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+
+y_plot = y_train.values
+p_plot = preds_train
+
+# Subplot 1: Actual vs Pr
+10 markdown: ## 5. Per-Circuit Model Accuracy (All 25 Tracks)
+
+Verifying that the model achieves sub-second accuracy across every cir
+11 code: df_train_only = df_clean[train_mask]
+preds_tr = preds_train
+
+circuit_results = []
+for circuit in sorted(df_train_only['C
+12 markdown: ## 6. Non-Linear Tyre Degradation Curves
+
+Modeling thermal & mechanical grip degradation penalties per compound (Soft, M
+13 code: def simulate_tyre_degradation(compound, tyre_age):
+    base_offsets = {'SOFT': 0.0, 'MEDIUM': 0.40, 'HARD': 0.85}
+    we
+14 markdown: ## 7. Real-Time Lap-Time Inference API
+
+A straightforward function allowing users to forecast lap times for any combinat
+15 code: def predict_lap_time(circuit="Italy", team="Red Bull Racing", lap_number=15,
+                     tyre_life=10, compound
+16 markdown: ## 8. Multi-Team Stint Progression Comparison
+
+Visualizing how predicted lap times evolve across a stint for different c
+17 code: # Compare stint pace at Monza for Top 4 Constructors
+test_circuit = "Italy"
+stint_laps = np.arange(1, 26)
+teams_to_compa
+18 markdown: ## 9. Complete Circuit & Team Registry
+19 code: print(f"SUPPORTED CIRCUITS ({len(meta['le_track'].classes_)}):")
+print(f"{'#':>3} {'Circuit':<22} {'Race Laps':>10}")
+pr

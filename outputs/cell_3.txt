@@ -1,0 +1,8 @@
+# Load canonical consolidated dataset
+data_path = 'data_fastf1_v1/f1_consolidated_data.csv'
+df_raw = pd.read_csv(data_path, low_memory=False)
+df_raw = df_raw[df_raw['Year'] >= 2022].copy()
+
+print(f"Loaded {len(df_raw):,} total laps | {df_raw['Circuit'].nunique()} circuits | {df_raw['Year'].nunique()} seasons ({df_raw['Year'].min()}?{df_raw['Year'].max()})")
+print(f"Constructors represented: {df_raw['Team'].nunique()}")
+df_raw[['Circuit', 'Year', 'Driver', 'Team', 'LapNumber', 'LapTime', 'TyreLife', 'Compound']].head(10)

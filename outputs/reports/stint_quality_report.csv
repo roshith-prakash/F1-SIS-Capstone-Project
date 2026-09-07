@@ -1,0 +1,45 @@
+Dimension,Value,Total_Stints,Good_Stints,Quality_Pct
+Year,2022,1240.0,983.0,79.27419354838709
+Year,2023,1348.0,1072.0,79.52522255192879
+Year,2024,1300.0,1054.0,81.07692307692308
+Year,2025,1295.0,1029.0,79.45945945945945
+GrandPrix,Abu Dhabi Grand Prix,203.0,195.0,96.05911330049261
+GrandPrix,Australian Grand Prix,284.0,138.0,48.59154929577465
+GrandPrix,Austrian Grand Prix,261.0,211.0,80.84291187739464
+GrandPrix,Azerbaijan Grand Prix,173.0,158.0,91.32947976878613
+GrandPrix,Bahrain Grand Prix,273.0,266.0,97.43589743589743
+GrandPrix,Belgian Grand Prix,215.0,181.0,84.18604651162791
+GrandPrix,British Grand Prix,229.0,143.0,62.44541484716157
+GrandPrix,Canadian Grand Prix,268.0,172.0,64.17910447761194
+GrandPrix,Chinese Grand Prix,105.0,100.0,95.23809523809523
+GrandPrix,Dutch Grand Prix,317.0,221.0,69.71608832807571
+GrandPrix,Emilia Romagna Grand Prix,149.0,123.0,82.5503355704698
+GrandPrix,French Grand Prix,45.0,44.0,97.77777777777777
+GrandPrix,Hungarian Grand Prix,227.0,216.0,95.15418502202643
+GrandPrix,Italian Grand Prix,180.0,167.0,92.77777777777779
+GrandPrix,Japanese Grand Prix,240.0,141.0,58.75
+GrandPrix,Las Vegas Grand Prix,153.0,135.0,88.23529411764706
+GrandPrix,Mexico City Grand Prix,189.0,173.0,91.53439153439153
+GrandPrix,Miami Grand Prix,171.0,164.0,95.90643274853801
+GrandPrix,Monaco Grand Prix,231.0,121.0,52.38095238095239
+GrandPrix,Qatar Grand Prix,214.0,162.0,75.70093457943925
+GrandPrix,Saudi Arabian Grand Prix,159.0,149.0,93.71069182389937
+GrandPrix,Singapore Grand Prix,171.0,142.0,83.04093567251462
+GrandPrix,Spanish Grand Prix,271.0,267.0,98.5239852398524
+GrandPrix,São Paulo Grand Prix,259.0,160.0,61.77606177606177
+GrandPrix,United States Grand Prix,196.0,189.0,96.42857142857143
+CanonicalTeam,Alpine,495.0,405.0,81.81818181818183
+CanonicalTeam,Aston Martin,522.0,413.0,79.11877394636015
+CanonicalTeam,Ferrari,503.0,406.0,80.71570576540755
+CanonicalTeam,Haas,522.0,409.0,78.35249042145594
+CanonicalTeam,McLaren,528.0,429.0,81.25
+CanonicalTeam,Mercedes,527.0,424.0,80.45540796963947
+CanonicalTeam,Red Bull,545.0,427.0,78.34862385321101
+CanonicalTeam,Sauber,518.0,403.0,77.7992277992278
+CanonicalTeam,VCARB,515.0,409.0,79.41747572815534
+CanonicalTeam,Williams,508.0,413.0,81.2992125984252
+Compound,HARD,1752.0,1592.0,90.8675799086758
+Compound,INTERMEDIATE,424.0,0.0,0.0
+Compound,MEDIUM,1997.0,1801.0,90.18527791687532
+Compound,SOFT,959.0,745.0,77.68508863399374
+Compound,WET,51.0,0.0,0.0

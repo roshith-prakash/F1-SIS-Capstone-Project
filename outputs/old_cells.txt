@@ -1,0 +1,238 @@
+
+=== [old] Cell 1 ===
+import os
+import glob
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from xgboost import XGBRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+from sklearn.preprocessing import LabelEncoder
+
+sns.set_theme(style="whitegrid")
+
+=== [old] Cell 2 ===
+
+TRACKS = [
+    'Australia', 
+    'Saudi_Arabia',
+    'Hungary',
+    'Italy'
+]
+
+df_list = []
+
+for track in TRACKS:
+    files = sorted(glob.glob(f'datasets/{track}/*_Laps.csv'))
+    for f in files:
+        temp_df = pd.read_csv(f, low_memory=False)
+        year = int(os.path.basename(f).split('_')[0])
+        temp_df['Year'] = year
+        temp_df['Track'] = track
+        df_list.append(temp_df)
+        print(f"Loaded {len(temp_df)} laps from {f}")
+
+df = pd.concat(df_list, ignore_index=True)
+print(f"\nTotal laps loaded: {len(df)}")
+df.head()
+
+=== [old] Cell 3 ===
+df = df.replace("NaT", np.nan)
+
+# --- Eligible drivers (same team across 2022-2025) ---
+ELIGIBLE_DRIVERS = ['ALB', 'LEC', 'NOR', 'RUS', 'VER']
+
+print(f"Starting rows: {len(df)}")
+
+# 1. Keep only eligible drivers
+df = df[df['Driver'].isin(ELIGIBLE_DRIVERS)].copy()
+print(f"After filtering eligible drivers: {len(df)}")
+
+# 2. Convert LapTime from timedelta string to seconds
+# if df['LapTime'].dtype == 'object':
+df['LapTime'] = pd.to_timedelta(df['LapTime'], errors="coerce").dt.total_seconds()
+
+# 3. Drop rows where LapTime is NaN
+df = df.dropna(subset=['LapTime'])
+print(f"After dropping NaN LapTime: {len(df)}")
+
+# 4. Keep only accurate laps
+df = df[df['IsAccurate'] == True]
+print(f"After keeping IsAccurate only: {len(df)}")
+
+# 5. Remove pit-out laps (PitOutTime is not NaN)
+df = df[df['PitOutTime'].isna()]
+print(f"After removing pit-out laps: {len(df)}")
+
+# 6. Remove pit-in laps (PitInTime is not NaN)
+df = df[df['PitInTime'].isna()]
+print(f"After removing pit-in laps: {len(df)}")
+
+# 7. Remove first lap (LapNumber == 1)
+df = df[df['LapNumber'] > 1]
+print(f"After removing first laps: {len(df)}")
+
+# 8. Green flag only (TrackStatus == 1 or '1')
+df['TrackStatus'] = df['TrackStatus'].astype(str).str.replace('.0', '', regex=False)
+df = df[df['TrackStatus'] == '1']
+print(f"After green-flag filter: {len(df)}")
+
+# 9. Dry tyres only
+valid_compounds = ['SOFT', 'MEDIUM', 'HARD']
+df = df[df['Compound'].isin(valid_compounds)]
+print(f"After keeping dry compounds only: {len(df)}")
+
+print(f"\n✅ Final clean dataset: {len(df)} laps")
+print(f"Drivers: {sorted(df['Driver'].unique())}")
+print(f"Tracks: {sorted(df['Track'].unique())}")
+print(f"Years: {sorted(df['Year'].unique())}")
+print(f"Compounds: {sorted(df['Compound'].dropna().unique())}")
+
+=== [old] Cell 4 ===
+df = df.dropna(subset=['Compound'])
+
+# Label-encode Driver
+le_driver = LabelEncoder()
+df['Driver_encoded'] = le_driver.fit_transform(df['Driver'])
+
+print("Driver encoding:")
+for cls, lbl in zip(le_driver.classes_, range(len(le_driver.classes_))):
+    print(f"  {cls} → {lbl}")
+
+# Label-encode Track
+le_track = LabelEncoder()
+df['Track_encoded'] = le_track.fit_transform(df['Track'])
+
+print("\nTrack encoding:")
+for cls, lbl in zip(le_track.classes_, range(len(le_track.classes_))):
+    print(f"  {cls} → {lbl}")
+
+# One-hot encode Compound
+compound_dummies = pd.get_dummies(df['Compound'], prefix='Compound')
+df = pd.concat([df, compound_dummies], axis=1)
+
+# Define feature columns and target
+FEATURE_COLS = ['Driver_encoded', 'Track_encoded', 'LapNumber', 'TyreLife', 'Year'] + \
+               [c for c in df.columns if c.startswith('Compound_')]
+
+TARGET_COL = 'LapTime'
+
+print(f"\nFeatures: {FEATURE_COLS}")
+print(f"Target: {TARGET_COL}")
+print(f"\nFeature matrix shape: {df[FEATURE_COLS].shape}")
+
+=== [old] Cell 5 ===
+df['Stratify_Key'] = df['Driver'] + "_" + df['Track']
+
+key_counts = df['Stratify_Key'].value_counts()
+valid_keys = key_counts[key_counts > 1].index
+df = df[df['Stratify_Key'].isin(valid_keys)]
+
+X = df[FEATURE_COLS]
+y = df[TARGET_COL]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=df['Stratify_Key']
+)
+
+print(f"Training set: {len(X_train)} samples")
+print(f"Test set:     {len(X_test)} samples")
+
+=== [old] Cell 6 ===
+model = XGBRegressor(
+    n_estimators=200,
+    max_depth=6,
+    learning_rate=0.1,
+    subsample=0.8,
+    # colsample_bytree=0.8,
+    random_state=42,
+    objective='reg:squarederror'
+)
+
+model.fit(
+    X_train, y_train,
+    eval_set=[(X_train, y_train), (X_test, y_test)],
+    verbose=False
+)
+
+print("✅ Model trained successfully!")
+
+=== [old] Cell 7 ===
+y_pred = model.predict(X_test)
+
+# Overall metrics
+rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+mae  = mean_absolute_error(y_test, y_pred)
+r2   = r2_score(y_test, y_pred)
+
+print("="*50)
+print("  Overall Test Set Metrics")
+print("="*50)
+print(f"  RMSE : {rmse:.4f} s")
+print(f"  MAE  : {mae:.4f} s")
+print(f"  MSE  : {mean_squared_error(y_test, y_pred):.4f} s^2")
+print(f"  R²   : {r2:.4f}")
+print("="*50)
+
+# Per-driver metrics
+test_df = X_test.copy()
+test_df['y_true'] = y_test.values
+test_df['y_pred'] = y_pred
+
+print("\n  Per-Driver Metrics")
+print("-" * 60)
+print(f"  {'Driver':<8} {'MAE':>8} {'RMSE':>8} {'R²':>8} {'Samples':>8}")
+print("-" * 60)
+
+for code_idx in sorted(test_df['Driver_encoded'].unique()):
+    driver_name = le_driver.inverse_transform([int(code_idx)])[0]
+    mask = test_df['Driver_encoded'] == code_idx
+    yt = test_df.loc[mask, 'y_true']
+    yp = test_df.loc[mask, 'y_pred']
+    d_rmse = np.sqrt(mean_squared_error(yt, yp))
+    d_mae  = mean_absolute_error(yt, yp)
+    d_r2   = r2_score(yt, yp) if len(yt) > 1 else float('nan')
+    print(f"  {driver_name:<8} {d_mae:>8.4f} {d_rmse:>8.4f} {d_r2:>8.4f} {len(yt):>8}")
+
+=== [old] Cell 8 ===
+print("\n  Per-Track Metrics")
+print("-" * 60)
+print(f"  {'Track':<18} {'MAE':>8} {'RMSE':>8} {'R²':>8} {'Samples':>8}")
+print("-" * 60)
+
+# Group metrics by track
+track_metrics = []
+for code_idx in sorted(test_df['Track_encoded'].unique()):
+    track_name = le_track.inverse_transform([int(code_idx)])[0]
+    mask = test_df['Track_encoded'] == code_idx
+    yt = test_df.loc[mask, 'y_true']
+    yp = test_df.loc[mask, 'y_pred']
+    
+    if len(yt) > 0:
+        d_rmse = np.sqrt(mean_squared_error(yt, yp))
+        d_mae  = mean_absolute_error(yt, yp)
+        d_r2   = r2_score(yt, yp) if len(yt) > 1 else float('nan')
+        track_metrics.append((track_name, d_mae, d_rmse, d_r2, len(yt)))
+
+# Sort by MAE
+track_metrics.sort(key=lambda x: x[1])
+
+for tr in track_metrics:
+    print(f"  {tr[0]:<18} {tr[1]:>8.4f} {tr[2]:>8.4f} {tr[3]:>8.4f} {tr[4]:>8}")
+
+=== [old] Cell 9 ===
+print("\n  Sample Predictions Table")
+print("-" * 75)
+print(f"  {'Driver':<8} | {'Track':<18} | {'Actual Lap Time':<18} | {'Predicted Lap Time':<18}")
+print("-" * 75)
+
+sample_df = test_df.sample(n=min(15, len(test_df)), random_state=42)
+for idx, row in sample_df.iterrows():
+    driver_name = le_driver.inverse_transform([int(row['Driver_encoded'])])[0]
+    track_name = le_track.inverse_transform([int(row['Track_encoded'])])[0]
+    y_act = row['y_true']
+    y_pr = row['y_pred']
+    print(f"  {driver_name:<8} | {track_name:<18} | {y_act:>15.3f} s | {y_pr:>15.3f} s")
