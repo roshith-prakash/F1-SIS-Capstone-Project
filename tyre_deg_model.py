@@ -606,8 +606,9 @@ import seaborn as sns
 import os, warnings
 warnings.filterwarnings("ignore")
 
-# Set aesthetics for premium plots
-plt.style.use('dark_background')
+# Set aesthetics for clean light mode plots
+plt.style.use('seaborn-v0_8-whitegrid' if 'seaborn-v0_8-whitegrid' in plt.style.available else 'default')
+sns.set_theme(style='whitegrid')
 sns.set_palette("husl")
 
 OUTPUT_DIR = os.path.join(".", "outputs")
@@ -716,7 +717,8 @@ import xgboost as xgb
 import joblib
 
 warnings.filterwarnings("ignore")
-plt.style.use('dark_background')
+plt.style.use('seaborn-v0_8-whitegrid' if 'seaborn-v0_8-whitegrid' in plt.style.available else 'default')
+sns.set_theme(style='whitegrid')
 sns.set_palette("husl")
 
 OUTPUT_DIR = os.path.join(".", "outputs")

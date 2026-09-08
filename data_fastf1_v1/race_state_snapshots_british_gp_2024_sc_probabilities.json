@@ -11178,6 +11178,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 1
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 17.0,
+        "field_spread": 3.2139126399944877,
+        "sector_anomaly_score": 0.0,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.010052,
+        "3L": 0.029853,
+        "5L": 0.049259,
+        "10L": 0.096091
+      },
+      "VSC_probs": {
+        "1L": 0.006223,
+        "3L": 0.018552,
+        "5L": 0.030729,
+        "10L": 0.060513
+      }
     }
   },
   {
@@ -22378,6 +22402,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 2
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 14.0,
+        "field_spread": 3.913172026688517,
+        "sector_anomaly_score": 0.0,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.008569,
+        "3L": 0.025486,
+        "5L": 0.042115,
+        "10L": 0.082456
+      },
+      "VSC_probs": {
+        "1L": 0.00484,
+        "3L": 0.014449,
+        "5L": 0.023966,
+        "10L": 0.047357
+      }
     }
   },
   {
@@ -33597,6 +33645,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 3
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 14.0,
+        "field_spread": 4.456930678747808,
+        "sector_anomaly_score": 0.0,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.008612,
+        "3L": 0.025614,
+        "5L": 0.042325,
+        "10L": 0.082859
+      },
+      "VSC_probs": {
+        "1L": 0.004967,
+        "3L": 0.014827,
+        "5L": 0.024589,
+        "10L": 0.048574
+      }
     }
   },
   {
@@ -44835,6 +44907,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 4
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 12.0,
+        "field_spread": 4.981367729601614,
+        "sector_anomaly_score": 0.0009652673113071941,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.007766,
+        "3L": 0.023118,
+        "5L": 0.038233,
+        "10L": 0.075004
+      },
+      "VSC_probs": {
+        "1L": 0.004212,
+        "3L": 0.012582,
+        "5L": 0.020882,
+        "10L": 0.041328
+      }
     }
   },
   {
@@ -56092,6 +56188,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 5
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 11.0,
+        "field_spread": 5.489807135260121,
+        "sector_anomaly_score": 0.0,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.007363,
+        "3L": 0.021926,
+        "5L": 0.036275,
+        "10L": 0.071234
+      },
+      "VSC_probs": {
+        "1L": 0.003924,
+        "3L": 0.011726,
+        "5L": 0.019467,
+        "10L": 0.038554
+      }
     }
   },
   {
@@ -67349,6 +67469,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 6
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 10.0,
+        "field_spread": 6.0591762776303755,
+        "sector_anomaly_score": 0.00031483667847309604,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.007008,
+        "3L": 0.020878,
+        "5L": 0.034553,
+        "10L": 0.067913
+      },
+      "VSC_probs": {
+        "1L": 0.003667,
+        "3L": 0.010959,
+        "5L": 0.018199,
+        "10L": 0.036066
+      }
     }
   },
   {
@@ -78606,6 +78750,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 7
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 8.0,
+        "field_spread": 6.794291868914669,
+        "sector_anomaly_score": 0.004265980498374677,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.006383,
+        "3L": 0.019028,
+        "5L": 0.031511,
+        "10L": 0.062029
+      },
+      "VSC_probs": {
+        "1L": 0.00314,
+        "3L": 0.00939,
+        "5L": 0.015601,
+        "10L": 0.030959
+      }
     }
   },
   {
@@ -89863,6 +90031,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 8
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 7.0,
+        "field_spread": 7.53168281328947,
+        "sector_anomaly_score": 0.004604550379198269,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.006086,
+        "3L": 0.018146,
+        "5L": 0.03006,
+        "10L": 0.059216
+      },
+      "VSC_probs": {
+        "1L": 0.002957,
+        "3L": 0.008846,
+        "5L": 0.0147,
+        "10L": 0.029183
+      }
     }
   },
   {
@@ -101120,6 +101312,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 9
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 7.0,
+        "field_spread": 8.256274996053458,
+        "sector_anomaly_score": 0.0028760912228462665,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.006098,
+        "3L": 0.018183,
+        "5L": 0.030121,
+        "10L": 0.059334
+      },
+      "VSC_probs": {
+        "1L": 0.003062,
+        "3L": 0.009157,
+        "5L": 0.015214,
+        "10L": 0.030197
+      }
     }
   },
   {
@@ -112377,6 +112593,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 10
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 5.0,
+        "field_spread": 9.091547329243207,
+        "sector_anomaly_score": 0.0022857142857142243,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.00549,
+        "3L": 0.016381,
+        "5L": 0.027152,
+        "10L": 0.053567
+      },
+      "VSC_probs": {
+        "1L": 0.002634,
+        "3L": 0.007882,
+        "5L": 0.013101,
+        "10L": 0.026031
+      }
     }
   },
   {
@@ -123634,6 +123874,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 11
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 5.0,
+        "field_spread": 9.85387329721244,
+        "sector_anomaly_score": 0.0003989149513323742,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005501,
+        "3L": 0.016413,
+        "5L": 0.027205,
+        "10L": 0.05367
+      },
+      "VSC_probs": {
+        "1L": 0.002732,
+        "3L": 0.008173,
+        "5L": 0.013585,
+        "10L": 0.026985
+      }
     }
   },
   {
@@ -134891,6 +135155,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 12
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 5.0,
+        "field_spread": 10.5370635218451,
+        "sector_anomaly_score": 0.0006698451475628531,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005541,
+        "3L": 0.01653,
+        "5L": 0.027398,
+        "10L": 0.054044
+      },
+      "VSC_probs": {
+        "1L": 0.002823,
+        "3L": 0.008444,
+        "5L": 0.014033,
+        "10L": 0.027869
+      }
     }
   },
   {
@@ -146148,6 +146436,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 13
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 4.0,
+        "field_spread": 14.196299911472376,
+        "sector_anomaly_score": 0.001418160330904028,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005434,
+        "3L": 0.016215,
+        "5L": 0.026879,
+        "10L": 0.053035
+      },
+      "VSC_probs": {
+        "1L": 0.003057,
+        "3L": 0.009142,
+        "5L": 0.015191,
+        "10L": 0.030151
+      }
     }
   },
   {
@@ -157405,6 +157717,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 14
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 6.0,
+        "field_spread": 14.678291446694933,
+        "sector_anomaly_score": 0.0,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.006077,
+        "3L": 0.018121,
+        "5L": 0.03002,
+        "10L": 0.059138
+      },
+      "VSC_probs": {
+        "1L": 0.003783,
+        "3L": 0.011306,
+        "5L": 0.018773,
+        "10L": 0.037194
+      }
     }
   },
   {
@@ -168662,6 +168998,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 15
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 6.0,
+        "field_spread": 15.197033129460122,
+        "sector_anomaly_score": 0.0005512679162071876,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.006116,
+        "3L": 0.018236,
+        "5L": 0.030209,
+        "10L": 0.059505
+      },
+      "VSC_probs": {
+        "1L": 0.003878,
+        "3L": 0.011589,
+        "5L": 0.01924,
+        "10L": 0.03811
+      }
     }
   },
   {
@@ -179919,6 +180279,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 16
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 6.0,
+        "field_spread": 16.2113435992862,
+        "sector_anomaly_score": 0.020869428256418132,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.006527,
+        "3L": 0.019453,
+        "5L": 0.032211,
+        "10L": 0.063384
+      },
+      "VSC_probs": {
+        "1L": 0.004071,
+        "3L": 0.012162,
+        "5L": 0.020188,
+        "10L": 0.039968
+      }
     }
   },
   {
@@ -191176,6 +191560,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 17
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 6.0,
+        "field_spread": 17.28430124579977,
+        "sector_anomaly_score": 0.08040141676505308,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.007756,
+        "3L": 0.023088,
+        "5L": 0.038183,
+        "10L": 0.074909
+      },
+      "VSC_probs": {
+        "1L": 0.004285,
+        "3L": 0.0128,
+        "5L": 0.021242,
+        "10L": 0.042033
+      }
     }
   },
   {
@@ -202433,6 +202841,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 18
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 4.0,
+        "field_spread": 18.391845851361996,
+        "sector_anomaly_score": 0.0790684866842375,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.006988,
+        "3L": 0.020817,
+        "5L": 0.034454,
+        "10L": 0.067722
+      },
+      "VSC_probs": {
+        "1L": 0.003736,
+        "3L": 0.011165,
+        "5L": 0.018539,
+        "10L": 0.036735
+      }
     }
   },
   {
@@ -213690,6 +214122,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 19
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 6.0,
+        "field_spread": 19.375567771988724,
+        "sector_anomaly_score": 0.15516542876434847,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.009697,
+        "3L": 0.028808,
+        "5L": 0.047552,
+        "10L": 0.092842
+      },
+      "VSC_probs": {
+        "1L": 0.004735,
+        "3L": 0.014139,
+        "5L": 0.023454,
+        "10L": 0.046358
+      }
     }
   },
   {
@@ -224947,6 +225403,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 20
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 9.0,
+        "field_spread": 19.749234534123683,
+        "sector_anomaly_score": 0.06647798106405212,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.009023,
+        "3L": 0.026826,
+        "5L": 0.04431,
+        "10L": 0.086656
+      },
+      "VSC_probs": {
+        "1L": 0.006407,
+        "3L": 0.019097,
+        "5L": 0.031625,
+        "10L": 0.06225
+      }
     }
   },
   {
@@ -236204,6 +236684,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 21
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 5.0,
+        "field_spread": 22.40499598599279,
+        "sector_anomaly_score": 0.0014245765841820468,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.006203,
+        "3L": 0.018495,
+        "5L": 0.030635,
+        "10L": 0.060331
+      },
+      "VSC_probs": {
+        "1L": 0.004974,
+        "3L": 0.014848,
+        "5L": 0.024624,
+        "10L": 0.048642
+      }
     }
   },
   {
@@ -247461,6 +247965,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 22
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 4.0,
+        "field_spread": 21.84219568900221,
+        "sector_anomaly_score": 0.0,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005815,
+        "3L": 0.017343,
+        "5L": 0.028737,
+        "10L": 0.056648
+      },
+      "VSC_probs": {
+        "1L": 0.004404,
+        "3L": 0.013153,
+        "5L": 0.021825,
+        "10L": 0.043174
+      }
     }
   },
   {
@@ -258718,6 +259246,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 23
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 2.0,
+        "field_spread": 26.12464483514561,
+        "sector_anomaly_score": 0.0,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005415,
+        "3L": 0.016158,
+        "5L": 0.026785,
+        "10L": 0.052852
+      },
+      "VSC_probs": {
+        "1L": 0.004467,
+        "3L": 0.013342,
+        "5L": 0.022138,
+        "10L": 0.043785
+      }
     }
   },
   {
@@ -269975,6 +270527,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 24
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 2.0,
+        "field_spread": 17.351711451833573,
+        "sector_anomaly_score": 0.01780784633928212,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005238,
+        "3L": 0.015631,
+        "5L": 0.025916,
+        "10L": 0.05116
+      },
+      "VSC_probs": {
+        "1L": 0.002939,
+        "3L": 0.00879,
+        "5L": 0.014607,
+        "10L": 0.029
+      }
     }
   },
   {
@@ -281232,6 +281808,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 25
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 4.0,
+        "field_spread": 18.574302859738093,
+        "sector_anomaly_score": 0.04358645359461866,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.006353,
+        "3L": 0.018939,
+        "5L": 0.031365,
+        "10L": 0.061746
+      },
+      "VSC_probs": {
+        "1L": 0.003768,
+        "3L": 0.011262,
+        "5L": 0.018699,
+        "10L": 0.037048
+      }
     }
   },
   {
@@ -292489,6 +293089,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 26
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 4.0,
+        "field_spread": 21.070375302414888,
+        "sector_anomaly_score": 0.1433087460484721,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.008537,
+        "3L": 0.025394,
+        "5L": 0.041964,
+        "10L": 0.082167
+      },
+      "VSC_probs": {
+        "1L": 0.004246,
+        "3L": 0.012683,
+        "5L": 0.021049,
+        "10L": 0.041656
+      }
     }
   },
   {
@@ -303746,6 +304370,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 27
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 3.0,
+        "field_spread": 24.570016597672257,
+        "sector_anomaly_score": 0.19627620351838182,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.009641,
+        "3L": 0.028644,
+        "5L": 0.047283,
+        "10L": 0.09233
+      },
+      "VSC_probs": {
+        "1L": 0.004563,
+        "3L": 0.013627,
+        "5L": 0.022609,
+        "10L": 0.044707
+      }
     }
   },
   {
@@ -315003,6 +315651,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 28
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 1.0,
+        "field_spread": 23.300368851016213,
+        "sector_anomaly_score": 0.211275607392307,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.008884,
+        "3L": 0.026416,
+        "5L": 0.043637,
+        "10L": 0.085371
+      },
+      "VSC_probs": {
+        "1L": 0.003552,
+        "3L": 0.010617,
+        "5L": 0.017633,
+        "10L": 0.034954
+      }
     }
   },
   {
@@ -326260,6 +326932,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 29
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 1.0,
+        "field_spread": 22.4169168612888,
+        "sector_anomaly_score": 0.053190104166666696,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005723,
+        "3L": 0.01707,
+        "5L": 0.028287,
+        "10L": 0.055774
+      },
+      "VSC_probs": {
+        "1L": 0.003404,
+        "3L": 0.010176,
+        "5L": 0.016903,
+        "10L": 0.03352
+      }
     }
   },
   {
@@ -337517,6 +338213,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 30
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 0.0,
+        "field_spread": 23.120419970923283,
+        "sector_anomaly_score": 0.005499894906466851,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.004782,
+        "3L": 0.014278,
+        "5L": 0.023684,
+        "10L": 0.046807
+      },
+      "VSC_probs": {
+        "1L": 0.0032,
+        "3L": 0.00957,
+        "5L": 0.0159,
+        "10L": 0.031546
+      }
     }
   },
   {
@@ -348774,6 +349494,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 31
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 0.0,
+        "field_spread": 23.97052748506148,
+        "sector_anomaly_score": 0.023295733202550295,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005061,
+        "3L": 0.015106,
+        "5L": 0.02505,
+        "10L": 0.049473
+      },
+      "VSC_probs": {
+        "1L": 0.003333,
+        "3L": 0.009966,
+        "5L": 0.016555,
+        "10L": 0.032836
+      }
     }
   },
   {
@@ -360031,6 +360775,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 32
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 1.0,
+        "field_spread": 24.806286518555318,
+        "sector_anomaly_score": 0.030336999929937658,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005497,
+        "3L": 0.016401,
+        "5L": 0.027186,
+        "10L": 0.053633
+      },
+      "VSC_probs": {
+        "1L": 0.003815,
+        "3L": 0.011401,
+        "5L": 0.018929,
+        "10L": 0.0375
+      }
     }
   },
   {
@@ -371288,6 +372056,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 33
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 0.0,
+        "field_spread": 25.625240191744847,
+        "sector_anomaly_score": 0.02769745322788575,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005202,
+        "3L": 0.015526,
+        "5L": 0.025742,
+        "10L": 0.050821
+      },
+      "VSC_probs": {
+        "1L": 0.003607,
+        "3L": 0.010783,
+        "5L": 0.017907,
+        "10L": 0.035492
+      }
     }
   },
   {
@@ -382536,6 +383328,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 34
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 0.0,
+        "field_spread": 26.767998996669778,
+        "sector_anomaly_score": 0.018745170761860663,
+        "recent_retirements": 1.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.000994,
+        "3L": 0.002979,
+        "5L": 0.004959,
+        "10L": 0.009894
+      },
+      "VSC_probs": {
+        "1L": 0.004599,
+        "3L": 0.013732,
+        "5L": 0.022782,
+        "10L": 0.045045
+      }
     }
   },
   {
@@ -393784,6 +394600,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 35
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 0.0,
+        "field_spread": 27.86662750042159,
+        "sector_anomaly_score": 0.011577320813027425,
+        "recent_retirements": 1.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.000985,
+        "3L": 0.002951,
+        "5L": 0.004913,
+        "10L": 0.009802
+      },
+      "VSC_probs": {
+        "1L": 0.004846,
+        "3L": 0.014467,
+        "5L": 0.023996,
+        "10L": 0.047415
+      }
     }
   },
   {
@@ -405032,6 +405872,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 36
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 0.0,
+        "field_spread": 28.23748421575769,
+        "sector_anomaly_score": 0.004605341246290973,
+        "recent_retirements": 1.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.000969,
+        "3L": 0.002905,
+        "5L": 0.004837,
+        "10L": 0.00965
+      },
+      "VSC_probs": {
+        "1L": 0.004932,
+        "3L": 0.014724,
+        "5L": 0.024419,
+        "10L": 0.048242
+      }
     }
   },
   {
@@ -416280,6 +417144,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 37
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 1.0,
+        "field_spread": 29.071208623570584,
+        "sector_anomaly_score": 0.0,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005265,
+        "3L": 0.015713,
+        "5L": 0.026052,
+        "10L": 0.051425
+      },
+      "VSC_probs": {
+        "1L": 0.004676,
+        "3L": 0.013961,
+        "5L": 0.023161,
+        "10L": 0.045785
+      }
     }
   },
   {
@@ -427528,6 +428416,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 38
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 1.0,
+        "field_spread": 29.605774559964726,
+        "sector_anomaly_score": 0.0,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005292,
+        "3L": 0.015792,
+        "5L": 0.026181,
+        "10L": 0.051676
+      },
+      "VSC_probs": {
+        "1L": 0.004796,
+        "3L": 0.01432,
+        "5L": 0.023753,
+        "10L": 0.046942
+      }
     }
   },
   {
@@ -438776,6 +439688,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 39
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 1.0,
+        "field_spread": 31.693328960160105,
+        "sector_anomaly_score": 0.0,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005396,
+        "3L": 0.016101,
+        "5L": 0.026692,
+        "10L": 0.052671
+      },
+      "VSC_probs": {
+        "1L": 0.005298,
+        "3L": 0.015811,
+        "5L": 0.026213,
+        "10L": 0.051738
+      }
     }
   },
   {
@@ -450024,6 +450960,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 40
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 2.0,
+        "field_spread": 27.111092617655178,
+        "sector_anomaly_score": 0.0,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005465,
+        "3L": 0.016307,
+        "5L": 0.02703,
+        "10L": 0.05333
+      },
+      "VSC_probs": {
+        "1L": 0.004683,
+        "3L": 0.013982,
+        "5L": 0.023194,
+        "10L": 0.045851
+      }
     }
   },
   {
@@ -461272,6 +462232,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 41
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 2.0,
+        "field_spread": 27.581383807626292,
+        "sector_anomaly_score": 0.0,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.00549,
+        "3L": 0.016378,
+        "5L": 0.027148,
+        "10L": 0.053559
+      },
+      "VSC_probs": {
+        "1L": 0.004789,
+        "3L": 0.014298,
+        "5L": 0.023715,
+        "10L": 0.046868
+      }
     }
   },
   {
@@ -472520,6 +473504,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 42
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 2.0,
+        "field_spread": 27.858685696399412,
+        "sector_anomaly_score": 0.0,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005504,
+        "3L": 0.016421,
+        "5L": 0.027218,
+        "10L": 0.053695
+      },
+      "VSC_probs": {
+        "1L": 0.004852,
+        "3L": 0.014487,
+        "5L": 0.024028,
+        "10L": 0.047479
+      }
     }
   },
   {
@@ -483768,6 +484776,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 43
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 2.0,
+        "field_spread": 28.35076897975767,
+        "sector_anomaly_score": 0.0,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005529,
+        "3L": 0.016496,
+        "5L": 0.027342,
+        "10L": 0.053936
+      },
+      "VSC_probs": {
+        "1L": 0.004968,
+        "3L": 0.014829,
+        "5L": 0.024593,
+        "10L": 0.048581
+      }
     }
   },
   {
@@ -495016,6 +496048,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 44
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 1.0,
+        "field_spread": 28.889043012302547,
+        "sector_anomaly_score": 0.0032063990070505533,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005303,
+        "3L": 0.015824,
+        "5L": 0.026234,
+        "10L": 0.051781
+      },
+      "VSC_probs": {
+        "1L": 0.004635,
+        "3L": 0.013841,
+        "5L": 0.022962,
+        "10L": 0.045397
+      }
     }
   },
   {
@@ -506264,6 +507320,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 45
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 1.0,
+        "field_spread": 29.586339278630877,
+        "sector_anomaly_score": 0.0022410315640675194,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005323,
+        "3L": 0.015886,
+        "5L": 0.026335,
+        "10L": 0.051977
+      },
+      "VSC_probs": {
+        "1L": 0.004792,
+        "3L": 0.014307,
+        "5L": 0.023731,
+        "10L": 0.046899
+      }
     }
   },
   {
@@ -517512,6 +518592,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 46
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 0.0,
+        "field_spread": 30.146632038574904,
+        "sector_anomaly_score": 0.004930269440948765,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005099,
+        "3L": 0.01522,
+        "5L": 0.025238,
+        "10L": 0.049839
+      },
+      "VSC_probs": {
+        "1L": 0.004476,
+        "3L": 0.013368,
+        "5L": 0.02218,
+        "10L": 0.043868
+      }
     }
   },
   {
@@ -528760,6 +529864,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 47
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 1.0,
+        "field_spread": 30.72708922608343,
+        "sector_anomaly_score": 0.0020468188307332102,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005378,
+        "3L": 0.016047,
+        "5L": 0.026601,
+        "10L": 0.052494
+      },
+      "VSC_probs": {
+        "1L": 0.00506,
+        "3L": 0.015103,
+        "5L": 0.025045,
+        "10L": 0.049462
+      }
     }
   },
   {
@@ -540008,6 +541136,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 48
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 1.0,
+        "field_spread": 31.353513496731804,
+        "sector_anomaly_score": 0.00515508205172277,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005455,
+        "3L": 0.016277,
+        "5L": 0.026981,
+        "10L": 0.053235
+      },
+      "VSC_probs": {
+        "1L": 0.005213,
+        "3L": 0.015559,
+        "5L": 0.025796,
+        "10L": 0.050927
+      }
     }
   },
   {
@@ -551256,6 +552408,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 49
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 0.0,
+        "field_spread": 30.818266898648986,
+        "sector_anomaly_score": 0.007788792231438357,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005172,
+        "3L": 0.015435,
+        "5L": 0.025593,
+        "10L": 0.05053
+      },
+      "VSC_probs": {
+        "1L": 0.004622,
+        "3L": 0.013801,
+        "5L": 0.022896,
+        "10L": 0.045267
+      }
     }
   },
   {
@@ -562504,6 +563680,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 50
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 1.0,
+        "field_spread": 31.335632034353868,
+        "sector_anomaly_score": 0.005002611253126732,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005452,
+        "3L": 0.016268,
+        "5L": 0.026966,
+        "10L": 0.053205
+      },
+      "VSC_probs": {
+        "1L": 0.005209,
+        "3L": 0.015545,
+        "5L": 0.025774,
+        "10L": 0.050885
+      }
     }
   },
   {
@@ -573725,6 +574925,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 51
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 0.0,
+        "field_spread": 31.363916390229925,
+        "sector_anomaly_score": 0.005147322879080596,
+        "recent_retirements": 3.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 3.7e-05,
+        "3L": 0.000112,
+        "5L": 0.000186,
+        "10L": 0.000372
+      },
+      "VSC_probs": {
+        "1L": 0.008334,
+        "3L": 0.024793,
+        "5L": 0.040979,
+        "10L": 0.080279
+      }
     }
   },
   {
@@ -584919,6 +586143,30 @@
       "country": "United Kingdom",
       "location": "Silverstone",
       "total_laps_expected": 52
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 1.0,
+        "field_spread": 32.065492682472495,
+        "sector_anomaly_score": 0.002017266433028464,
+        "recent_retirements": 6.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.0,
+        "3L": 1e-06,
+        "5L": 1e-06,
+        "10L": 3e-06
+      },
+      "VSC_probs": {
+        "1L": 0.016578,
+        "3L": 0.048915,
+        "5L": 0.080189,
+        "10L": 0.153948
+      }
     }
   }
 ]

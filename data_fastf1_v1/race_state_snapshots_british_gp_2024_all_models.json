@@ -8,8 +8,8 @@
     "location": "Silverstone",
     "current_lap": 1,
     "total_laps_seen": 1,
-    "total_laps_expected": 1,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -11177,7 +11177,75 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 1
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 17.0,
+        "field_spread": 3.2139126399944877,
+        "sector_anomaly_score": 0.0,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.010052,
+        "3L": 0.029853,
+        "5L": 0.049259,
+        "10L": 0.096091
+      },
+      "VSC_probs": {
+        "1L": 0.006223,
+        "3L": 0.018552,
+        "5L": 0.030729,
+        "10L": 0.060513
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 93.084,
+        "PER": 93.834,
+        "ALO": 94.079,
+        "LEC": 93.965,
+        "STR": 94.078,
+        "SAR": 94.243,
+        "MAG": 94.023,
+        "TSU": 94.121,
+        "ALB": 94.237,
+        "ZHO": 94.06,
+        "HUL": 94.044,
+        "RIC": 94.08,
+        "OCO": 94.095,
+        "NOR": 93.47,
+        "HAM": 93.05,
+        "SAI": 93.807,
+        "RUS": 93.035,
+        "BOT": 93.981,
+        "PIA": 93.753
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": -0.302,
+        "PER": -0.313,
+        "ALO": -0.302,
+        "LEC": -0.302,
+        "STR": -0.302,
+        "SAR": -0.302,
+        "MAG": -0.302,
+        "TSU": -0.302,
+        "ALB": -0.302,
+        "ZHO": -0.203,
+        "HUL": -0.302,
+        "RIC": -0.302,
+        "OCO": -0.203,
+        "NOR": -0.302,
+        "HAM": -0.302,
+        "SAI": -0.302,
+        "RUS": -0.302,
+        "BOT": -0.302,
+        "PIA": -0.302
+      }
     }
   },
   {
@@ -11189,8 +11257,8 @@
     "location": "Silverstone",
     "current_lap": 2,
     "total_laps_seen": 2,
-    "total_laps_expected": 2,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -22377,7 +22445,75 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 2
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 14.0,
+        "field_spread": 3.913172026688517,
+        "sector_anomaly_score": 0.0,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.008569,
+        "3L": 0.025486,
+        "5L": 0.042115,
+        "10L": 0.082456
+      },
+      "VSC_probs": {
+        "1L": 0.00484,
+        "3L": 0.014449,
+        "5L": 0.023966,
+        "10L": 0.047357
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 93.419,
+        "PER": 94.269,
+        "ALO": 94.469,
+        "LEC": 94.247,
+        "STR": 94.329,
+        "SAR": 94.558,
+        "MAG": 94.585,
+        "TSU": 94.507,
+        "ALB": 94.566,
+        "ZHO": 94.515,
+        "HUL": 94.357,
+        "RIC": 94.525,
+        "OCO": 94.67,
+        "NOR": 93.784,
+        "HAM": 93.35,
+        "SAI": 94.043,
+        "RUS": 93.175,
+        "BOT": 94.593,
+        "PIA": 93.943
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 4.505,
+        "PER": -0.313,
+        "ALO": 3.6,
+        "LEC": 3.6,
+        "STR": 3.6,
+        "SAR": 3.6,
+        "MAG": 3.6,
+        "TSU": 3.6,
+        "ALB": 3.6,
+        "ZHO": 3.756,
+        "HUL": 3.6,
+        "RIC": 3.6,
+        "OCO": 3.756,
+        "NOR": 3.6,
+        "HAM": 4.192,
+        "SAI": 3.6,
+        "RUS": 3.754,
+        "BOT": 3.6,
+        "PIA": 3.6
+      }
     }
   },
   {
@@ -22389,8 +22525,8 @@
     "location": "Silverstone",
     "current_lap": 3,
     "total_laps_seen": 3,
-    "total_laps_expected": 3,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -33596,7 +33732,75 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 3
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 14.0,
+        "field_spread": 4.456930678747808,
+        "sector_anomaly_score": 0.0,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.008612,
+        "3L": 0.025614,
+        "5L": 0.042325,
+        "10L": 0.082859
+      },
+      "VSC_probs": {
+        "1L": 0.004967,
+        "3L": 0.014827,
+        "5L": 0.024589,
+        "10L": 0.048574
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 92.988,
+        "PER": 93.825,
+        "ALO": 93.889,
+        "LEC": 93.68,
+        "STR": 93.756,
+        "SAR": 93.974,
+        "MAG": 94.078,
+        "TSU": 93.897,
+        "ALB": 93.973,
+        "ZHO": 94.006,
+        "HUL": 93.781,
+        "RIC": 93.938,
+        "OCO": 94.085,
+        "NOR": 93.352,
+        "HAM": 92.998,
+        "SAI": 93.526,
+        "RUS": 92.958,
+        "BOT": 94.207,
+        "PIA": 93.486
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": -0.073,
+        "PER": 1.005,
+        "ALO": 1.032,
+        "LEC": 1.191,
+        "STR": 1.191,
+        "SAR": 1.385,
+        "MAG": 1.877,
+        "TSU": 1.032,
+        "ALB": 1.032,
+        "ZHO": 1.504,
+        "HUL": 1.191,
+        "RIC": 1.877,
+        "OCO": 1.996,
+        "NOR": 0.839,
+        "HAM": -0.625,
+        "SAI": 1.014,
+        "RUS": -0.625,
+        "BOT": 2.548,
+        "PIA": 1.014
+      }
     }
   },
   {
@@ -33608,8 +33812,8 @@
     "location": "Silverstone",
     "current_lap": 4,
     "total_laps_seen": 4,
-    "total_laps_expected": 4,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -44834,7 +45038,75 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 4
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 12.0,
+        "field_spread": 4.981367729601614,
+        "sector_anomaly_score": 0.0009652673113071941,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.007766,
+        "3L": 0.023118,
+        "5L": 0.038233,
+        "10L": 0.075004
+      },
+      "VSC_probs": {
+        "1L": 0.004212,
+        "3L": 0.012582,
+        "5L": 0.020882,
+        "10L": 0.041328
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 92.965,
+        "PER": 93.845,
+        "ALO": 93.821,
+        "LEC": 93.593,
+        "STR": 93.672,
+        "SAR": 93.95,
+        "MAG": 94.055,
+        "TSU": 93.827,
+        "ALB": 93.921,
+        "ZHO": 93.993,
+        "HUL": 93.712,
+        "RIC": 93.919,
+        "OCO": 94.064,
+        "NOR": 93.327,
+        "HAM": 92.973,
+        "SAI": 93.441,
+        "RUS": 92.92,
+        "BOT": 94.206,
+        "PIA": 93.449
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 3.243,
+        "PER": 2.952,
+        "ALO": 3.572,
+        "LEC": 3.271,
+        "STR": 3.316,
+        "SAR": 3.867,
+        "MAG": 4.033,
+        "TSU": 3.572,
+        "ALB": 3.925,
+        "ZHO": 3.802,
+        "HUL": 3.5,
+        "RIC": 3.867,
+        "OCO": 3.802,
+        "NOR": 3.029,
+        "HAM": 2.764,
+        "SAI": 3.147,
+        "RUS": 2.548,
+        "BOT": 5.086,
+        "PIA": 3.025
+      }
     }
   },
   {
@@ -44846,8 +45118,8 @@
     "location": "Silverstone",
     "current_lap": 5,
     "total_laps_seen": 5,
-    "total_laps_expected": 5,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -56091,7 +56363,75 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 5
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 11.0,
+        "field_spread": 5.489807135260121,
+        "sector_anomaly_score": 0.0,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.007363,
+        "3L": 0.021926,
+        "5L": 0.036275,
+        "10L": 0.071234
+      },
+      "VSC_probs": {
+        "1L": 0.003924,
+        "3L": 0.011726,
+        "5L": 0.019467,
+        "10L": 0.038554
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 93.043,
+        "PER": 93.865,
+        "ALO": 93.895,
+        "LEC": 93.658,
+        "STR": 93.741,
+        "SAR": 94.011,
+        "MAG": 94.128,
+        "TSU": 93.898,
+        "ALB": 93.98,
+        "ZHO": 94.056,
+        "HUL": 93.8,
+        "RIC": 93.989,
+        "OCO": 94.116,
+        "NOR": 93.402,
+        "HAM": 93.054,
+        "SAI": 93.525,
+        "RUS": 92.973,
+        "BOT": 94.264,
+        "PIA": 93.529
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 2.889,
+        "PER": 3.639,
+        "ALO": 3.614,
+        "LEC": 3.286,
+        "STR": 3.38,
+        "SAR": 3.258,
+        "MAG": 3.311,
+        "TSU": 3.479,
+        "ALB": 3.128,
+        "ZHO": 3.615,
+        "HUL": 3.416,
+        "RIC": 3.618,
+        "OCO": 3.623,
+        "NOR": 3.033,
+        "HAM": 2.938,
+        "SAI": 3.03,
+        "RUS": 2.861,
+        "BOT": 4.722,
+        "PIA": 2.916
+      }
     }
   },
   {
@@ -56103,8 +56443,8 @@
     "location": "Silverstone",
     "current_lap": 6,
     "total_laps_seen": 6,
-    "total_laps_expected": 6,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -67348,7 +67688,75 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 6
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 10.0,
+        "field_spread": 6.0591762776303755,
+        "sector_anomaly_score": 0.00031483667847309604,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.007008,
+        "3L": 0.020878,
+        "5L": 0.034553,
+        "10L": 0.067913
+      },
+      "VSC_probs": {
+        "1L": 0.003667,
+        "3L": 0.010959,
+        "5L": 0.018199,
+        "10L": 0.036066
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 93.057,
+        "PER": 93.828,
+        "ALO": 93.888,
+        "LEC": 93.66,
+        "STR": 93.743,
+        "SAR": 93.997,
+        "MAG": 94.103,
+        "TSU": 93.902,
+        "ALB": 93.974,
+        "ZHO": 94.045,
+        "HUL": 93.808,
+        "RIC": 93.966,
+        "OCO": 94.086,
+        "NOR": 93.426,
+        "HAM": 93.07,
+        "SAI": 93.537,
+        "RUS": 92.986,
+        "BOT": 94.232,
+        "PIA": 93.552
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 2.844,
+        "PER": 3.378,
+        "ALO": 3.422,
+        "LEC": 3.342,
+        "STR": 3.378,
+        "SAR": 3.576,
+        "MAG": 3.256,
+        "TSU": 3.43,
+        "ALB": 3.272,
+        "ZHO": 3.698,
+        "HUL": 3.306,
+        "RIC": 3.576,
+        "OCO": 3.698,
+        "NOR": 2.836,
+        "HAM": 2.871,
+        "SAI": 3.067,
+        "RUS": 2.87,
+        "BOT": 4.102,
+        "PIA": 2.944
+      }
     }
   },
   {
@@ -67360,8 +67768,8 @@
     "location": "Silverstone",
     "current_lap": 7,
     "total_laps_seen": 7,
-    "total_laps_expected": 7,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -78605,7 +79013,75 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 7
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 8.0,
+        "field_spread": 6.794291868914669,
+        "sector_anomaly_score": 0.004265980498374677,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.006383,
+        "3L": 0.019028,
+        "5L": 0.031511,
+        "10L": 0.062029
+      },
+      "VSC_probs": {
+        "1L": 0.00314,
+        "3L": 0.00939,
+        "5L": 0.015601,
+        "10L": 0.030959
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 93.05,
+        "PER": 93.801,
+        "ALO": 93.872,
+        "LEC": 93.639,
+        "STR": 93.721,
+        "SAR": 93.984,
+        "MAG": 94.086,
+        "TSU": 93.885,
+        "ALB": 93.961,
+        "ZHO": 94.044,
+        "HUL": 93.826,
+        "RIC": 93.932,
+        "OCO": 94.104,
+        "NOR": 93.409,
+        "HAM": 93.046,
+        "SAI": 93.52,
+        "RUS": 92.957,
+        "BOT": 94.236,
+        "PIA": 93.535
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 2.828,
+        "PER": 3.464,
+        "ALO": 3.295,
+        "LEC": 3.396,
+        "STR": 3.245,
+        "SAR": 3.237,
+        "MAG": 4.077,
+        "TSU": 3.453,
+        "ALB": 3.584,
+        "ZHO": 4.058,
+        "HUL": 3.415,
+        "RIC": 4.078,
+        "OCO": 4.131,
+        "NOR": 3.063,
+        "HAM": 2.926,
+        "SAI": 3.063,
+        "RUS": 2.868,
+        "BOT": 4.132,
+        "PIA": 3.175
+      }
     }
   },
   {
@@ -78617,8 +79093,8 @@
     "location": "Silverstone",
     "current_lap": 8,
     "total_laps_seen": 8,
-    "total_laps_expected": 8,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -89862,7 +90338,75 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 8
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 7.0,
+        "field_spread": 7.53168281328947,
+        "sector_anomaly_score": 0.004604550379198269,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.006086,
+        "3L": 0.018146,
+        "5L": 0.03006,
+        "10L": 0.059216
+      },
+      "VSC_probs": {
+        "1L": 0.002957,
+        "3L": 0.008846,
+        "5L": 0.0147,
+        "10L": 0.029183
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 93.021,
+        "PER": 93.82,
+        "ALO": 93.849,
+        "LEC": 93.613,
+        "STR": 93.697,
+        "SAR": 93.968,
+        "MAG": 93.988,
+        "TSU": 93.867,
+        "ALB": 93.945,
+        "ZHO": 94.168,
+        "HUL": 93.805,
+        "RIC": 93.919,
+        "OCO": 94.076,
+        "NOR": 93.383,
+        "HAM": 93.001,
+        "SAI": 93.488,
+        "RUS": 92.915,
+        "BOT": 94.217,
+        "PIA": 93.511
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 2.978,
+        "PER": 3.757,
+        "ALO": 3.219,
+        "LEC": 3.101,
+        "STR": 3.235,
+        "SAR": 3.429,
+        "MAG": 3.897,
+        "TSU": 3.26,
+        "ALB": 3.534,
+        "ZHO": 4.693,
+        "HUL": 3.101,
+        "RIC": 3.471,
+        "OCO": 3.638,
+        "NOR": 3.05,
+        "HAM": 2.794,
+        "SAI": 3.171,
+        "RUS": 2.777,
+        "BOT": 3.921,
+        "PIA": 2.979
+      }
     }
   },
   {
@@ -89874,8 +90418,8 @@
     "location": "Silverstone",
     "current_lap": 9,
     "total_laps_seen": 9,
-    "total_laps_expected": 9,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -101119,7 +101663,75 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 9
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 7.0,
+        "field_spread": 8.256274996053458,
+        "sector_anomaly_score": 0.0028760912228462665,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.006098,
+        "3L": 0.018183,
+        "5L": 0.030121,
+        "10L": 0.059334
+      },
+      "VSC_probs": {
+        "1L": 0.003062,
+        "3L": 0.009157,
+        "5L": 0.015214,
+        "10L": 0.030197
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 92.997,
+        "PER": 93.795,
+        "ALO": 93.821,
+        "LEC": 93.572,
+        "STR": 93.659,
+        "SAR": 93.94,
+        "MAG": 93.967,
+        "TSU": 93.846,
+        "ALB": 93.916,
+        "ZHO": 94.152,
+        "HUL": 93.767,
+        "RIC": 93.894,
+        "OCO": 94.061,
+        "NOR": 93.346,
+        "HAM": 92.972,
+        "SAI": 93.456,
+        "RUS": 92.88,
+        "BOT": 94.205,
+        "PIA": 93.474
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 3.061,
+        "PER": 4.259,
+        "ALO": 3.326,
+        "LEC": 3.27,
+        "STR": 3.168,
+        "SAR": 3.168,
+        "MAG": 3.525,
+        "TSU": 3.289,
+        "ALB": 3.203,
+        "ZHO": 4.456,
+        "HUL": 3.27,
+        "RIC": 3.533,
+        "OCO": 4.115,
+        "NOR": 3.104,
+        "HAM": 2.971,
+        "SAI": 3.268,
+        "RUS": 2.951,
+        "BOT": 4.021,
+        "PIA": 3.222
+      }
     }
   },
   {
@@ -101131,8 +101743,8 @@
     "location": "Silverstone",
     "current_lap": 10,
     "total_laps_seen": 10,
-    "total_laps_expected": 10,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -112376,7 +112988,75 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 10
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 5.0,
+        "field_spread": 9.091547329243207,
+        "sector_anomaly_score": 0.0022857142857142243,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.00549,
+        "3L": 0.016381,
+        "5L": 0.027152,
+        "10L": 0.053567
+      },
+      "VSC_probs": {
+        "1L": 0.002634,
+        "3L": 0.007882,
+        "5L": 0.013101,
+        "10L": 0.026031
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 93.015,
+        "PER": 93.854,
+        "ALO": 93.844,
+        "LEC": 93.589,
+        "STR": 93.677,
+        "SAR": 93.968,
+        "MAG": 93.999,
+        "TSU": 93.866,
+        "ALB": 93.942,
+        "ZHO": 94.27,
+        "HUL": 93.788,
+        "RIC": 93.932,
+        "OCO": 94.105,
+        "NOR": 93.354,
+        "HAM": 92.975,
+        "SAI": 93.467,
+        "RUS": 92.879,
+        "BOT": 94.235,
+        "PIA": 93.48
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 3.236,
+        "PER": 3.762,
+        "ALO": 3.182,
+        "LEC": 3.382,
+        "STR": 3.39,
+        "SAR": 3.619,
+        "MAG": 3.176,
+        "TSU": 3.217,
+        "ALB": 3.619,
+        "ZHO": 5.478,
+        "HUL": 3.382,
+        "RIC": 3.174,
+        "OCO": 4.034,
+        "NOR": 3.169,
+        "HAM": 2.878,
+        "SAI": 3.217,
+        "RUS": 2.865,
+        "BOT": 4.055,
+        "PIA": 3.119
+      }
     }
   },
   {
@@ -112388,8 +113068,8 @@
     "location": "Silverstone",
     "current_lap": 11,
     "total_laps_seen": 11,
-    "total_laps_expected": 11,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -123633,7 +124313,75 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 11
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 5.0,
+        "field_spread": 9.85387329721244,
+        "sector_anomaly_score": 0.0003989149513323742,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005501,
+        "3L": 0.016413,
+        "5L": 0.027205,
+        "10L": 0.05367
+      },
+      "VSC_probs": {
+        "1L": 0.002732,
+        "3L": 0.008173,
+        "5L": 0.013585,
+        "10L": 0.026985
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 92.989,
+        "PER": 93.818,
+        "ALO": 93.84,
+        "LEC": 93.59,
+        "STR": 93.68,
+        "SAR": 93.95,
+        "MAG": 93.994,
+        "TSU": 93.852,
+        "ALB": 93.919,
+        "ZHO": 94.29,
+        "HUL": 93.795,
+        "RIC": 93.915,
+        "OCO": 94.109,
+        "NOR": 93.347,
+        "HAM": 92.961,
+        "SAI": 93.461,
+        "RUS": 92.874,
+        "BOT": 94.242,
+        "PIA": 93.473
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 2.998,
+        "PER": 3.409,
+        "ALO": 3.64,
+        "LEC": 3.229,
+        "STR": 3.175,
+        "SAR": 3.754,
+        "MAG": 3.238,
+        "TSU": 4.008,
+        "ALB": 3.64,
+        "ZHO": 5.852,
+        "HUL": 3.229,
+        "RIC": 3.229,
+        "OCO": 4.159,
+        "NOR": 3.167,
+        "HAM": 2.869,
+        "SAI": 3.316,
+        "RUS": 3.006,
+        "BOT": 4.08,
+        "PIA": 3.099
+      }
     }
   },
   {
@@ -123645,8 +124393,8 @@
     "location": "Silverstone",
     "current_lap": 12,
     "total_laps_seen": 12,
-    "total_laps_expected": 12,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -134890,7 +135638,75 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 12
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 5.0,
+        "field_spread": 10.5370635218451,
+        "sector_anomaly_score": 0.0006698451475628531,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005541,
+        "3L": 0.01653,
+        "5L": 0.027398,
+        "10L": 0.054044
+      },
+      "VSC_probs": {
+        "1L": 0.002823,
+        "3L": 0.008444,
+        "5L": 0.014033,
+        "10L": 0.027869
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 92.994,
+        "PER": 93.815,
+        "ALO": 93.812,
+        "LEC": 93.577,
+        "STR": 93.66,
+        "SAR": 93.95,
+        "MAG": 94.0,
+        "TSU": 93.829,
+        "ALB": 93.917,
+        "ZHO": 94.328,
+        "HUL": 93.802,
+        "RIC": 93.915,
+        "OCO": 94.122,
+        "NOR": 93.35,
+        "HAM": 92.968,
+        "SAI": 93.457,
+        "RUS": 92.864,
+        "BOT": 94.267,
+        "PIA": 93.456
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 3.255,
+        "PER": 3.407,
+        "ALO": 3.175,
+        "LEC": 3.309,
+        "STR": 3.413,
+        "SAR": 3.503,
+        "MAG": 3.503,
+        "TSU": 3.64,
+        "ALB": 3.607,
+        "ZHO": 4.873,
+        "HUL": 3.292,
+        "RIC": 3.607,
+        "OCO": 4.743,
+        "NOR": 3.084,
+        "HAM": 2.884,
+        "SAI": 3.388,
+        "RUS": 2.993,
+        "BOT": 4.094,
+        "PIA": 3.175
+      }
     }
   },
   {
@@ -134902,8 +135718,8 @@
     "location": "Silverstone",
     "current_lap": 13,
     "total_laps_seen": 13,
-    "total_laps_expected": 13,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -146147,7 +146963,75 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 13
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 4.0,
+        "field_spread": 14.196299911472376,
+        "sector_anomaly_score": 0.001418160330904028,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005434,
+        "3L": 0.016215,
+        "5L": 0.026879,
+        "10L": 0.053035
+      },
+      "VSC_probs": {
+        "1L": 0.003057,
+        "3L": 0.009142,
+        "5L": 0.015191,
+        "10L": 0.030151
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 92.944,
+        "PER": 93.807,
+        "ALO": 93.808,
+        "LEC": 93.521,
+        "STR": 93.7,
+        "SAR": 93.928,
+        "MAG": 94.008,
+        "TSU": 93.812,
+        "ALB": 93.894,
+        "ZHO": 93.4,
+        "HUL": 93.804,
+        "RIC": 93.903,
+        "OCO": 94.116,
+        "NOR": 93.336,
+        "HAM": 92.925,
+        "SAI": 93.435,
+        "RUS": 92.832,
+        "BOT": 94.3,
+        "PIA": 93.441
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 3.099,
+        "PER": 3.392,
+        "ALO": 3.229,
+        "LEC": 3.381,
+        "STR": 3.223,
+        "SAR": 3.495,
+        "MAG": 3.188,
+        "TSU": 3.539,
+        "ALB": 3.238,
+        "ZHO": 0.079,
+        "HUL": 3.187,
+        "RIC": 3.617,
+        "OCO": 4.684,
+        "NOR": 3.175,
+        "HAM": 3.064,
+        "SAI": 3.321,
+        "RUS": 3.086,
+        "BOT": 4.144,
+        "PIA": 3.099
+      }
     }
   },
   {
@@ -146159,8 +147043,8 @@
     "location": "Silverstone",
     "current_lap": 14,
     "total_laps_seen": 14,
-    "total_laps_expected": 14,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -157404,7 +158288,75 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 14
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 6.0,
+        "field_spread": 14.678291446694933,
+        "sector_anomaly_score": 0.0,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.006077,
+        "3L": 0.018121,
+        "5L": 0.03002,
+        "10L": 0.059138
+      },
+      "VSC_probs": {
+        "1L": 0.003783,
+        "3L": 0.011306,
+        "5L": 0.018773,
+        "10L": 0.037194
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 92.943,
+        "PER": 93.804,
+        "ALO": 93.843,
+        "LEC": 93.544,
+        "STR": 93.726,
+        "SAR": 93.918,
+        "MAG": 94.049,
+        "TSU": 93.804,
+        "ALB": 93.888,
+        "ZHO": 93.661,
+        "HUL": 93.843,
+        "RIC": 93.889,
+        "OCO": 94.166,
+        "NOR": 93.349,
+        "HAM": 92.924,
+        "SAI": 93.456,
+        "RUS": 92.849,
+        "BOT": 94.282,
+        "PIA": 93.451
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 3.303,
+        "PER": 3.983,
+        "ALO": 3.212,
+        "LEC": 3.405,
+        "STR": 4.029,
+        "SAR": 4.156,
+        "MAG": 3.645,
+        "TSU": 4.102,
+        "ALB": 3.52,
+        "ZHO": 0.102,
+        "HUL": 3.329,
+        "RIC": 3.645,
+        "OCO": 4.82,
+        "NOR": 3.039,
+        "HAM": 3.207,
+        "SAI": 3.326,
+        "RUS": 3.186,
+        "BOT": 4.081,
+        "PIA": 3.177
+      }
     }
   },
   {
@@ -157416,8 +158368,8 @@
     "location": "Silverstone",
     "current_lap": 15,
     "total_laps_seen": 15,
-    "total_laps_expected": 15,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -168661,7 +169613,75 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 15
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 6.0,
+        "field_spread": 15.197033129460122,
+        "sector_anomaly_score": 0.0005512679162071876,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.006116,
+        "3L": 0.018236,
+        "5L": 0.030209,
+        "10L": 0.059505
+      },
+      "VSC_probs": {
+        "1L": 0.003878,
+        "3L": 0.011589,
+        "5L": 0.01924,
+        "10L": 0.03811
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 92.957,
+        "PER": 93.775,
+        "ALO": 93.808,
+        "LEC": 93.492,
+        "STR": 93.678,
+        "SAR": 93.9,
+        "MAG": 94.018,
+        "TSU": 93.765,
+        "ALB": 93.862,
+        "ZHO": 93.817,
+        "HUL": 93.803,
+        "RIC": 93.856,
+        "OCO": 94.163,
+        "NOR": 93.162,
+        "HAM": 92.866,
+        "SAI": 93.401,
+        "RUS": 92.768,
+        "BOT": 94.27,
+        "PIA": 93.384
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 3.216,
+        "PER": 3.767,
+        "ALO": 3.212,
+        "LEC": 3.327,
+        "STR": 3.673,
+        "SAR": 3.527,
+        "MAG": 3.527,
+        "TSU": 3.527,
+        "ALB": 3.527,
+        "ZHO": 2.539,
+        "HUL": 3.666,
+        "RIC": 4.156,
+        "OCO": 5.802,
+        "NOR": 3.039,
+        "HAM": 3.188,
+        "SAI": 3.402,
+        "RUS": 3.148,
+        "BOT": 4.118,
+        "PIA": 3.188
+      }
     }
   },
   {
@@ -168673,8 +169693,8 @@
     "location": "Silverstone",
     "current_lap": 16,
     "total_laps_seen": 16,
-    "total_laps_expected": 16,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -179918,7 +180938,75 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 16
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 6.0,
+        "field_spread": 16.2113435992862,
+        "sector_anomaly_score": 0.020869428256418132,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.006527,
+        "3L": 0.019453,
+        "5L": 0.032211,
+        "10L": 0.063384
+      },
+      "VSC_probs": {
+        "1L": 0.004071,
+        "3L": 0.012162,
+        "5L": 0.020188,
+        "10L": 0.039968
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 92.852,
+        "PER": 93.701,
+        "ALO": 93.736,
+        "LEC": 93.444,
+        "STR": 93.611,
+        "SAR": 93.83,
+        "MAG": 93.95,
+        "TSU": 93.688,
+        "ALB": 93.792,
+        "ZHO": 93.721,
+        "HUL": 93.755,
+        "RIC": 93.792,
+        "OCO": 94.103,
+        "NOR": 93.109,
+        "HAM": 92.832,
+        "SAI": 93.356,
+        "RUS": 92.739,
+        "BOT": 94.209,
+        "PIA": 93.291
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 3.471,
+        "PER": 3.929,
+        "ALO": 3.32,
+        "LEC": 3.605,
+        "STR": 3.646,
+        "SAR": 3.646,
+        "MAG": 4.179,
+        "TSU": 3.646,
+        "ALB": 3.331,
+        "ZHO": 2.967,
+        "HUL": 3.738,
+        "RIC": 4.185,
+        "OCO": 5.837,
+        "NOR": 2.79,
+        "HAM": 3.284,
+        "SAI": 3.481,
+        "RUS": 3.3,
+        "BOT": 4.237,
+        "PIA": 3.286
+      }
     }
   },
   {
@@ -179930,8 +181018,8 @@
     "location": "Silverstone",
     "current_lap": 17,
     "total_laps_seen": 17,
-    "total_laps_expected": 17,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -191175,7 +192263,75 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 17
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 6.0,
+        "field_spread": 17.28430124579977,
+        "sector_anomaly_score": 0.08040141676505308,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.007756,
+        "3L": 0.023088,
+        "5L": 0.038183,
+        "10L": 0.074909
+      },
+      "VSC_probs": {
+        "1L": 0.004285,
+        "3L": 0.0128,
+        "5L": 0.021242,
+        "10L": 0.042033
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 92.851,
+        "PER": 93.525,
+        "ALO": 93.656,
+        "LEC": 93.326,
+        "STR": 93.494,
+        "SAR": 93.757,
+        "MAG": 93.875,
+        "TSU": 93.613,
+        "ALB": 93.719,
+        "ZHO": 93.67,
+        "HUL": 93.667,
+        "RIC": 93.838,
+        "OCO": 94.05,
+        "NOR": 93.032,
+        "HAM": 92.75,
+        "SAI": 93.243,
+        "RUS": 92.659,
+        "BOT": 94.151,
+        "PIA": 93.096
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 4.338,
+        "PER": 5.458,
+        "ALO": 4.475,
+        "LEC": 4.855,
+        "STR": 4.932,
+        "SAR": 5.348,
+        "MAG": 4.839,
+        "TSU": 4.932,
+        "ALB": 4.841,
+        "ZHO": 4.881,
+        "HUL": 4.841,
+        "RIC": 5.494,
+        "OCO": 6.589,
+        "NOR": 3.995,
+        "HAM": 4.154,
+        "SAI": 4.488,
+        "RUS": 4.059,
+        "BOT": 5.357,
+        "PIA": 4.182
+      }
     }
   },
   {
@@ -191187,8 +192343,8 @@
     "location": "Silverstone",
     "current_lap": 18,
     "total_laps_seen": 18,
-    "total_laps_expected": 18,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -202432,7 +203588,75 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 18
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 4.0,
+        "field_spread": 18.391845851361996,
+        "sector_anomaly_score": 0.0790684866842375,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.006988,
+        "3L": 0.020817,
+        "5L": 0.034454,
+        "10L": 0.067722
+      },
+      "VSC_probs": {
+        "1L": 0.003736,
+        "3L": 0.011165,
+        "5L": 0.018539,
+        "10L": 0.036735
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 92.812,
+        "PER": 93.482,
+        "ALO": 93.62,
+        "LEC": 93.277,
+        "STR": 93.442,
+        "SAR": 93.681,
+        "MAG": 93.806,
+        "TSU": 93.577,
+        "ALB": 93.647,
+        "ZHO": 93.719,
+        "HUL": 93.618,
+        "RIC": 93.789,
+        "OCO": 94.005,
+        "NOR": 92.939,
+        "HAM": 92.531,
+        "SAI": 93.196,
+        "RUS": 92.659,
+        "BOT": 94.085,
+        "PIA": 93.022
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 4.622,
+        "PER": 4.926,
+        "ALO": 4.119,
+        "LEC": 4.805,
+        "STR": 4.622,
+        "SAR": 4.622,
+        "MAG": 4.794,
+        "TSU": 4.66,
+        "ALB": 4.45,
+        "ZHO": 3.446,
+        "HUL": 4.622,
+        "RIC": 4.622,
+        "OCO": 4.097,
+        "NOR": 3.4,
+        "HAM": 3.823,
+        "SAI": 3.731,
+        "RUS": 4.119,
+        "BOT": 4.805,
+        "PIA": 3.575
+      }
     }
   },
   {
@@ -202444,8 +203668,8 @@
     "location": "Silverstone",
     "current_lap": 19,
     "total_laps_seen": 19,
-    "total_laps_expected": 19,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -213689,7 +214913,75 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 19
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 6.0,
+        "field_spread": 19.375567771988724,
+        "sector_anomaly_score": 0.15516542876434847,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.009697,
+        "3L": 0.028808,
+        "5L": 0.047552,
+        "10L": 0.092842
+      },
+      "VSC_probs": {
+        "1L": 0.004735,
+        "3L": 0.014139,
+        "5L": 0.023454,
+        "10L": 0.046358
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 92.843,
+        "PER": 93.527,
+        "ALO": 93.591,
+        "LEC": 93.25,
+        "STR": 93.489,
+        "SAR": 93.657,
+        "MAG": 93.767,
+        "TSU": 93.558,
+        "ALB": 93.633,
+        "ZHO": 93.718,
+        "HUL": 93.531,
+        "RIC": 93.787,
+        "OCO": 93.967,
+        "NOR": 92.747,
+        "HAM": 92.45,
+        "SAI": 93.165,
+        "RUS": 92.7,
+        "BOT": 94.061,
+        "PIA": 92.973
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 4.469,
+        "PER": 6.411,
+        "ALO": 5.111,
+        "LEC": 5.111,
+        "STR": 5.111,
+        "SAR": 6.034,
+        "MAG": 6.034,
+        "TSU": 5.504,
+        "ALB": 5.504,
+        "ZHO": 4.603,
+        "HUL": 5.295,
+        "RIC": 4.652,
+        "OCO": 5.036,
+        "NOR": 3.933,
+        "HAM": 4.326,
+        "SAI": 4.996,
+        "RUS": 3.588,
+        "BOT": 4.919,
+        "PIA": 4.142
+      }
     }
   },
   {
@@ -213701,8 +214993,8 @@
     "location": "Silverstone",
     "current_lap": 20,
     "total_laps_seen": 20,
-    "total_laps_expected": 20,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -224946,7 +226238,71 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 20
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 9.0,
+        "field_spread": 19.749234534123683,
+        "sector_anomaly_score": 0.06647798106405212,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.009023,
+        "3L": 0.026826,
+        "5L": 0.04431,
+        "10L": 0.086656
+      },
+      "VSC_probs": {
+        "1L": 0.006407,
+        "3L": 0.019097,
+        "5L": 0.031625,
+        "10L": 0.06225
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 92.828,
+        "ALO": 93.396,
+        "STR": 93.478,
+        "SAR": 93.609,
+        "MAG": 93.706,
+        "TSU": 93.54,
+        "ALB": 93.563,
+        "HUL": 93.477,
+        "RIC": 93.593,
+        "NOR": 92.551,
+        "HAM": 92.68,
+        "SAI": 93.15,
+        "RUS": 92.756,
+        "BOT": 93.969,
+        "PIA": 92.731
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 3.631,
+        "PER": 0.098,
+        "ALO": 4.588,
+        "LEC": 0.098,
+        "STR": 4.588,
+        "SAR": 4.588,
+        "MAG": 3.631,
+        "TSU": 4.588,
+        "ALB": 4.588,
+        "ZHO": 0.098,
+        "HUL": 4.588,
+        "RIC": 4.588,
+        "OCO": 0.098,
+        "NOR": 3.631,
+        "HAM": 3.631,
+        "SAI": 3.631,
+        "RUS": 4.588,
+        "BOT": 4.588,
+        "PIA": 3.631
+      }
     }
   },
   {
@@ -224958,8 +226314,8 @@
     "location": "Silverstone",
     "current_lap": 21,
     "total_laps_seen": 21,
-    "total_laps_expected": 21,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -236203,7 +237559,71 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 21
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 5.0,
+        "field_spread": 22.40499598599279,
+        "sector_anomaly_score": 0.0014245765841820468,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.006203,
+        "3L": 0.018495,
+        "5L": 0.030635,
+        "10L": 0.060331
+      },
+      "VSC_probs": {
+        "1L": 0.004974,
+        "3L": 0.014848,
+        "5L": 0.024624,
+        "10L": 0.048642
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 92.833,
+        "ALO": 93.393,
+        "STR": 93.473,
+        "SAR": 93.564,
+        "MAG": 93.704,
+        "TSU": 93.527,
+        "ALB": 93.518,
+        "HUL": 93.474,
+        "RIC": 93.589,
+        "NOR": 92.56,
+        "HAM": 92.683,
+        "SAI": 93.153,
+        "RUS": 92.756,
+        "BOT": 93.812,
+        "PIA": 92.75
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 5.921,
+        "PER": 0.05,
+        "ALO": 5.923,
+        "LEC": 0.05,
+        "STR": 5.691,
+        "SAR": 6.028,
+        "MAG": 6.662,
+        "TSU": 5.735,
+        "ALB": 6.028,
+        "ZHO": 0.05,
+        "HUL": 5.691,
+        "RIC": 6.127,
+        "OCO": 0.05,
+        "NOR": 4.362,
+        "HAM": 3.494,
+        "SAI": 4.57,
+        "RUS": 4.362,
+        "BOT": 4.57,
+        "PIA": 4.362
+      }
     }
   },
   {
@@ -236215,8 +237635,8 @@
     "location": "Silverstone",
     "current_lap": 22,
     "total_laps_seen": 22,
-    "total_laps_expected": 22,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -247460,7 +248880,72 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 22
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 4.0,
+        "field_spread": 21.84219568900221,
+        "sector_anomaly_score": 0.0,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005815,
+        "3L": 0.017343,
+        "5L": 0.028737,
+        "10L": 0.056648
+      },
+      "VSC_probs": {
+        "1L": 0.004404,
+        "3L": 0.013153,
+        "5L": 0.021825,
+        "10L": 0.043174
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 92.775,
+        "ALO": 93.335,
+        "STR": 93.414,
+        "SAR": 93.505,
+        "MAG": 93.662,
+        "TSU": 93.469,
+        "ALB": 93.45,
+        "HUL": 93.419,
+        "RIC": 93.553,
+        "OCO": 92.974,
+        "NOR": 92.47,
+        "HAM": 92.616,
+        "SAI": 93.095,
+        "RUS": 92.685,
+        "BOT": 93.749,
+        "PIA": 92.679
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 4.91,
+        "PER": 6.112,
+        "ALO": 4.215,
+        "LEC": 6.112,
+        "STR": 4.929,
+        "SAR": 4.929,
+        "MAG": 4.929,
+        "TSU": 4.929,
+        "ALB": 4.929,
+        "ZHO": 6.276,
+        "HUL": 4.215,
+        "RIC": 6.059,
+        "OCO": -0.008,
+        "NOR": 3.421,
+        "HAM": 3.744,
+        "SAI": 4.978,
+        "RUS": 4.215,
+        "BOT": 6.978,
+        "PIA": 3.442
+      }
     }
   },
   {
@@ -247472,8 +248957,8 @@
     "location": "Silverstone",
     "current_lap": 23,
     "total_laps_seen": 23,
-    "total_laps_expected": 23,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -258717,7 +260202,72 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 23
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 2.0,
+        "field_spread": 26.12464483514561,
+        "sector_anomaly_score": 0.0,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005415,
+        "3L": 0.016158,
+        "5L": 0.026785,
+        "10L": 0.052852
+      },
+      "VSC_probs": {
+        "1L": 0.004467,
+        "3L": 0.013342,
+        "5L": 0.022138,
+        "10L": 0.043785
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 92.78,
+        "ALO": 93.334,
+        "STR": 93.415,
+        "SAR": 93.557,
+        "MAG": 93.646,
+        "TSU": 93.453,
+        "ALB": 93.456,
+        "HUL": 93.426,
+        "RIC": 93.545,
+        "OCO": 93.116,
+        "NOR": 92.475,
+        "HAM": 92.615,
+        "SAI": 93.082,
+        "RUS": 92.694,
+        "BOT": 93.767,
+        "PIA": 92.676
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 3.533,
+        "PER": 6.232,
+        "ALO": 4.399,
+        "LEC": 6.232,
+        "STR": 4.399,
+        "SAR": 4.502,
+        "MAG": 4.286,
+        "TSU": 4.399,
+        "ALB": 4.502,
+        "ZHO": 6.232,
+        "HUL": 3.848,
+        "RIC": 4.399,
+        "OCO": -0.052,
+        "NOR": 3.184,
+        "HAM": 3.222,
+        "SAI": 3.848,
+        "RUS": 3.203,
+        "BOT": 5.057,
+        "PIA": 3.353
+      }
     }
   },
   {
@@ -258729,8 +260279,8 @@
     "location": "Silverstone",
     "current_lap": 24,
     "total_laps_seen": 24,
-    "total_laps_expected": 24,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -269974,7 +271524,72 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 24
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 2.0,
+        "field_spread": 17.351711451833573,
+        "sector_anomaly_score": 0.01780784633928212,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005238,
+        "3L": 0.015631,
+        "5L": 0.025916,
+        "10L": 0.05116
+      },
+      "VSC_probs": {
+        "1L": 0.002939,
+        "3L": 0.00879,
+        "5L": 0.014607,
+        "10L": 0.029
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 92.748,
+        "ALO": 93.303,
+        "STR": 93.382,
+        "SAR": 93.544,
+        "MAG": 93.65,
+        "TSU": 93.44,
+        "ALB": 93.438,
+        "HUL": 93.384,
+        "RIC": 93.539,
+        "OCO": 93.231,
+        "NOR": 92.502,
+        "HAM": 92.611,
+        "SAI": 93.039,
+        "RUS": 92.677,
+        "BOT": 93.781,
+        "PIA": 92.683
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 3.99,
+        "PER": 6.223,
+        "ALO": 4.568,
+        "LEC": 6.223,
+        "STR": 4.983,
+        "SAR": 5.786,
+        "MAG": 4.943,
+        "TSU": 4.994,
+        "ALB": 4.571,
+        "ZHO": 5.371,
+        "HUL": 4.497,
+        "RIC": 5.141,
+        "OCO": 6.225,
+        "NOR": 3.585,
+        "HAM": 3.521,
+        "SAI": 3.99,
+        "RUS": 3.739,
+        "BOT": 5.078,
+        "PIA": 3.556
+      }
     }
   },
   {
@@ -269986,8 +271601,8 @@
     "location": "Silverstone",
     "current_lap": 25,
     "total_laps_seen": 25,
-    "total_laps_expected": 25,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -281231,7 +282846,72 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 25
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 4.0,
+        "field_spread": 18.574302859738093,
+        "sector_anomaly_score": 0.04358645359461866,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.006353,
+        "3L": 0.018939,
+        "5L": 0.031365,
+        "10L": 0.061746
+      },
+      "VSC_probs": {
+        "1L": 0.003768,
+        "3L": 0.011262,
+        "5L": 0.018699,
+        "10L": 0.037048
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 92.719,
+        "ALO": 93.238,
+        "STR": 93.336,
+        "SAR": 93.525,
+        "MAG": 93.652,
+        "TSU": 93.418,
+        "ALB": 93.416,
+        "HUL": 93.352,
+        "RIC": 93.537,
+        "OCO": 93.273,
+        "NOR": 92.494,
+        "HAM": 92.605,
+        "SAI": 93.004,
+        "RUS": 92.672,
+        "BOT": 93.758,
+        "PIA": 92.683
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 4.815,
+        "PER": 5.347,
+        "ALO": 4.935,
+        "LEC": 5.347,
+        "STR": 4.761,
+        "SAR": 5.109,
+        "MAG": 4.954,
+        "TSU": 4.935,
+        "ALB": 4.954,
+        "ZHO": 6.855,
+        "HUL": 5.038,
+        "RIC": 4.436,
+        "OCO": 6.047,
+        "NOR": 3.578,
+        "HAM": 3.593,
+        "SAI": 4.491,
+        "RUS": 3.932,
+        "BOT": 4.436,
+        "PIA": 3.732
+      }
     }
   },
   {
@@ -281243,8 +282923,8 @@
     "location": "Silverstone",
     "current_lap": 26,
     "total_laps_seen": 26,
-    "total_laps_expected": 26,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -292488,7 +294168,72 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 26
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 4.0,
+        "field_spread": 21.070375302414888,
+        "sector_anomaly_score": 0.1433087460484721,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.008537,
+        "3L": 0.025394,
+        "5L": 0.041964,
+        "10L": 0.082167
+      },
+      "VSC_probs": {
+        "1L": 0.004246,
+        "3L": 0.012683,
+        "5L": 0.021049,
+        "10L": 0.041656
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 92.721,
+        "ALO": 93.304,
+        "STR": 93.203,
+        "SAR": 93.507,
+        "MAG": 93.623,
+        "TSU": 93.39,
+        "ALB": 93.398,
+        "HUL": 93.322,
+        "RIC": 93.504,
+        "OCO": 93.238,
+        "NOR": 92.469,
+        "HAM": 92.601,
+        "SAI": 92.988,
+        "RUS": 92.667,
+        "BOT": 93.729,
+        "PIA": 92.67
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 4.424,
+        "PER": 6.068,
+        "ALO": 4.424,
+        "LEC": 6.14,
+        "STR": 5.19,
+        "SAR": 5.752,
+        "MAG": 6.254,
+        "TSU": 5.19,
+        "ALB": 4.424,
+        "ZHO": 6.916,
+        "HUL": 4.424,
+        "RIC": 3.556,
+        "OCO": 5.356,
+        "NOR": 4.195,
+        "HAM": 5.028,
+        "SAI": 5.028,
+        "RUS": 5.028,
+        "BOT": 3.556,
+        "PIA": 4.195
+      }
     }
   },
   {
@@ -292500,8 +294245,8 @@
     "location": "Silverstone",
     "current_lap": 27,
     "total_laps_seen": 27,
-    "total_laps_expected": 27,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -303745,7 +305490,65 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 27
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 3.0,
+        "field_spread": 24.570016597672257,
+        "sector_anomaly_score": 0.19627620351838182,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.009641,
+        "3L": 0.028644,
+        "5L": 0.047283,
+        "10L": 0.09233
+      },
+      "VSC_probs": {
+        "1L": 0.004563,
+        "3L": 0.013627,
+        "5L": 0.022609,
+        "10L": 0.044707
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "ALO": 93.148,
+        "SAR": 93.35,
+        "MAG": 93.496,
+        "TSU": 93.081,
+        "ALB": 93.167,
+        "NOR": 92.471,
+        "HAM": 92.406,
+        "RUS": 92.647,
+        "PIA": 92.883
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 0.021,
+        "PER": 5.576,
+        "ALO": 4.311,
+        "LEC": 5.718,
+        "STR": 0.021,
+        "SAR": 4.311,
+        "MAG": 4.311,
+        "TSU": 3.422,
+        "ALB": 4.311,
+        "ZHO": 0.021,
+        "HUL": 0.021,
+        "RIC": 0.021,
+        "OCO": 0.021,
+        "NOR": 3.422,
+        "HAM": 3.422,
+        "SAI": 0.021,
+        "RUS": 3.422,
+        "BOT": 0.021,
+        "PIA": 3.422
+      }
     }
   },
   {
@@ -303757,8 +305560,8 @@
     "location": "Silverstone",
     "current_lap": 28,
     "total_laps_seen": 28,
-    "total_laps_expected": 28,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -315002,7 +316805,57 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 28
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 1.0,
+        "field_spread": 23.300368851016213,
+        "sector_anomaly_score": 0.211275607392307,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.008884,
+        "3L": 0.026416,
+        "5L": 0.043637,
+        "10L": 0.085371
+      },
+      "VSC_probs": {
+        "1L": 0.003552,
+        "3L": 0.010617,
+        "5L": 0.017633,
+        "10L": 0.034954
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "PIA": 92.458
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 0.021,
+        "PER": 4.111,
+        "ALO": 0.021,
+        "LEC": 0.021,
+        "STR": 0.021,
+        "SAR": 0.021,
+        "MAG": 0.021,
+        "TSU": 0.021,
+        "ALB": 0.021,
+        "ZHO": 0.021,
+        "HUL": 0.021,
+        "RIC": 0.021,
+        "OCO": 0.021,
+        "NOR": 0.021,
+        "HAM": 0.021,
+        "SAI": 0.021,
+        "RUS": 0.021,
+        "BOT": 0.021,
+        "PIA": 4.52
+      }
     }
   },
   {
@@ -315014,8 +316867,8 @@
     "location": "Silverstone",
     "current_lap": 29,
     "total_laps_seen": 29,
-    "total_laps_expected": 29,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -326259,7 +328112,55 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 29
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 1.0,
+        "field_spread": 22.4169168612888,
+        "sector_anomaly_score": 0.053190104166666696,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005723,
+        "3L": 0.01707,
+        "5L": 0.028287,
+        "10L": 0.055774
+      },
+      "VSC_probs": {
+        "1L": 0.003404,
+        "3L": 0.010176,
+        "5L": 0.016903,
+        "10L": 0.03352
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {},
+      "tyre_deg_deficit_seconds": {
+        "VER": 6.172,
+        "PER": 0.018,
+        "ALO": 0.018,
+        "LEC": 0.018,
+        "STR": 6.172,
+        "SAR": 0.018,
+        "MAG": 0.018,
+        "TSU": 0.018,
+        "ALB": 0.018,
+        "ZHO": 6.172,
+        "HUL": 6.172,
+        "RIC": 6.172,
+        "OCO": 6.172,
+        "NOR": 0.018,
+        "HAM": 0.018,
+        "SAI": 6.172,
+        "RUS": 0.018,
+        "BOT": 6.172,
+        "PIA": 0.018
+      }
     }
   },
   {
@@ -326271,8 +328172,8 @@
     "location": "Silverstone",
     "current_lap": 30,
     "total_laps_seen": 30,
-    "total_laps_expected": 30,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -337516,7 +339417,55 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 30
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 0.0,
+        "field_spread": 23.120419970923283,
+        "sector_anomaly_score": 0.005499894906466851,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.004782,
+        "3L": 0.014278,
+        "5L": 0.023684,
+        "10L": 0.046807
+      },
+      "VSC_probs": {
+        "1L": 0.0032,
+        "3L": 0.00957,
+        "5L": 0.0159,
+        "10L": 0.031546
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {},
+      "tyre_deg_deficit_seconds": {
+        "VER": 6.164,
+        "PER": 0.01,
+        "ALO": 6.164,
+        "LEC": 6.164,
+        "STR": 6.164,
+        "SAR": 6.164,
+        "MAG": 6.164,
+        "TSU": 6.225,
+        "ALB": 6.164,
+        "ZHO": 6.164,
+        "HUL": 6.164,
+        "RIC": 6.225,
+        "OCO": 6.164,
+        "NOR": 6.164,
+        "HAM": 6.164,
+        "SAI": 6.164,
+        "RUS": 6.164,
+        "BOT": 6.164,
+        "PIA": 0.01
+      }
     }
   },
   {
@@ -337528,8 +339477,8 @@
     "location": "Silverstone",
     "current_lap": 31,
     "total_laps_seen": 31,
-    "total_laps_expected": 31,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -348773,7 +350722,55 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 31
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 0.0,
+        "field_spread": 23.97052748506148,
+        "sector_anomaly_score": 0.023295733202550295,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005061,
+        "3L": 0.015106,
+        "5L": 0.02505,
+        "10L": 0.049473
+      },
+      "VSC_probs": {
+        "1L": 0.003333,
+        "3L": 0.009966,
+        "5L": 0.016555,
+        "10L": 0.032836
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {},
+      "tyre_deg_deficit_seconds": {
+        "VER": 6.352,
+        "PER": 6.164,
+        "ALO": 6.164,
+        "LEC": 6.164,
+        "STR": 6.352,
+        "SAR": 6.164,
+        "MAG": 6.164,
+        "TSU": 6.164,
+        "ALB": 6.225,
+        "ZHO": 6.234,
+        "HUL": 6.352,
+        "RIC": 6.422,
+        "OCO": 5.953,
+        "NOR": 6.164,
+        "HAM": 6.164,
+        "SAI": 6.672,
+        "RUS": 6.164,
+        "BOT": 5.899,
+        "PIA": 6.164
+      }
     }
   },
   {
@@ -348785,8 +350782,8 @@
     "location": "Silverstone",
     "current_lap": 32,
     "total_laps_seen": 32,
-    "total_laps_expected": 32,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -360030,7 +362027,55 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 32
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 1.0,
+        "field_spread": 24.806286518555318,
+        "sector_anomaly_score": 0.030336999929937658,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005497,
+        "3L": 0.016401,
+        "5L": 0.027186,
+        "10L": 0.053633
+      },
+      "VSC_probs": {
+        "1L": 0.003815,
+        "3L": 0.011401,
+        "5L": 0.018929,
+        "10L": 0.0375
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {},
+      "tyre_deg_deficit_seconds": {
+        "VER": 6.528,
+        "PER": 6.022,
+        "ALO": 6.913,
+        "LEC": 5.642,
+        "STR": 6.015,
+        "SAR": 5.984,
+        "MAG": 5.815,
+        "TSU": 6.404,
+        "ALB": 5.953,
+        "ZHO": 5.665,
+        "HUL": 6.005,
+        "RIC": 6.073,
+        "OCO": 5.976,
+        "NOR": 6.352,
+        "HAM": 6.262,
+        "SAI": 6.333,
+        "RUS": 5.783,
+        "BOT": 5.838,
+        "PIA": 6.022
+      }
     }
   },
   {
@@ -360042,8 +362087,8 @@
     "location": "Silverstone",
     "current_lap": 33,
     "total_laps_seen": 33,
-    "total_laps_expected": 33,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -371287,7 +373332,55 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 33
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 0.0,
+        "field_spread": 25.625240191744847,
+        "sector_anomaly_score": 0.02769745322788575,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005202,
+        "3L": 0.015526,
+        "5L": 0.025742,
+        "10L": 0.050821
+      },
+      "VSC_probs": {
+        "1L": 0.003607,
+        "3L": 0.010783,
+        "5L": 0.017907,
+        "10L": 0.035492
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {},
+      "tyre_deg_deficit_seconds": {
+        "VER": 6.369,
+        "PER": 5.864,
+        "ALO": 5.791,
+        "LEC": 5.86,
+        "STR": 5.756,
+        "SAR": 5.55,
+        "MAG": 5.781,
+        "TSU": 5.86,
+        "ALB": 5.806,
+        "ZHO": 5.876,
+        "HUL": 5.636,
+        "RIC": 5.702,
+        "OCO": 5.636,
+        "NOR": 5.691,
+        "HAM": 4.957,
+        "SAI": 5.795,
+        "RUS": 5.709,
+        "BOT": 5.876,
+        "PIA": 5.527
+      }
     }
   },
   {
@@ -371299,8 +373392,8 @@
     "location": "Silverstone",
     "current_lap": 34,
     "total_laps_seen": 34,
-    "total_laps_expected": 34,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -382535,7 +384628,55 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 34
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 0.0,
+        "field_spread": 26.767998996669778,
+        "sector_anomaly_score": 0.018745170761860663,
+        "recent_retirements": 1.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.000994,
+        "3L": 0.002979,
+        "5L": 0.004959,
+        "10L": 0.009894
+      },
+      "VSC_probs": {
+        "1L": 0.004599,
+        "3L": 0.013732,
+        "5L": 0.022782,
+        "10L": 0.045045
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {},
+      "tyre_deg_deficit_seconds": {
+        "VER": 6.143,
+        "PER": 6.333,
+        "ALO": 6.197,
+        "LEC": 6.8,
+        "STR": 5.37,
+        "SAR": 6.197,
+        "MAG": 6.06,
+        "TSU": 6.197,
+        "ALB": 6.197,
+        "ZHO": 5.052,
+        "HUL": 5.372,
+        "RIC": 5.029,
+        "OCO": 5.002,
+        "NOR": 6.479,
+        "HAM": 6.597,
+        "SAI": 5.284,
+        "RUS": 6.151,
+        "BOT": 5.068,
+        "PIA": 6.21
+      }
     }
   },
   {
@@ -382547,8 +384688,8 @@
     "location": "Silverstone",
     "current_lap": 35,
     "total_laps_seen": 35,
-    "total_laps_expected": 35,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -393783,7 +395924,55 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 35
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 0.0,
+        "field_spread": 27.86662750042159,
+        "sector_anomaly_score": 0.011577320813027425,
+        "recent_retirements": 1.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.000985,
+        "3L": 0.002951,
+        "5L": 0.004913,
+        "10L": 0.009802
+      },
+      "VSC_probs": {
+        "1L": 0.004846,
+        "3L": 0.014467,
+        "5L": 0.023996,
+        "10L": 0.047415
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {},
+      "tyre_deg_deficit_seconds": {
+        "VER": 6.467,
+        "PER": 6.328,
+        "ALO": 5.336,
+        "LEC": 5.664,
+        "STR": 5.428,
+        "SAR": 5.214,
+        "MAG": 5.252,
+        "TSU": 5.554,
+        "ALB": 5.252,
+        "ZHO": 5.296,
+        "HUL": 5.502,
+        "RIC": 5.383,
+        "OCO": 5.14,
+        "NOR": 5.252,
+        "HAM": 6.691,
+        "SAI": 6.28,
+        "RUS": 6.336,
+        "BOT": 5.66,
+        "PIA": 6.328
+      }
     }
   },
   {
@@ -393795,8 +395984,8 @@
     "location": "Silverstone",
     "current_lap": 36,
     "total_laps_seen": 36,
-    "total_laps_expected": 36,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -405031,7 +407220,55 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 36
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 0.0,
+        "field_spread": 28.23748421575769,
+        "sector_anomaly_score": 0.004605341246290973,
+        "recent_retirements": 1.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.000969,
+        "3L": 0.002905,
+        "5L": 0.004837,
+        "10L": 0.00965
+      },
+      "VSC_probs": {
+        "1L": 0.004932,
+        "3L": 0.014724,
+        "5L": 0.024419,
+        "10L": 0.048242
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {},
+      "tyre_deg_deficit_seconds": {
+        "VER": 5.35,
+        "PER": 5.64,
+        "ALO": 5.637,
+        "LEC": 6.27,
+        "STR": 5.267,
+        "SAR": 5.359,
+        "MAG": 5.356,
+        "TSU": 5.552,
+        "ALB": 5.451,
+        "ZHO": 6.25,
+        "HUL": 5.329,
+        "RIC": 5.129,
+        "OCO": 5.427,
+        "NOR": 6.461,
+        "HAM": 6.467,
+        "SAI": 5.35,
+        "RUS": 6.351,
+        "BOT": 5.529,
+        "PIA": 5.749
+      }
     }
   },
   {
@@ -405043,8 +407280,8 @@
     "location": "Silverstone",
     "current_lap": 37,
     "total_laps_seen": 37,
-    "total_laps_expected": 37,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -416279,7 +418516,55 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 37
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 1.0,
+        "field_spread": 29.071208623570584,
+        "sector_anomaly_score": 0.0,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005265,
+        "3L": 0.015713,
+        "5L": 0.026052,
+        "10L": 0.051425
+      },
+      "VSC_probs": {
+        "1L": 0.004676,
+        "3L": 0.013961,
+        "5L": 0.023161,
+        "10L": 0.045785
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {},
+      "tyre_deg_deficit_seconds": {
+        "VER": 6.396,
+        "PER": 6.495,
+        "ALO": 6.372,
+        "LEC": 6.495,
+        "STR": 5.517,
+        "SAR": 5.625,
+        "MAG": 5.709,
+        "TSU": 6.367,
+        "ALB": 5.654,
+        "ZHO": 6.492,
+        "HUL": 5.517,
+        "RIC": 5.924,
+        "OCO": 6.337,
+        "NOR": 6.393,
+        "HAM": 6.4,
+        "SAI": 6.583,
+        "RUS": 6.425,
+        "BOT": 5.708,
+        "PIA": 6.35
+      }
     }
   },
   {
@@ -416291,8 +418576,8 @@
     "location": "Silverstone",
     "current_lap": 38,
     "total_laps_seen": 38,
-    "total_laps_expected": 38,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -427527,7 +429812,62 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 38
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 1.0,
+        "field_spread": 29.605774559964726,
+        "sector_anomaly_score": 0.0,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005292,
+        "3L": 0.015792,
+        "5L": 0.026181,
+        "10L": 0.051676
+      },
+      "VSC_probs": {
+        "1L": 0.004796,
+        "3L": 0.01432,
+        "5L": 0.023753,
+        "10L": 0.046942
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "PER": 92.108,
+        "LEC": 91.885,
+        "MAG": 91.909,
+        "ZHO": 93.043,
+        "RIC": 92.255,
+        "BOT": 92.099
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 6.538,
+        "PER": 0.079,
+        "ALO": 6.541,
+        "LEC": 0.088,
+        "STR": 6.434,
+        "SAR": 6.538,
+        "MAG": 0.088,
+        "TSU": 6.538,
+        "ALB": 6.539,
+        "ZHO": 0.088,
+        "HUL": 6.434,
+        "RIC": 0.088,
+        "OCO": 6.335,
+        "NOR": 6.387,
+        "HAM": 6.325,
+        "SAI": 6.434,
+        "RUS": 6.538,
+        "BOT": 0.088,
+        "PIA": 6.54
+      }
     }
   },
   {
@@ -427539,8 +429879,8 @@
     "location": "Silverstone",
     "current_lap": 39,
     "total_laps_seen": 39,
-    "total_laps_expected": 39,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -438775,7 +441115,70 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 39
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 1.0,
+        "field_spread": 31.693328960160105,
+        "sector_anomaly_score": 0.0,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005396,
+        "3L": 0.016101,
+        "5L": 0.026692,
+        "10L": 0.052671
+      },
+      "VSC_probs": {
+        "1L": 0.005298,
+        "3L": 0.015811,
+        "5L": 0.026213,
+        "10L": 0.051738
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 91.192,
+        "PER": 92.791,
+        "ALO": 91.881,
+        "LEC": 92.433,
+        "SAR": 92.352,
+        "MAG": 92.422,
+        "TSU": 92.232,
+        "ALB": 92.113,
+        "ZHO": 93.215,
+        "RIC": 92.818,
+        "OCO": 92.803,
+        "HAM": 91.545,
+        "BOT": 92.656,
+        "PIA": 91.291
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 0.297,
+        "PER": 0.182,
+        "ALO": 0.182,
+        "LEC": 0.191,
+        "STR": 6.738,
+        "SAR": 0.191,
+        "MAG": 0.191,
+        "TSU": 0.191,
+        "ALB": 0.182,
+        "ZHO": 0.191,
+        "HUL": 6.735,
+        "RIC": 0.191,
+        "OCO": 0.182,
+        "NOR": 6.735,
+        "HAM": 0.191,
+        "SAI": 6.735,
+        "RUS": 6.755,
+        "BOT": 0.191,
+        "PIA": 0.182
+      }
     }
   },
   {
@@ -438787,8 +441190,8 @@
     "location": "Silverstone",
     "current_lap": 40,
     "total_laps_seen": 40,
-    "total_laps_expected": 40,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -450023,7 +452426,74 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 40
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 2.0,
+        "field_spread": 27.111092617655178,
+        "sector_anomaly_score": 0.0,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005465,
+        "3L": 0.016307,
+        "5L": 0.02703,
+        "10L": 0.05333
+      },
+      "VSC_probs": {
+        "1L": 0.004683,
+        "3L": 0.013982,
+        "5L": 0.023194,
+        "10L": 0.045851
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 91.333,
+        "PER": 92.358,
+        "ALO": 92.098,
+        "LEC": 92.169,
+        "STR": 91.71,
+        "SAR": 92.635,
+        "MAG": 92.372,
+        "TSU": 92.55,
+        "ALB": 92.377,
+        "ZHO": 92.989,
+        "HUL": 91.688,
+        "RIC": 92.722,
+        "OCO": 92.873,
+        "NOR": 91.228,
+        "HAM": 91.291,
+        "SAI": 91.29,
+        "BOT": 92.546,
+        "PIA": 91.411
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 0.297,
+        "PER": 4.103,
+        "ALO": 0.182,
+        "LEC": 3.525,
+        "STR": 0.182,
+        "SAR": 0.191,
+        "MAG": 4.252,
+        "TSU": 0.191,
+        "ALB": 0.182,
+        "ZHO": 4.252,
+        "HUL": 0.191,
+        "RIC": 4.252,
+        "OCO": 0.182,
+        "NOR": 0.191,
+        "HAM": 0.191,
+        "SAI": 0.297,
+        "RUS": 6.245,
+        "BOT": 6.335,
+        "PIA": 0.182
+      }
     }
   },
   {
@@ -450035,8 +452505,8 @@
     "location": "Silverstone",
     "current_lap": 41,
     "total_laps_seen": 41,
-    "total_laps_expected": 41,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -461271,7 +463741,74 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 41
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 2.0,
+        "field_spread": 27.581383807626292,
+        "sector_anomaly_score": 0.0,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.00549,
+        "3L": 0.016378,
+        "5L": 0.027148,
+        "10L": 0.053559
+      },
+      "VSC_probs": {
+        "1L": 0.004789,
+        "3L": 0.014298,
+        "5L": 0.023715,
+        "10L": 0.046868
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 90.991,
+        "PER": 92.026,
+        "ALO": 91.628,
+        "LEC": 91.729,
+        "STR": 91.647,
+        "SAR": 92.115,
+        "MAG": 91.985,
+        "TSU": 91.965,
+        "ALB": 91.849,
+        "ZHO": 92.65,
+        "HUL": 91.555,
+        "RIC": 92.226,
+        "OCO": 92.438,
+        "NOR": 90.987,
+        "HAM": 91.026,
+        "SAI": 91.264,
+        "BOT": 92.21,
+        "PIA": 91.098
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 2.441,
+        "PER": 5.186,
+        "ALO": 2.819,
+        "LEC": 2.934,
+        "STR": -0.065,
+        "SAR": 3.264,
+        "MAG": 3.686,
+        "TSU": 3.686,
+        "ALB": 2.819,
+        "ZHO": 4.752,
+        "HUL": 0.052,
+        "RIC": 3.686,
+        "OCO": 3.877,
+        "NOR": -0.056,
+        "HAM": 2.693,
+        "SAI": -0.001,
+        "RUS": 5.929,
+        "BOT": 4.026,
+        "PIA": 2.371
+      }
     }
   },
   {
@@ -461283,8 +463820,8 @@
     "location": "Silverstone",
     "current_lap": 42,
     "total_laps_seen": 42,
-    "total_laps_expected": 42,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -472519,7 +475056,74 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 42
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 2.0,
+        "field_spread": 27.858685696399412,
+        "sector_anomaly_score": 0.0,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005504,
+        "3L": 0.016421,
+        "5L": 0.027218,
+        "10L": 0.053695
+      },
+      "VSC_probs": {
+        "1L": 0.004852,
+        "3L": 0.014487,
+        "5L": 0.024028,
+        "10L": 0.047479
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 90.899,
+        "PER": 91.943,
+        "ALO": 91.527,
+        "LEC": 91.682,
+        "STR": 91.408,
+        "SAR": 91.82,
+        "MAG": 91.861,
+        "TSU": 91.787,
+        "ALB": 91.657,
+        "ZHO": 92.379,
+        "HUL": 91.359,
+        "RIC": 92.116,
+        "OCO": 92.319,
+        "NOR": 90.884,
+        "HAM": 90.834,
+        "SAI": 91.008,
+        "BOT": 92.169,
+        "PIA": 91.071
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 2.525,
+        "PER": 3.684,
+        "ALO": 2.648,
+        "LEC": 3.623,
+        "STR": 2.652,
+        "SAR": 3.06,
+        "MAG": 3.696,
+        "TSU": 3.06,
+        "ALB": 2.648,
+        "ZHO": 4.025,
+        "HUL": 3.843,
+        "RIC": 4.32,
+        "OCO": 2.946,
+        "NOR": 3.322,
+        "HAM": 3.492,
+        "SAI": 2.665,
+        "RUS": 5.962,
+        "BOT": 6.419,
+        "PIA": 2.493
+      }
     }
   },
   {
@@ -472531,8 +475135,8 @@
     "location": "Silverstone",
     "current_lap": 43,
     "total_laps_seen": 43,
-    "total_laps_expected": 43,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -483767,7 +486371,74 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 43
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 2.0,
+        "field_spread": 28.35076897975767,
+        "sector_anomaly_score": 0.0,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005529,
+        "3L": 0.016496,
+        "5L": 0.027342,
+        "10L": 0.053936
+      },
+      "VSC_probs": {
+        "1L": 0.004968,
+        "3L": 0.014829,
+        "5L": 0.024593,
+        "10L": 0.048581
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 90.944,
+        "PER": 92.176,
+        "ALO": 91.613,
+        "LEC": 91.887,
+        "STR": 91.539,
+        "SAR": 92.034,
+        "MAG": 92.081,
+        "TSU": 91.798,
+        "ALB": 91.733,
+        "ZHO": 92.427,
+        "HUL": 91.408,
+        "RIC": 92.322,
+        "OCO": 92.515,
+        "NOR": 91.048,
+        "HAM": 90.958,
+        "SAI": 91.134,
+        "BOT": 92.36,
+        "PIA": 91.156
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 3.109,
+        "PER": 3.68,
+        "ALO": 3.645,
+        "LEC": 3.607,
+        "STR": 2.512,
+        "SAR": 3.541,
+        "MAG": 3.778,
+        "TSU": 3.606,
+        "ALB": 3.485,
+        "ZHO": 4.33,
+        "HUL": 3.69,
+        "RIC": 4.0,
+        "OCO": 4.214,
+        "NOR": 3.397,
+        "HAM": 3.455,
+        "SAI": 2.507,
+        "RUS": 5.812,
+        "BOT": 4.65,
+        "PIA": 3.247
+      }
     }
   },
   {
@@ -483779,8 +486450,8 @@
     "location": "Silverstone",
     "current_lap": 44,
     "total_laps_seen": 44,
-    "total_laps_expected": 44,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -495015,7 +497686,74 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 44
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 1.0,
+        "field_spread": 28.889043012302547,
+        "sector_anomaly_score": 0.0032063990070505533,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005303,
+        "3L": 0.015824,
+        "5L": 0.026234,
+        "10L": 0.051781
+      },
+      "VSC_probs": {
+        "1L": 0.004635,
+        "3L": 0.013841,
+        "5L": 0.022962,
+        "10L": 0.045397
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 91.0,
+        "PER": 92.215,
+        "ALO": 91.724,
+        "LEC": 92.047,
+        "STR": 91.542,
+        "SAR": 92.092,
+        "MAG": 92.394,
+        "TSU": 91.948,
+        "ALB": 91.856,
+        "ZHO": 92.62,
+        "HUL": 91.514,
+        "RIC": 92.468,
+        "OCO": 92.581,
+        "NOR": 91.134,
+        "HAM": 90.972,
+        "SAI": 91.116,
+        "BOT": 92.546,
+        "PIA": 91.27
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 3.083,
+        "PER": 3.819,
+        "ALO": 3.823,
+        "LEC": 3.718,
+        "STR": 3.668,
+        "SAR": 3.821,
+        "MAG": 3.875,
+        "TSU": 3.82,
+        "ALB": 3.819,
+        "ZHO": 4.135,
+        "HUL": 3.703,
+        "RIC": 4.374,
+        "OCO": 4.263,
+        "NOR": 3.152,
+        "HAM": 3.715,
+        "SAI": 3.665,
+        "RUS": 5.966,
+        "BOT": 4.324,
+        "PIA": 3.168
+      }
     }
   },
   {
@@ -495027,8 +497765,8 @@
     "location": "Silverstone",
     "current_lap": 45,
     "total_laps_seen": 45,
-    "total_laps_expected": 45,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -506263,7 +509001,74 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 45
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 1.0,
+        "field_spread": 29.586339278630877,
+        "sector_anomaly_score": 0.0022410315640675194,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005323,
+        "3L": 0.015886,
+        "5L": 0.026335,
+        "10L": 0.051977
+      },
+      "VSC_probs": {
+        "1L": 0.004792,
+        "3L": 0.014307,
+        "5L": 0.023731,
+        "10L": 0.046899
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 90.983,
+        "PER": 92.115,
+        "ALO": 91.631,
+        "LEC": 91.932,
+        "STR": 91.456,
+        "SAR": 92.037,
+        "MAG": 92.248,
+        "TSU": 92.064,
+        "ALB": 91.632,
+        "ZHO": 92.499,
+        "HUL": 91.405,
+        "RIC": 92.391,
+        "OCO": 92.457,
+        "NOR": 91.038,
+        "HAM": 90.883,
+        "SAI": 91.075,
+        "BOT": 92.441,
+        "PIA": 91.197
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 3.566,
+        "PER": 3.76,
+        "ALO": 3.699,
+        "LEC": 3.806,
+        "STR": 3.768,
+        "SAR": 3.872,
+        "MAG": 4.243,
+        "TSU": 4.017,
+        "ALB": 4.066,
+        "ZHO": 4.362,
+        "HUL": 3.755,
+        "RIC": 4.362,
+        "OCO": 4.099,
+        "NOR": 3.775,
+        "HAM": 3.712,
+        "SAI": 3.726,
+        "RUS": 5.994,
+        "BOT": 4.287,
+        "PIA": 3.166
+      }
     }
   },
   {
@@ -506275,8 +509080,8 @@
     "location": "Silverstone",
     "current_lap": 46,
     "total_laps_seen": 46,
-    "total_laps_expected": 46,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -517511,7 +520316,74 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 46
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 0.0,
+        "field_spread": 30.146632038574904,
+        "sector_anomaly_score": 0.004930269440948765,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005099,
+        "3L": 0.01522,
+        "5L": 0.025238,
+        "10L": 0.049839
+      },
+      "VSC_probs": {
+        "1L": 0.004476,
+        "3L": 0.013368,
+        "5L": 0.02218,
+        "10L": 0.043868
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 90.948,
+        "PER": 92.121,
+        "ALO": 91.583,
+        "LEC": 91.891,
+        "STR": 91.437,
+        "SAR": 92.008,
+        "MAG": 92.228,
+        "TSU": 92.059,
+        "ALB": 91.606,
+        "ZHO": 92.484,
+        "HUL": 91.416,
+        "RIC": 92.362,
+        "OCO": 92.403,
+        "NOR": 91.049,
+        "HAM": 90.899,
+        "SAI": 91.053,
+        "BOT": 92.389,
+        "PIA": 91.161
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 3.125,
+        "PER": 4.013,
+        "ALO": 3.687,
+        "LEC": 3.865,
+        "STR": 3.749,
+        "SAR": 4.145,
+        "MAG": 4.449,
+        "TSU": 4.23,
+        "ALB": 3.778,
+        "ZHO": 4.347,
+        "HUL": 3.858,
+        "RIC": 4.262,
+        "OCO": 4.188,
+        "NOR": 3.671,
+        "HAM": 3.561,
+        "SAI": 3.675,
+        "RUS": 5.98,
+        "BOT": 5.42,
+        "PIA": 3.286
+      }
     }
   },
   {
@@ -517523,8 +520395,8 @@
     "location": "Silverstone",
     "current_lap": 47,
     "total_laps_seen": 47,
-    "total_laps_expected": 47,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -528759,7 +531631,74 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 47
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 1.0,
+        "field_spread": 30.72708922608343,
+        "sector_anomaly_score": 0.0020468188307332102,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005378,
+        "3L": 0.016047,
+        "5L": 0.026601,
+        "10L": 0.052494
+      },
+      "VSC_probs": {
+        "1L": 0.00506,
+        "3L": 0.015103,
+        "5L": 0.025045,
+        "10L": 0.049462
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 90.919,
+        "PER": 91.962,
+        "ALO": 91.53,
+        "LEC": 91.719,
+        "STR": 91.355,
+        "SAR": 91.932,
+        "MAG": 92.043,
+        "TSU": 91.974,
+        "ALB": 91.543,
+        "ZHO": 92.525,
+        "HUL": 91.433,
+        "RIC": 92.205,
+        "OCO": 92.372,
+        "NOR": 90.903,
+        "HAM": 90.772,
+        "SAI": 90.928,
+        "BOT": 92.229,
+        "PIA": 91.12
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 3.537,
+        "PER": 3.513,
+        "ALO": 3.585,
+        "LEC": 3.851,
+        "STR": 3.749,
+        "SAR": 3.949,
+        "MAG": 4.293,
+        "TSU": 4.517,
+        "ALB": 3.739,
+        "ZHO": 4.31,
+        "HUL": 3.837,
+        "RIC": 4.262,
+        "OCO": 4.182,
+        "NOR": 3.858,
+        "HAM": 3.777,
+        "SAI": 3.682,
+        "RUS": 5.98,
+        "BOT": 4.313,
+        "PIA": 3.395
+      }
     }
   },
   {
@@ -528771,8 +531710,8 @@
     "location": "Silverstone",
     "current_lap": 48,
     "total_laps_seen": 48,
-    "total_laps_expected": 48,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -540007,7 +542946,74 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 48
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 1.0,
+        "field_spread": 31.353513496731804,
+        "sector_anomaly_score": 0.00515508205172277,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005455,
+        "3L": 0.016277,
+        "5L": 0.026981,
+        "10L": 0.053235
+      },
+      "VSC_probs": {
+        "1L": 0.005213,
+        "3L": 0.015559,
+        "5L": 0.025796,
+        "10L": 0.050927
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 90.93,
+        "PER": 91.087,
+        "ALO": 91.661,
+        "LEC": 91.788,
+        "STR": 91.535,
+        "SAR": 91.984,
+        "MAG": 92.159,
+        "TSU": 92.081,
+        "ALB": 91.627,
+        "ZHO": 92.606,
+        "HUL": 91.572,
+        "RIC": 92.338,
+        "OCO": 92.348,
+        "NOR": 91.314,
+        "HAM": 90.969,
+        "SAI": 91.083,
+        "BOT": 92.314,
+        "PIA": 91.211
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 3.52,
+        "PER": -0.022,
+        "ALO": 3.618,
+        "LEC": 3.929,
+        "STR": 3.775,
+        "SAR": 4.264,
+        "MAG": 4.183,
+        "TSU": 4.184,
+        "ALB": 3.751,
+        "ZHO": 4.326,
+        "HUL": 3.885,
+        "RIC": 4.095,
+        "OCO": 5.026,
+        "NOR": 3.866,
+        "HAM": 3.58,
+        "SAI": 3.655,
+        "RUS": 5.976,
+        "BOT": 4.139,
+        "PIA": 3.156
+      }
     }
   },
   {
@@ -540019,8 +543025,8 @@
     "location": "Silverstone",
     "current_lap": 49,
     "total_laps_seen": 49,
-    "total_laps_expected": 49,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -551255,7 +554261,74 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 49
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 0.0,
+        "field_spread": 30.818266898648986,
+        "sector_anomaly_score": 0.007788792231438357,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005172,
+        "3L": 0.015435,
+        "5L": 0.025593,
+        "10L": 0.05053
+      },
+      "VSC_probs": {
+        "1L": 0.004622,
+        "3L": 0.013801,
+        "5L": 0.022896,
+        "10L": 0.045267
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 90.863,
+        "PER": 91.079,
+        "ALO": 91.721,
+        "LEC": 92.02,
+        "STR": 91.491,
+        "SAR": 92.054,
+        "MAG": 92.246,
+        "TSU": 92.139,
+        "ALB": 91.614,
+        "ZHO": 92.876,
+        "HUL": 91.591,
+        "RIC": 92.471,
+        "OCO": 92.549,
+        "NOR": 91.273,
+        "HAM": 90.931,
+        "SAI": 90.978,
+        "BOT": 92.439,
+        "PIA": 91.231
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 3.16,
+        "PER": -0.023,
+        "ALO": 3.821,
+        "LEC": 3.854,
+        "STR": 3.82,
+        "SAR": 4.374,
+        "MAG": 4.416,
+        "TSU": 4.183,
+        "ALB": 3.759,
+        "ZHO": 4.789,
+        "HUL": 4.145,
+        "RIC": 4.452,
+        "OCO": 3.046,
+        "NOR": 3.998,
+        "HAM": 3.817,
+        "SAI": 3.58,
+        "RUS": 5.678,
+        "BOT": 4.641,
+        "PIA": 3.442
+      }
     }
   },
   {
@@ -551267,8 +554340,8 @@
     "location": "Silverstone",
     "current_lap": 50,
     "total_laps_seen": 50,
-    "total_laps_expected": 50,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -562503,7 +565576,74 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 50
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 1.0,
+        "field_spread": 31.335632034353868,
+        "sector_anomaly_score": 0.005002611253126732,
+        "recent_retirements": 0.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.005452,
+        "3L": 0.016268,
+        "5L": 0.026966,
+        "10L": 0.053205
+      },
+      "VSC_probs": {
+        "1L": 0.005209,
+        "3L": 0.015545,
+        "5L": 0.025774,
+        "10L": 0.050885
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 90.85,
+        "PER": 91.11,
+        "ALO": 91.699,
+        "LEC": 92.031,
+        "STR": 91.544,
+        "SAR": 92.088,
+        "MAG": 92.221,
+        "TSU": 92.112,
+        "ALB": 91.533,
+        "ZHO": 92.786,
+        "HUL": 91.563,
+        "RIC": 92.438,
+        "OCO": 92.546,
+        "NOR": 91.228,
+        "HAM": 90.928,
+        "SAI": 91.004,
+        "BOT": 92.436,
+        "PIA": 91.212
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 3.647,
+        "PER": 5.457,
+        "ALO": 4.255,
+        "LEC": 4.336,
+        "STR": 3.821,
+        "SAR": 4.402,
+        "MAG": 4.375,
+        "TSU": 4.419,
+        "ALB": 3.77,
+        "ZHO": 4.713,
+        "HUL": 4.197,
+        "RIC": 4.81,
+        "OCO": 4.179,
+        "NOR": 4.012,
+        "HAM": 3.929,
+        "SAI": 3.486,
+        "RUS": 5.678,
+        "BOT": 4.813,
+        "PIA": 3.658
+      }
     }
   },
   {
@@ -562515,8 +565655,8 @@
     "location": "Silverstone",
     "current_lap": 51,
     "total_laps_seen": 51,
-    "total_laps_expected": 51,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -573724,7 +576864,74 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 51
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 0.0,
+        "field_spread": 31.363916390229925,
+        "sector_anomaly_score": 0.005147322879080596,
+        "recent_retirements": 3.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 3.7e-05,
+        "3L": 0.000112,
+        "5L": 0.000186,
+        "10L": 0.000372
+      },
+      "VSC_probs": {
+        "1L": 0.008334,
+        "3L": 0.024793,
+        "5L": 0.040979,
+        "10L": 0.080279
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 90.948,
+        "PER": 91.485,
+        "ALO": 91.619,
+        "LEC": 92.196,
+        "STR": 91.546,
+        "SAR": 92.346,
+        "MAG": 92.31,
+        "TSU": 92.224,
+        "ALB": 91.487,
+        "ZHO": 93.051,
+        "HUL": 91.639,
+        "RIC": 92.634,
+        "OCO": 92.525,
+        "NOR": 91.436,
+        "HAM": 91.158,
+        "SAI": 90.329,
+        "BOT": 92.602,
+        "PIA": 91.224
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 3.616,
+        "PER": 2.854,
+        "ALO": 4.245,
+        "LEC": 4.207,
+        "STR": 3.794,
+        "SAR": 4.461,
+        "MAG": 4.503,
+        "TSU": 4.826,
+        "ALB": 3.795,
+        "ZHO": 4.861,
+        "HUL": 4.19,
+        "RIC": 4.627,
+        "OCO": 4.505,
+        "NOR": 4.18,
+        "HAM": 4.0,
+        "SAI": -0.019,
+        "RUS": 5.698,
+        "BOT": 5.118,
+        "PIA": 3.667
+      }
     }
   },
   {
@@ -573736,8 +576943,8 @@
     "location": "Silverstone",
     "current_lap": 52,
     "total_laps_seen": 52,
-    "total_laps_expected": 52,
-    "race_completion_pct": 100.0,
+    "total_laps_expected": null,
+    "race_completion_pct": null,
     "current_conditions": {
       "track_status": "1",
       "has_green": true,
@@ -584918,7 +588125,74 @@
       "round": 12,
       "country": "United Kingdom",
       "location": "Silverstone",
-      "total_laps_expected": 52
+      "total_laps_expected": null
+    },
+    "sc_risk": {
+      "features": {
+        "logit_p_sc_hist": -13.815509557963773,
+        "logit_p_vsc_hist": -13.815509557963773,
+        "close_battles": 1.0,
+        "field_spread": 32.065492682472495,
+        "sector_anomaly_score": 0.002017266433028464,
+        "recent_retirements": 6.0,
+        "yellow_last3": 0.0,
+        "sc_count_cumul": 0.0
+      },
+      "SC_probs": {
+        "1L": 0.0,
+        "3L": 1e-06,
+        "5L": 1e-06,
+        "10L": 3e-06
+      },
+      "VSC_probs": {
+        "1L": 0.016578,
+        "3L": 0.048915,
+        "5L": 0.080189,
+        "10L": 0.153948
+      }
+    },
+    "predictions": {
+      "lap_time_seconds": {
+        "VER": 90.803,
+        "PER": 91.429,
+        "ALO": 91.767,
+        "LEC": 92.408,
+        "STR": 91.518,
+        "SAR": 92.649,
+        "MAG": 92.519,
+        "TSU": 92.593,
+        "ALB": 91.479,
+        "ZHO": 93.337,
+        "HUL": 91.819,
+        "RIC": 92.881,
+        "OCO": 92.337,
+        "NOR": 91.549,
+        "HAM": 91.195,
+        "SAI": 89.552,
+        "BOT": 92.87,
+        "PIA": 91.177
+      },
+      "tyre_deg_deficit_seconds": {
+        "VER": 3.77,
+        "PER": 3.559,
+        "ALO": 4.405,
+        "LEC": 4.745,
+        "STR": 3.886,
+        "SAR": 4.914,
+        "MAG": 4.765,
+        "TSU": 4.914,
+        "ALB": 3.909,
+        "ZHO": 4.776,
+        "HUL": 4.562,
+        "RIC": 5.476,
+        "OCO": 4.701,
+        "NOR": 4.555,
+        "HAM": 4.03,
+        "SAI": 0.554,
+        "RUS": 6.096,
+        "BOT": 5.02,
+        "PIA": 3.366
+      }
     }
   }
 ]

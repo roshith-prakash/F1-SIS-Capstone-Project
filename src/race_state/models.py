@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from dataclasses import asdict, dataclass, field
 from typing import Any, Optional
 
@@ -8,12 +9,17 @@ def safe_float(value: Any) -> Optional[float]:
     if value is None or value == "":
         return None
     if isinstance(value, (int, float)):
+        if isinstance(value, float) and math.isnan(value):
+            return None
         return float(value)
     text = str(value).strip()
-    if text in {"", "nan", "NaN", "None", "null"}:
+    if text.lower() in {"", "nan", "none", "null"}:
         return None
     try:
-        return float(text)
+        val = float(text)
+        if math.isnan(val):
+            return None
+        return val
     except (TypeError, ValueError):
         return None
 

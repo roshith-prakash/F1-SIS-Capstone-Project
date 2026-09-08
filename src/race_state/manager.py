@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from typing import Any, Iterable
 
 from .models import (
@@ -52,8 +53,6 @@ def validate_state(state: RaceState | None) -> None:
             raise ValueError(f"{driver} is missing a driver code")
         if participant.team is None:
             raise ValueError(f"{driver} is missing a team")
-        if participant.position is None:
-            raise ValueError(f"{driver} is missing a position")
         if participant.recent_lap_times is None:
             raise ValueError(f"{driver} recent_lap_times is None")
 
@@ -116,8 +115,12 @@ class RaceStateManager:
             metadata["country"] = row.get("Country")
         if row.get("Location") not in (None, ""):
             metadata["location"] = row.get("Location")
-        if row.get("LapNumber") not in (None, ""):
-            metadata["total_laps_expected"] = safe_int(row.get("LapNumber"))
+        if row.get("TotalLaps") not in (None, ""):
+            metadata["total_laps_expected"] = safe_int(row.get("TotalLaps"))
+        elif row.get("TotalLapsExpected") not in (None, ""):
+            metadata["total_laps_expected"] = safe_int(row.get("TotalLapsExpected"))
+        elif row.get("total_laps_expected") not in (None, ""):
+            metadata["total_laps_expected"] = safe_int(row.get("total_laps_expected"))
         self._apply_race_metadata(metadata)
 
     def update_from_row(self, row: dict[str, Any]) -> None:
@@ -201,8 +204,8 @@ class RaceStateManager:
             self.state.participants[driver_code] = participant
 
         participant.driver = driver_code
-        participant.driver_number = safe_int(row.get("DriverNumber"))
-        participant.driver_full_name = row.get("DriverFullName") or row.get("Driver")
+        participant.driver_number = safe_int(row.get("DriverNumber")) or participant.driver_number
+        participant.driver_full_name = row.get("DriverFullName") or row.get("Driver") or participant.driver_full_name
         participant.team = row.get("Team") or participant.team
         if self.state.year is not None and participant.team:
             participant.constructor_season_id = f"{normalize_team(participant.team)}_{self.state.year}"
@@ -211,7 +214,7 @@ class RaceStateManager:
         participant.last_lap_time_seconds = safe_float(row.get("LapTimeSeconds"))
         participant.total_race_time_seconds = safe_float(row.get("TimeSeconds"))
         participant.time_seconds = safe_float(row.get("TimeSeconds"))
-        participant.compound = row.get("Compound")
+        participant.compound = row.get("Compound") or participant.compound
         participant.tyre_life = safe_float(row.get("TyreLife"))
         participant.stint = safe_float(row.get("Stint"))
         participant.fresh_tyre = safe_bool(row.get("FreshTyre"))
@@ -313,11 +316,36 @@ class RaceStateManager:
 
         self._refresh_classification(lap_number)
         self._refresh_constructors(lap_number)
+
+        # Compute field-wide aggregates needed by downstream SC risk adapter
+        active_this_lap = [
+            p for p in self.state.participants.values()
+            if p.is_active and p.last_lap_number == lap_number
+        ]
+        n_active = len(active_this_lap)
+
+        def _median(values: list) -> float | None:
+            vals = [v for v in values if v is not None and not (isinstance(v, float) and math.isnan(v))]
+            if not vals:
+                return None
+            vals.sort()
+            mid = len(vals) // 2
+            return vals[mid] if len(vals) % 2 else (vals[mid - 1] + vals[mid]) / 2.0
+
+        sector_medians = {
+            "s1": _median([p.sector_1_time_seconds for p in active_this_lap]),
+            "s2": _median([p.sector_2_time_seconds for p in active_this_lap]),
+            "s3": _median([p.sector_3_time_seconds for p in active_this_lap]),
+        }
+
         self.state.lap_history.append(
             {
                 "lap_number": lap_number,
                 "current_conditions": self.state.current_conditions.to_dict(),
                 "classification": [entry.to_dict() for entry in self.state.classification],
+                # Aggregates for SC risk feature computation
+                "n_active_cars": n_active,
+                "sector_medians": sector_medians,
             }
         )
         validate_state(self.state)
