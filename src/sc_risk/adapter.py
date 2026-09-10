@@ -171,10 +171,14 @@ class SCRiskAdapter:
         prog_bin = _progress_bin(race_progress)
         mask_bin = self._circ_prog['progress_bin'].astype(str) == prog_bin
 
-        # Try circuit-specific prior first
-        mask_circ = (
-            self._circ_prog['Location'].str.lower() == str(location).lower()
-        )
+        # Try circuit-specific prior first (normalize accents/casing)
+        import unicodedata
+        def _norm(s: Any) -> str:
+            if s is None: return ""
+            return unicodedata.normalize('NFKD', str(s)).encode('ASCII', 'ignore').decode('utf-8').strip().lower()
+
+        norm_loc = _norm(location)
+        mask_circ = self._circ_prog['Location'].apply(_norm) == norm_loc
         circ_row = self._circ_prog[mask_circ & mask_bin]
 
         p_circ = float(circ_row[col].iloc[0]) if (not circ_row.empty and col in circ_row.columns) else None
@@ -201,9 +205,10 @@ class SCRiskAdapter:
         Count of active cars whose interval to the car ahead is < 1.0 s.
         Matches CSV adapter: (df['IntervalToPositionAheadSeconds'] < 1.0).sum()
         """
+        current_lap = state.current_lap or 0
         count = 0
         for p in state.participants.values():
-            if not p.is_active:
+            if not p.is_active or (current_lap > 0 and p.last_lap_number != current_lap):
                 continue
             interval = p.interval_to_position_ahead_seconds
             if interval is not None and interval < CLOSE_BATTLE_GAP_S:
@@ -215,10 +220,11 @@ class SCRiskAdapter:
         Std dev of gap-to-leader across all active classified cars.
         Matches CSV adapter: df['GapToLeaderSeconds'].std()
         """
+        current_lap = state.current_lap or 0
         gaps = [
             p.gap_to_leader_seconds
             for p in state.participants.values()
-            if p.is_active and p.gap_to_leader_seconds is not None
+            if p.is_active and (current_lap == 0 or p.last_lap_number == current_lap) and p.gap_to_leader_seconds is not None
         ]
         if len(gaps) < 2:
             return 0.0
@@ -274,7 +280,7 @@ class SCRiskAdapter:
         drops (lapped cars not reported, finishers going inactive) from being
         misread as retirements.
         """
-        if len(history) < 2:
+        if len(history) <= self._retirement_window:
             return 0.0
 
         # Build retirements_total series (same as CSV adapter's cummax logic)
@@ -291,7 +297,7 @@ class SCRiskAdapter:
 
         # recent_retirements = diff over window laps (clipped >= 0)
         current_ret = ret_total[-1]
-        lookback_idx = max(0, len(ret_total) - 1 - self._retirement_window)
+        lookback_idx = len(ret_total) - 1 - self._retirement_window
         past_ret = ret_total[lookback_idx]
         return float(max(0.0, current_ret - past_ret))
 

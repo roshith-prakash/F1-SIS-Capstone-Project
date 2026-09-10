@@ -141,57 +141,34 @@ class RaceStateManager:
             self.update_from_row(row)
 
     def _update_current_conditions(self, rows: list[dict[str, Any]]) -> None:
-        condition_fields = {
-            "track_status": lambda value: str(value) if value not in (None, "") else None,
-            "has_green": safe_bool,
-            "has_yellow": safe_bool,
-            "has_safety_car": safe_bool,
-            "has_vsc": safe_bool,
-            "has_red_flag": safe_bool,
-            "has_vsc_ending": safe_bool,
-            "air_temp": safe_float,
-            "track_temp": safe_float,
-            "humidity": safe_float,
-            "pressure": safe_float,
-            "rainfall": safe_bool,
-            "wind_direction": lambda value: str(value) if value not in (None, "") else None,
-            "wind_speed": safe_float,
+        ts_values = [str(r.get("TrackStatus", "")) for r in rows if r.get("TrackStatus") not in (None, "")]
+        all_ts = "".join(ts_values)
+
+        cond = self.state.current_conditions
+        cond.track_status = ts_values[-1] if ts_values else None
+        cond.has_green = any(safe_bool(r.get("HasGreen")) for r in rows) or ("1" in all_ts)
+        cond.has_yellow = any(safe_bool(r.get("HasYellow")) or safe_bool(r.get("HasSafetyCar")) for r in rows) or any(c in all_ts for c in ["2", "4"])
+        cond.has_safety_car = any(safe_bool(r.get("HasSafetyCar")) for r in rows) or ("4" in all_ts)
+        cond.has_vsc = any(safe_bool(r.get("HasVSC")) for r in rows) or any(c in all_ts for c in ["6", "7"])
+        cond.has_vsc_ending = any(safe_bool(r.get("HasVSCEnding")) for r in rows) or ("7" in all_ts)
+        cond.has_red_flag = any(safe_bool(r.get("HasRedFlag")) for r in rows) or ("5" in all_ts)
+        cond.rainfall = any(safe_bool(r.get("Rainfall")) for r in rows)
+
+        weather_fields = {
+            "air_temp": ("AirTemp", safe_float),
+            "track_temp": ("TrackTemp", safe_float),
+            "humidity": ("Humidity", safe_float),
+            "pressure": ("Pressure", safe_float),
+            "wind_direction": ("WindDirection", lambda value: str(value) if value not in (None, "") else None),
+            "wind_speed": ("WindSpeed", safe_float),
         }
-        for field_name, parser in condition_fields.items():
+        for field_name, (col_name, parser) in weather_fields.items():
             last_value = None
             for row in rows:
-                value = row.get(field_name.replace("_", "").title().replace("", ""))
-                if field_name == "track_status":
-                    value = row.get("TrackStatus")
-                elif field_name == "has_green":
-                    value = row.get("HasGreen")
-                elif field_name == "has_yellow":
-                    value = row.get("HasYellow")
-                elif field_name == "has_safety_car":
-                    value = row.get("HasSafetyCar")
-                elif field_name == "has_vsc":
-                    value = row.get("HasVSC")
-                elif field_name == "has_red_flag":
-                    value = row.get("HasRedFlag")
-                elif field_name == "has_vsc_ending":
-                    value = row.get("HasVSCEnding")
-                elif field_name == "air_temp":
-                    value = row.get("AirTemp")
-                elif field_name == "track_temp":
-                    value = row.get("TrackTemp")
-                elif field_name == "humidity":
-                    value = row.get("Humidity")
-                elif field_name == "pressure":
-                    value = row.get("Pressure")
-                elif field_name == "rainfall":
-                    value = row.get("Rainfall")
-                elif field_name == "wind_direction":
-                    value = row.get("WindDirection")
-                elif field_name == "wind_speed":
-                    value = row.get("WindSpeed")
-                if value not in (None, ""):
-                    last_value = parser(value)
-            setattr(self.state.current_conditions, field_name, last_value)
+                val = row.get(col_name)
+                if val not in (None, ""):
+                    last_value = parser(val)
+            setattr(cond, field_name, last_value)
 
     def _apply_row_to_participant(self, lap_number: int, row: dict[str, Any]) -> None:
         driver_code = normalize_driver(row.get("Driver"))

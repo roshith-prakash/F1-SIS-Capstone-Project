@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 import joblib
+import numpy as np
 import pandas as pd
 
 try:
@@ -185,6 +186,9 @@ class LapTimeAdapter:
         self.teams_set = set(self.meta["teams"])
         self.dry_compounds = set(self.meta.get("dry_compounds", ["SOFT", "MEDIUM", "HARD"]))
         self.feature_cols = list(self.meta["feature_cols"])
+        self.auto_calibrate: bool = True
+        self.calibrated_bases: dict[str, float] = {}
+        self.implied_history: dict[str, list[float]] = {}
 
     def resolve_circuit(self, state: RaceState) -> str:
         """Resolve the canonical circuit name from RaceState attributes."""
@@ -231,7 +235,50 @@ class LapTimeAdapter:
                 return t
         return "Red Bull Racing"
 
-    def build_features(self, state: RaceState, participant: ParticipantState) -> dict[str, Any] | None:
+    def calibrate_from_state(self, state: RaceState) -> float | None:
+        """
+        Calibrate the track dry baseline dynamically from clean green-flag laps
+        in the current RaceState snapshot without requiring practice/qualifying data.
+        Returns the calibrated base in seconds, or None if not enough samples yet.
+        """
+        cond = state.current_conditions
+        circuit = self.resolve_circuit(state)
+        # Do not calibrate during full-course caution periods
+        if cond.has_safety_car or cond.has_vsc or cond.has_red_flag:
+            return self.calibrated_bases.get(circuit)
+
+        static_base = float(self.meta["circuit_dry_bases"].get(circuit, 85.0))
+        history = self.implied_history.setdefault(circuit, [])
+
+        for driver_code, participant in state.participants.items():
+            if not participant.is_active or participant.position is None or participant.position > 10:
+                continue
+            lt = participant.last_lap_time_seconds
+            if lt is None or participant.is_pit_in_lap or participant.is_pit_out_lap:
+                continue
+            # Validate lap time is a realistic racing lap (within 15% of expected baseline)
+            if not (static_base * 0.85 <= lt <= static_base * 1.25):
+                continue
+
+            feats = self.build_features(state, participant, use_calibrated=False)
+            if feats is None:
+                continue
+            df_row = pd.DataFrame([feats])[self.feature_cols]
+            delta = float(self.model.predict(df_row)[0])
+            implied_base = lt - delta
+            history.append(implied_base)
+
+        if len(history) >= 5:
+            # 15th percentile of implied base across clean top-half laps locks onto true dry base
+            est_base = float(np.percentile(history, 15))
+            self.calibrated_bases[circuit] = est_base
+            return est_base
+
+        return self.calibrated_bases.get(circuit)
+
+    def build_features(
+        self, state: RaceState, participant: ParticipantState, use_calibrated: bool = True
+    ) -> dict[str, Any] | None:
         """
         Build the 15-feature dictionary for a specific participant on the current lap.
         Returns None if compound is not a dry slick (SOFT, MEDIUM, HARD).
@@ -259,7 +306,11 @@ class LapTimeAdapter:
 
         is_fresh_tyre = int(participant.fresh_tyre if participant.fresh_tyre is not None else (tyre_life <= 1))
 
-        event_dry_base = float(self.meta["circuit_dry_bases"].get(circuit, 85.0))
+        if use_calibrated and circuit in self.calibrated_bases:
+            event_dry_base = self.calibrated_bases[circuit]
+        else:
+            event_dry_base = float(self.meta["circuit_dry_bases"].get(circuit, 85.0))
+
         progress_ratio = min(1.0, max(0.0, lap_number / total_laps))
         fuel_load = 110.0 * (1.0 - progress_ratio)
         race_progress_pct = progress_ratio * 100.0
@@ -299,6 +350,9 @@ class LapTimeAdapter:
         Predict expected dry lap time (seconds) for a driver given the current RaceState snapshot.
         Returns None if driver is inactive, unclassified, or running wet/intermediate tyres.
         """
+        if self.auto_calibrate:
+            self.calibrate_from_state(state)
+
         driver_code = normalize_driver(driver)
         if driver_code is None:
             return None
@@ -322,6 +376,9 @@ class LapTimeAdapter:
         Batches predictions for maximum vectorization and performance.
         Returns {driver_code: predicted_lap_time_seconds}.
         """
+        if self.auto_calibrate:
+            self.calibrate_from_state(state)
+
         rows: list[dict[str, Any]] = []
         driver_codes: list[str] = []
         bases: list[float] = []
