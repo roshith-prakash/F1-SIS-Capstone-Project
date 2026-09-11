@@ -1,0 +1,102 @@
+{
+  "model_name": "Tyre Degradation Baseline XGBoost",
+  "model_type": "XGBRegressor",
+  "version": "1.0.0",
+  "target": "Target_Tyre_Degradation",
+  "target_description": "Pure tyre degradation pace deficit in seconds relative to track base pace and fuel corrected benchmark.",
+  "feature_cols": [
+    "TyreAge",
+    "Log_TyreAge",
+    "StintLap",
+    "Compound_Encoded",
+    "RaceProgressFraction",
+    "TrackTemp",
+    "AirTemp",
+    "is_safety_car",
+    "is_vsc",
+    "Lag1_Pace_Residual",
+    "Rolling3_Degradation_Trend",
+    "Team_Median_Pace_Lag1"
+  ],
+  "compound_map": {
+    "SOFT": 1,
+    "MEDIUM": 2,
+    "HARD": 3,
+    "INTERMEDIATE": -1,
+    "WET": -2,
+    "TEST_UNKNOWN": 0
+  },
+  "hyperparameters": {
+    "n_estimators": 200,
+    "max_depth": 5,
+    "learning_rate": 0.1,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "random_state": 42,
+    "tree_method": "hist"
+  },
+  "evaluation_metrics": [
+    {
+      "Model": "Global Mean",
+      "MAE": 1.25793586225482,
+      "RMSE": 1.7141042936538848,
+      "R2": -0.0774929746927661,
+      "Bias": -0.4596859026826541
+    },
+    {
+      "Model": "Linear Reg (TyreAge Only)",
+      "MAE": 1.1973479228795094,
+      "RMSE": 1.6330603482581438,
+      "R2": 0.0219874457488873,
+      "Bias": -0.4048083119755718
+    },
+    {
+      "Model": "Multiple Linear Reg",
+      "MAE": 0.9397143749150482,
+      "RMSE": 1.481933666955324,
+      "R2": 0.1946262120115545,
+      "Bias": -0.0008154597978742
+    },
+    {
+      "Model": "XGBoost Baseline",
+      "MAE": 0.4496727335600213,
+      "RMSE": 0.7316165022141105,
+      "R2": 0.8037060351438061,
+      "Bias": 0.0003809804235275
+    },
+    {
+      "Model": "XGBoost Baseline (TEST SET 2025)",
+      "MAE": 0.4233600936328315,
+      "RMSE": 0.7124112406479333,
+      "R2": 0.8437890053216938,
+      "Bias": 0.0349760238167022
+    }
+  ],
+  "circuit_base_paces": {
+    "Abu_Dhabi": 88.391,
+    "Australia": 80.26,
+    "Austria": 67.583,
+    "Azerbaijan": 103.37,
+    "Bahrain": 93.996,
+    "Belgium": 107.305,
+    "Brazil": 72.486,
+    "Canada": 74.481,
+    "China": 97.81,
+    "Emilia_Romagna": 78.446,
+    "France": 98.088,
+    "Great_Britain": 90.51,
+    "Hungary": 80.504,
+    "Italy": 84.03,
+    "Japan": 93.706,
+    "Las_Vegas": 95.49,
+    "Mexico": 80.153,
+    "Miami": 91.361,
+    "Monaco": 74.693,
+    "Netherlands": 73.652,
+    "Qatar": 84.319,
+    "Saudi_Arabia": 91.634,
+    "Singapore": 95.867,
+    "Spain": 84.108,
+    "United_States": 98.139
+  }
+}

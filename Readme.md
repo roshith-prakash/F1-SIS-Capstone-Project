@@ -106,10 +106,21 @@ f1-strategy-simulator/
 │   ├── laps/                          # Per-race CSV telemetry (2018–2025)
 │   └── f1_consolidated_data.csv       # Multi-season consolidated telemetry dataset (all 25 tracks)
 ├── models/                            # Serialized ML models
-│   └── Lap Time Estimation/           # Lap time prediction model & encoders (.pkl)
-│       ├── laptime_model.pkl          # Trained XGBoost Regressor
-│       └── laptime_metadata.pkl       # Encoders, feature schemas & circuit timing
+│   ├── Lap Time Estimation/           # Lap time prediction model & encoders (.pkl)
+│   │   ├── laptime_model.pkl          # Trained XGBoost Regressor
+│   │   └── laptime_metadata.pkl       # Encoders, feature schemas & circuit timing
+│   ├── SC Estimation/                 # Safety Car & VSC risk models & historical priors
+│   │   ├── sc_risk_logit_model_sc.joblib
+│   │   ├── sc_risk_logit_model_vsc.joblib
+│   │   └── sc_vsc_historical_prior.csv
+│   └── Tyre Degradation Estimation/   # Non-linear tyre degradation models & metadata
+│       ├── tyre_deg_model.json        # Trained XGBoost baseline regressor
+│       ├── tyre_deg_model.joblib      # Serialized model object
+│       ├── tyre_deg_metadata.json     # Feature schema, compound encoding & track baselines
+│       └── xgboost_baseline_metrics.csv # Benchmark performance report
 ├── Lap_Time_Prediction.ipynb          # End-to-end interactive modeling, evaluation & analysis notebook
+├── SC_Risk_Estimation.ipynb           # SC/VSC hazard modeling notebook
+├── tyre_deg_model.ipynb               # Pure tyre degradation modeling notebook
 ├── project_spec.md                    # Complete F1 Strategic AI Project Specification
 ├── requirements.txt                   # Pinned project dependencies
 ├── .gitignore                         # Git exclusion rules

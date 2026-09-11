@@ -17,9 +17,11 @@ except ImportError:
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_MODEL_PATHS = [
+    PROJECT_ROOT / "models" / "Tyre Degradation Estimation" / "xgboost_baseline.json",
+    PROJECT_ROOT / "models" / "Tyre Degradation Estimation" / "tyre_deg_model.json",
+    PROJECT_ROOT / "models" / "Tyre Degradation" / "xgboost_baseline.json",
     PROJECT_ROOT / "outputs" / "models" / "xgboost_baseline.json",
     PROJECT_ROOT / "models" / "xgboost_baseline.json",
-    PROJECT_ROOT / "models" / "Tyre Degradation" / "xgboost_baseline.json",
     Path("outputs") / "models" / "xgboost_baseline.json",
 ]
 
@@ -199,12 +201,21 @@ class TyreDegAdapter:
             for p in candidate_paths:
                 if p and p.exists():
                     try:
-                        m = xgb.XGBRegressor()
-                        m.load_model(str(p))
-                        loaded_model = m
+                        if str(p).endswith((".joblib", ".pkl")):
+                            import joblib
+                            loaded_model = joblib.load(str(p))
+                        else:
+                            m = xgb.XGBRegressor()
+                            m.load_model(str(p))
+                            loaded_model = m
                         break
                     except Exception:
-                        continue
+                        try:
+                            import joblib
+                            loaded_model = joblib.load(str(p))
+                            break
+                        except Exception:
+                            continue
             self.model = loaded_model
 
     def resolve_circuit(self, state: RaceState) -> str:
