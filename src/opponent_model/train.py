@@ -119,11 +119,12 @@ class OpponentTrainer:
 
             rows.append({
                 "Model": name,
+                "ROC-AUC": f"{metrics['roc_auc']:.4f}",
+                "PR-AUC": f"{metrics['pr_auc']:.4f}",
                 "Accuracy": f"{metrics['accuracy']:.4f}",
                 "F1": f"{metrics['f1']:.4f}",
                 "Precision": f"{metrics['precision']:.4f}",
                 "Recall": f"{metrics['recall']:.4f}",
-                "ROC-AUC": f"{metrics['roc_auc']:.4f}",
                 "Brier Score": f"{metrics['brier_score']:.4f}",
                 "Log Loss": f"{metrics['log_loss']:.4f}",
                 "ECE": f"{metrics['ece']:.4f}",
@@ -194,30 +195,33 @@ class OpponentTrainer:
 
         calib_df = pd.DataFrame([
             {
-                "Method": "Raw XGBoost",
+                "Method": "Raw XGBoost (Pre-calibration)",
+                "ROC-AUC": f"{m_raw['roc_auc']:.4f}",
+                "PR-AUC": f"{m_raw['pr_auc']:.4f}",
                 "Brier Score": f"{m_raw['brier_score']:.4f}",
                 "Log Loss": f"{m_raw['log_loss']:.4f}",
                 "ECE": f"{m_raw['ece']:.4f}",
                 "MCE": f"{m_raw['mce']:.4f}",
-                "ROC-AUC": f"{m_raw['roc_auc']:.4f}",
                 "F1": f"{m_raw['f1']:.4f}",
             },
             {
                 "Method": "Platt Scaling (Sigmoid)",
+                "ROC-AUC": f"{m_platt['roc_auc']:.4f}",
+                "PR-AUC": f"{m_platt['pr_auc']:.4f}",
                 "Brier Score": f"{m_platt['brier_score']:.4f}",
                 "Log Loss": f"{m_platt['log_loss']:.4f}",
                 "ECE": f"{m_platt['ece']:.4f}",
                 "MCE": f"{m_platt['mce']:.4f}",
-                "ROC-AUC": f"{m_platt['roc_auc']:.4f}",
                 "F1": f"{m_platt['f1']:.4f}",
             },
             {
                 "Method": "Isotonic Regression",
+                "ROC-AUC": f"{m_iso['roc_auc']:.4f}",
+                "PR-AUC": f"{m_iso['pr_auc']:.4f}",
                 "Brier Score": f"{m_iso['brier_score']:.4f}",
                 "Log Loss": f"{m_iso['log_loss']:.4f}",
                 "ECE": f"{m_iso['ece']:.4f}",
                 "MCE": f"{m_iso['mce']:.4f}",
-                "ROC-AUC": f"{m_iso['roc_auc']:.4f}",
                 "F1": f"{m_iso['f1']:.4f}",
             },
         ]).set_index("Method")

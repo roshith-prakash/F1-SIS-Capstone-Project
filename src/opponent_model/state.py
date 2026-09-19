@@ -1,7 +1,13 @@
 """
 src/opponent_model/state.py
 ===========================
-Opponent state vector definitions and builders.
+Opponent state vector definitions and builders conforming to F1 SIS architecture.
+Encapsulates:
+- Category A: Current Race State
+- Category B: Opponent Physical/Performance State
+- Category C: Our Car's (Ego) State
+- Opponent Temporal History (H_t)
+- Derived Strategic Features
 """
 
 from __future__ import annotations
@@ -16,6 +22,7 @@ from .features import (
     FEATURES_MODEL_A,
     FEATURES_MODEL_B,
     FEATURES_MODEL_C,
+    FEATURES_MODEL_EXTENDED,
     compute_derived_features,
 )
 
@@ -28,62 +35,136 @@ except ImportError:
 @dataclass
 class OpponentStateVector:
     """
-    Complete state vector for a single opponent driver at lap t (Task 29, Phase A2).
+    Complete state vector S_t for a single opponent driver at lap t.
+    Grounded in F1 SIS architecture with 3 explicit input categories,
+    opponent temporal history, and derived strategic signals.
     """
     # Identity
     race_id: str
     driver: str
     lap_number: int
 
-    # Observed state (raw)
+    # Category A: Current Race State
     remaining_laps: int
     race_progress_fraction: float
     position: int
-    tyre_compound: str
-    tyre_age: int
-    tyre_age_squared: float
-    laps_since_last_pit: int
-    pit_count: int
     gap_ahead: float
     gap_behind: float
-    last_lap_time: float
-    rolling_3_lap_avg: float
     is_safety_car: int
     is_vsc: int
     track_temp: float
     air_temp: float
     rainfall: int
+    pit_loss_seconds: float = 22.0
+    race_phase: str = "mid"  # "early", "mid", "late"
 
-    # Foundational model outputs
-    predicted_lap_time: float
-    predicted_degradation: float
-    predicted_lap_time_t1: float
-    predicted_degradation_t1: float
-    p_sc_h1: float
-    p_vsc_h1: float
-    p_sc_h3: float
+    # Category B: Opponent Physical & Performance State
+    tyre_compound: str = "MEDIUM"
+    tyre_age: int = 0
+    tyre_age_squared: float = 0.0
+    last_lap_time: float = 90.0
+    rolling_3_lap_avg: float = 90.0
+    predicted_lap_time: float = 90.0
+    predicted_degradation: float = 0.0
+    predicted_lap_time_t1: float = 90.1
+    predicted_degradation_t1: float = 0.05
+    p_sc_h1: float = 0.02
+    p_vsc_h1: float = 0.01
+    p_sc_h3: float = 0.05
 
-    # Derived strategic features
-    pace_delta: float
-    deg_rate_acceleration: float
-    cost_of_staying: float
-    pit_position_cost: float
-    gap_ratio: float
-    undercut_threat: int
-    overcut_window: int
-    tyre_life_fraction: float
-    laps_past_nominal: int
-    position_pressure: int
-    sc_adjusted_pit_cost: float
+    # Category C: Our Car's (Ego) State
+    ego_driver: str = ""
+    ego_position: int = 0
+    gap_to_ego: float = 0.0
+    ego_compound: str = "MEDIUM"
+    ego_tyre_age: int = 0
+    ego_predicted_pace: float = 90.0
+    ego_predicted_deg: float = 0.0
+    ego_recently_pitted: int = 0
+    ego_undercut_threat: int = 0
+
+    # Opponent Temporal History (H_t)
+    laps_since_last_pit: int = 0
+    pit_count: int = 0
+    recent_pace_trend: float = 0.0
+    recent_deg_trend: float = 0.0
+    previous_action: int = 0  # 0=STAY, 1=PIT
+
+    # Derived Strategic Features
+    pace_delta: float = 0.0
+    deg_rate_acceleration: float = 0.0
+    cost_of_staying: float = 0.0
+    pit_position_cost: float = 0.0
+    gap_ratio: float = 0.5
+    undercut_threat: int = 0
+    overcut_window: int = 0
+    tyre_life_fraction: float = 0.0
+    laps_past_nominal: int = 0
+    position_pressure: int = 0
+    sc_adjusted_pit_cost: float = 0.0
+
+    # -------------------------------------------------------------------------
+    # Explicit Semantic Properties (Tasks 3 & 4)
+    # -------------------------------------------------------------------------
+    @property
+    def opponent_predicted_lap_time(self) -> float:
+        """Explicit semantic alias for opponent's predicted lap time."""
+        return self.predicted_lap_time
+
+    @property
+    def opponent_predicted_degradation(self) -> float:
+        """Explicit semantic alias for opponent's predicted tyre degradation."""
+        return self.predicted_degradation
+
+    @property
+    def opponent_tyre_age(self) -> int:
+        """Explicit semantic alias for opponent's tyre age."""
+        return self.tyre_age
+
+    @property
+    def opponent_compound(self) -> str:
+        """Explicit semantic alias for opponent's tyre compound."""
+        return self.tyre_compound
+
+    @property
+    def ego_predicted_lap_time(self) -> float:
+        """Explicit semantic alias for ego car's predicted lap time."""
+        return self.ego_predicted_pace
+
+    @property
+    def ego_predicted_degradation(self) -> float:
+        """Explicit semantic alias for ego car's predicted tyre degradation."""
+        return self.ego_predicted_deg
+
+    @property
+    def gap_opponent_to_ego(self) -> float:
+        """Explicit semantic alias for gap from opponent to ego car in seconds."""
+        return self.gap_to_ego
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert state vector to standard dictionary."""
-        return asdict(self)
+        """Convert state vector to standard dictionary with explicit semantic aliases."""
+        d = asdict(self)
+        d["opponent_predicted_lap_time"] = self.predicted_lap_time
+        d["opponent_predicted_degradation"] = self.predicted_degradation
+        d["opponent_tyre_age"] = self.tyre_age
+        d["opponent_compound"] = self.tyre_compound
+        d["ego_predicted_lap_time"] = self.ego_predicted_pace
+        d["ego_predicted_degradation"] = self.ego_predicted_deg
+        d["gap_opponent_to_ego"] = self.gap_to_ego
+        return d
 
-    def to_feature_dict(self, model_version: str = "C") -> dict[str, float]:
+    def __iter__(self):
+        """Allow dict(vector) conversion for compatibility."""
+        return iter(self.to_dict().items())
+
+    def to_feature_dict(
+        self,
+        model_version: str = "C",
+        feature_names: list[str] | None = None,
+    ) -> dict[str, float]:
         """
         Convert to flat numerical feature dictionary with one-hot encoded compound.
-        Supports 'A' (Race State), 'B' (+ Foundational), 'C' (+ Derived).
+        Supports 'A', 'B', 'C', 'EXTENDED', or custom feature_names list.
         """
         d = self.to_dict()
 
@@ -93,10 +174,14 @@ class OpponentStateVector:
         d["compound_MEDIUM"] = 1.0 if compound_upper == "MEDIUM" else 0.0
         d["compound_HARD"] = 1.0 if compound_upper == "HARD" else 0.0
 
-        if model_version.upper() == "A":
+        if feature_names is not None:
+            cols = feature_names
+        elif model_version.upper() == "A":
             cols = FEATURES_MODEL_A
         elif model_version.upper() == "B":
             cols = FEATURES_MODEL_B
+        elif model_version.upper() == "EXTENDED":
+            cols = FEATURES_MODEL_EXTENDED
         else:
             cols = FEATURES_MODEL_C
 
@@ -106,15 +191,18 @@ class OpponentStateVector:
 def build_opponent_state(
     state: RaceState,
     driver: str,
+    ego_driver: str | None = None,
     lt_adapter: Any = None,
     tyre_adapter: Any = None,
     sc_adapter: Any = None,
     sc_models: tuple[Any, Any, list[str], list[str]] | None = None,
     field_median_lap_time: float | None = None,
     cached_sc_probs: dict[str, dict[int, float]] | None = None,
+    pit_loss_seconds: float = 22.0,
 ) -> OpponentStateVector | None:
     """
-    Build an OpponentStateVector from a live RaceState snapshot and foundational models.
+    Build an OpponentStateVector from a live RaceState snapshot, foundational models,
+    and Ego car state.
     """
     driver_code = driver.upper().strip()
     participant = state.participants.get(driver_code)
@@ -125,6 +213,14 @@ def build_opponent_state(
     total_laps = int(state.total_laps_expected or 57)
     remaining_laps = max(0, total_laps - current_lap)
     race_progress_fraction = float(current_lap / max(1, total_laps))
+
+    # Determine race phase
+    if race_progress_fraction < 0.33:
+        race_phase = "early"
+    elif race_progress_fraction < 0.67:
+        race_phase = "mid"
+    else:
+        race_phase = "late"
 
     cond = state.current_conditions
     is_sc = 1 if getattr(cond, "has_safety_car", False) else 0
@@ -146,7 +242,53 @@ def build_opponent_state(
     last_lap_time = float(participant.last_lap_time_seconds or 90.0)
     rolling_3_lap_avg = float(participant.rolling_3_lap_avg or last_lap_time)
 
-    # Foundational Model 1: Lap Time
+    # Opponent history trends
+    recent_pace_trend = float(rolling_3_lap_avg - last_lap_time)  # positive = getting slower
+    previous_action = 1 if laps_since_last_pit == 1 else 0
+
+    # -------------------------------------------------------------------------
+    # Category C: Our Car's (Ego) State Resolution
+    # -------------------------------------------------------------------------
+    ego_code = ""
+    ego_participant = None
+    if ego_driver:
+        ego_code = ego_driver.upper().strip()
+        ego_participant = state.participants.get(ego_code)
+
+    # If no ego_driver specified or invalid, pick the nearest competitor
+    if ego_participant is None:
+        opp_pos = int(participant.position or 10)
+        closest_p = None
+        min_pos_diff = 999
+        for p_code, p in state.participants.items():
+            if p_code != driver_code and p.is_active and p.position is not None:
+                diff = abs(int(p.position) - opp_pos)
+                if diff < min_pos_diff:
+                    min_pos_diff = diff
+                    closest_p = p
+                    ego_code = p_code
+        ego_participant = closest_p
+
+    ego_position = int(ego_participant.position or 0) if ego_participant else 0
+    ego_compound = str(ego_participant.compound or "MEDIUM").strip().upper() if ego_participant else "MEDIUM"
+    ego_tyre_age = int(ego_participant.tyre_life or 0) if ego_participant else 0
+    ego_laps_since_pit = int(ego_participant.laps_since_last_pit or ego_tyre_age) if ego_participant else 0
+    ego_recently_pitted = 1 if ego_laps_since_pit <= 2 else 0
+
+    # Calculate gap to ego (in seconds)
+    gap_to_ego = 0.0
+    if ego_participant and participant.position is not None and ego_participant.position is not None:
+        if participant.position < ego_participant.position:
+            # Opponent is ahead of Ego: gap is positive
+            gap_to_ego = float(gap_behind) if (int(ego_participant.position) == int(participant.position) + 1) else float(abs(participant.position - ego_participant.position) * 2.0)
+        elif participant.position > ego_participant.position:
+            # Opponent is behind Ego: gap is negative
+            gap_to_ego = -float(gap_ahead) if (int(ego_participant.position) == int(participant.position) - 1) else -float(abs(participant.position - ego_participant.position) * 2.0)
+
+    # -------------------------------------------------------------------------
+    # Foundational Models Integration
+    # -------------------------------------------------------------------------
+    # 1. Lap-Time Model
     predicted_lap_time = 0.0
     predicted_lap_time_t1 = 0.0
     if lt_adapter is not None:
@@ -156,7 +298,6 @@ def build_opponent_state(
         except Exception:
             predicted_lap_time = rolling_3_lap_avg
 
-        # Approximate t+1 by incrementing tyre_life and lap_number
         try:
             orig_life = participant.tyre_life
             participant.tyre_life = (orig_life or 0) + 1
@@ -169,7 +310,16 @@ def build_opponent_state(
         predicted_lap_time = rolling_3_lap_avg
         predicted_lap_time_t1 = rolling_3_lap_avg + 0.1
 
-    # Foundational Model 2: Tyre Degradation
+    # Ego predicted pace
+    ego_predicted_pace = 90.0
+    if lt_adapter is not None and ego_code:
+        try:
+            p_lt = lt_adapter.predict_lap_time(state, ego_code)
+            ego_predicted_pace = float(p_lt) if p_lt is not None else 90.0
+        except Exception:
+            ego_predicted_pace = 90.0
+
+    # 2. Tyre Degradation Model
     predicted_degradation = 0.0
     predicted_degradation_t1 = 0.0
     if tyre_adapter is not None:
@@ -188,7 +338,16 @@ def build_opponent_state(
         except Exception:
             predicted_degradation_t1 = predicted_degradation + 0.05
 
-    # Foundational Model 3: SC Risk
+    # Ego predicted deg
+    ego_predicted_deg = 0.0
+    if tyre_adapter is not None and ego_code:
+        try:
+            deg = tyre_adapter.predict_degradation(state, ego_code)
+            ego_predicted_deg = float(deg) if deg is not None else 0.0
+        except Exception:
+            ego_predicted_deg = 0.0
+
+    # 3. SC Risk Model
     p_sc_h1 = 0.0
     p_vsc_h1 = 0.0
     p_sc_h3 = 0.0
@@ -232,6 +391,10 @@ def build_opponent_state(
         predicted_degradation=predicted_degradation,
         predicted_degradation_t1=predicted_degradation_t1,
         p_sc_h1=p_sc_h1,
+        pit_loss=pit_loss_seconds,
+        gap_to_ego=gap_to_ego,
+        ego_tyre_age=ego_tyre_age,
+        ego_recently_pitted=ego_recently_pitted,
     )
 
     race_id = str(state.race_id or f"{state.year}_{state.grand_prix}")
@@ -243,20 +406,20 @@ def build_opponent_state(
         remaining_laps=remaining_laps,
         race_progress_fraction=race_progress_fraction,
         position=int(participant.position or 10),
-        tyre_compound=tyre_compound,
-        tyre_age=tyre_age,
-        tyre_age_squared=tyre_age_squared,
-        laps_since_last_pit=laps_since_last_pit,
-        pit_count=pit_count,
         gap_ahead=gap_ahead,
         gap_behind=gap_behind,
-        last_lap_time=last_lap_time,
-        rolling_3_lap_avg=rolling_3_lap_avg,
         is_safety_car=is_sc,
         is_vsc=is_vsc,
         track_temp=track_temp,
         air_temp=air_temp,
         rainfall=rainfall,
+        pit_loss_seconds=pit_loss_seconds,
+        race_phase=race_phase,
+        tyre_compound=tyre_compound,
+        tyre_age=tyre_age,
+        tyre_age_squared=tyre_age_squared,
+        last_lap_time=last_lap_time,
+        rolling_3_lap_avg=rolling_3_lap_avg,
         predicted_lap_time=predicted_lap_time,
         predicted_degradation=predicted_degradation,
         predicted_lap_time_t1=predicted_lap_time_t1,
@@ -264,6 +427,20 @@ def build_opponent_state(
         p_sc_h1=p_sc_h1,
         p_vsc_h1=p_vsc_h1,
         p_sc_h3=p_sc_h3,
+        ego_driver=ego_code,
+        ego_position=ego_position,
+        gap_to_ego=gap_to_ego,
+        ego_compound=ego_compound,
+        ego_tyre_age=ego_tyre_age,
+        ego_predicted_pace=ego_predicted_pace,
+        ego_predicted_deg=ego_predicted_deg,
+        ego_recently_pitted=ego_recently_pitted,
+        ego_undercut_threat=int(derived.get("ego_undercut_threat", 0)),
+        laps_since_last_pit=laps_since_last_pit,
+        pit_count=pit_count,
+        recent_pace_trend=recent_pace_trend,
+        recent_deg_trend=derived["deg_rate_acceleration"],
+        previous_action=previous_action,
         pace_delta=derived["pace_delta"],
         deg_rate_acceleration=derived["deg_rate_acceleration"],
         cost_of_staying=derived["cost_of_staying"],

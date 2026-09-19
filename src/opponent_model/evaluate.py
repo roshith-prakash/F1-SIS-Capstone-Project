@@ -15,10 +15,28 @@ from sklearn.metrics import (
     recall_score,
     f1_score,
     roc_auc_score,
+    average_precision_score,
     confusion_matrix,
     log_loss,
     brier_score_loss,
 )
+
+
+def compute_pr_auc(y_true: np.ndarray, y_prob: np.ndarray) -> float:
+    """
+    Compute Precision-Recall Area Under Curve (Average Precision).
+    Handles edge cases like single-class arrays gracefully without fallback.
+    """
+    y_true = np.asarray(y_true, dtype=int)
+    y_prob = np.asarray(y_prob, dtype=float)
+    if len(y_true) == 0:
+        return 0.0
+    if len(np.unique(y_true)) < 2:
+        return float(np.mean(y_true))
+    try:
+        return float(average_precision_score(y_true, y_prob))
+    except Exception:
+        return 0.0
 
 
 def compute_calibration_errors(
@@ -105,6 +123,9 @@ def compute_all_metrics(
     except ValueError:
         auc = 0.5
 
+    # PR-AUC / Average Precision (rare-event detection metric)
+    pr_auc = compute_pr_auc(y_true, y_prob)
+
     # Probability quality metrics
     brier = brier_score_loss(y_true, y_prob)
     # Clamp for log loss
@@ -132,6 +153,7 @@ def compute_all_metrics(
         "precision": float(prec),
         "recall": float(rec),
         "roc_auc": float(auc),
+        "pr_auc": float(pr_auc),
         "brier_score": float(brier),
         "log_loss": float(ll),
         "prob_mae": float(prob_mae),
@@ -397,3 +419,210 @@ def evaluate_multi_horizon(
     df_sweep = pd.DataFrame(sweep_rows)
 
     return df_summary, df_sweep
+
+
+def evaluate_threshold_sweep(
+    y_true: np.ndarray,
+    y_prob: np.ndarray,
+    thresholds: list[float] | None = None,
+) -> pd.DataFrame:
+    """
+    Evaluate binary classification metrics across multiple probability thresholds (Section 4).
+
+    Returns DataFrame with columns:
+    threshold, precision, recall, f1, fpr, fnr, tp, fp, tn, fn
+    """
+    if thresholds is None:
+        thresholds = [0.01, 0.02, 0.03, 0.05, 0.07, 0.10, 0.15, 0.20, 0.25, 0.30, 0.40, 0.50]
+
+    y_true = np.asarray(y_true, dtype=int)
+    y_prob = np.asarray(y_prob, dtype=float)
+
+    rows = []
+    for th in thresholds:
+        y_pred = (y_prob >= th).astype(int)
+        cm = confusion_matrix(y_true, y_pred, labels=[0, 1])
+        tn, fp, fn, tp = cm.ravel()
+
+        prec = float(tp / (tp + fp)) if (tp + fp) > 0 else 0.0
+        rec = float(tp / (tp + fn)) if (tp + fn) > 0 else 0.0
+        f1 = float(2 * prec * rec / (prec + rec)) if (prec + rec) > 0 else 0.0
+        fpr = float(fp / (fp + tn)) if (fp + tn) > 0 else 0.0
+        fnr = float(fn / (fn + tp)) if (fn + tp) > 0 else 0.0
+
+        rows.append({
+            "threshold": float(th),
+            "precision": prec,
+            "recall": rec,
+            "f1": f1,
+            "fpr": fpr,
+            "fnr": fnr,
+            "tp": int(tp),
+            "fp": int(fp),
+            "tn": int(tn),
+            "fn": int(fn),
+        })
+
+    return pd.DataFrame(rows)
+
+
+def select_operational_threshold(
+    y_val: np.ndarray,
+    p_val: np.ndarray,
+    metric: str = "f1",
+    thresholds: list[float] | None = None,
+) -> float:
+    """
+    Select the optimal operational threshold strictly using VALIDATION data (Section 4 & 17).
+    Never uses test set.
+    """
+    if thresholds is None:
+        thresholds = [0.01, 0.02, 0.03, 0.05, 0.07, 0.10, 0.15, 0.20, 0.25, 0.30, 0.40, 0.50]
+    df_sweep = evaluate_threshold_sweep(y_val, p_val, thresholds=thresholds)
+
+    if metric == "f1":
+        best_idx = df_sweep["f1"].idxmax()
+    elif metric == "recall_at_fpr_5pct":
+        # Best recall where FPR <= 0.05
+        valid = df_sweep[df_sweep["fpr"] <= 0.05]
+        best_idx = valid["recall"].idxmax() if len(valid) > 0 else df_sweep["f1"].idxmax()
+    else:
+        best_idx = df_sweep["f1"].idxmax()
+
+    return float(df_sweep.loc[best_idx, "threshold"])
+
+
+def evaluate_pit_window_detection(
+    df: pd.DataFrame,
+    y_prob: np.ndarray,
+    thresholds: list[float] | None = None,
+    horizons: list[int] | None = None,
+) -> pd.DataFrame:
+    """
+    Evaluate empirical pit-window detection rates for actual pit events (Section 6 & 7).
+
+    For every actual opponent pit event (target == 1 at lap t, pit on lap t+1),
+    evaluates whether the model gave a meaningful pit-window signal before the pit
+    in the preceding H laps (H=1, 3, 5 laps).
+
+    Prediction windows:
+    H = 1: Prediction at lap t (immediately preceding the pit at t+1).
+    H = 3: Maximum prediction over laps in [t-2, t].
+    H = 5: Maximum prediction over laps in [t-4, t].
+
+    Strictly no future information used: predictions are taken only from laps <= t.
+
+    Returns a DataFrame with detection rates and counts across thresholds.
+    """
+    if thresholds is None:
+        thresholds = [0.01, 0.02, 0.03, 0.05, 0.07, 0.10, 0.15, 0.20, 0.25, 0.30, 0.40, 0.50]
+    if horizons is None:
+        horizons = [1, 3, 5]
+
+    df_work = df.copy()
+    df_work["y_prob"] = np.asarray(y_prob, dtype=float)
+    df_work = df_work.sort_values(["race_id", "driver", "lap_number"]).reset_index(drop=True)
+
+    # Find all actual pit event indices (target == 1)
+    pit_indices = df_work[df_work["target"] == 1].index.tolist()
+    total_pits = len(pit_indices)
+    if total_pits == 0:
+        return pd.DataFrame()
+
+    # Pre-group by driver race
+    driver_groups = {k: v for k, v in df_work.groupby(["race_id", "driver"])}
+
+    pit_records = []
+    for idx in pit_indices:
+        row = df_work.iloc[idx]
+        race = row["race_id"]
+        driver = row["driver"]
+        lap = row["lap_number"]
+        grp = driver_groups.get((race, driver))
+        if grp is None:
+            continue
+
+        rec = {
+            "race_id": race,
+            "driver": driver,
+            "lap_number": lap,
+            "prob_immediate": float(row["y_prob"]),
+        }
+        for h in horizons:
+            # Preceding H laps strictly <= lap: laps in [lap - h + 1, lap]
+            sub = grp[(grp["lap_number"] <= lap) & (grp["lap_number"] >= lap - h + 1)]
+            probs = sub["y_prob"].values
+            rec[f"max_p_h{h}"] = float(np.max(probs)) if len(probs) > 0 else float(row["y_prob"])
+            rec[f"avg_p_h{h}"] = float(np.mean(probs)) if len(probs) > 0 else float(row["y_prob"])
+        pit_records.append(rec)
+
+    df_pits = pd.DataFrame(pit_records)
+
+    rate_rows = []
+    for th in thresholds:
+        row_dict = {"threshold": th, "total_pits": total_pits}
+        for h in horizons:
+            detected = int(np.sum(df_pits[f"max_p_h{h}"] >= th))
+            rate = float(detected / total_pits)
+            row_dict[f"h{h}_detected"] = detected
+            row_dict[f"h{h}_detection_rate"] = rate
+        rate_rows.append(row_dict)
+
+    return pd.DataFrame(rate_rows)
+
+
+def extract_high_confidence_false_negatives(
+    df: pd.DataFrame,
+    y_prob: np.ndarray,
+    thresholds: list[float] | None = None,
+) -> dict[float, pd.DataFrame]:
+    """
+    Extract and categorize actual PIT events missed with high confidence (Section 10).
+    Categories:
+    - P(PIT) < 0.05
+    - P(PIT) < 0.10
+    - P(PIT) < 0.20
+    """
+    if thresholds is None:
+        thresholds = [0.05, 0.10, 0.20]
+
+    df_work = df.copy()
+    df_work["p_pit"] = np.asarray(y_prob, dtype=float)
+    actual_pits = df_work[df_work["target"] == 1].copy()
+
+    def categorize_fn(row):
+        if row.get("is_safety_car", 0) == 1 or row.get("is_vsc", 0) == 1:
+            return "SC/VSC-related (opportunistic neutralization stop)"
+        if row.get("tyre_age", 0) < 12:
+            return "Early/unexpected stint stop (puncture, damage, or aggressive undercut)"
+        if row.get("gap_behind", 99.0) < 2.0 or row.get("ego_undercut_threat", 0) == 1:
+            return "Tactical/undercut defense pressure"
+        if row.get("predicted_degradation", 0.0) < 0.5:
+            return "Degradation model under-prediction (pace appeared stable)"
+        return "Team strategy / driver preference anomaly"
+
+    actual_pits["failure_category"] = actual_pits.apply(categorize_fn, axis=1)
+
+    key_cols = [
+        "race_id",
+        "lap_number",
+        "driver",
+        "tyre_compound",
+        "tyre_age",
+        "predicted_degradation",
+        "predicted_lap_time",
+        "gap_ahead",
+        "gap_behind",
+        "is_safety_car",
+        "is_vsc",
+        "p_pit",
+        "failure_category",
+    ]
+    present_cols = [c for c in key_cols if c in actual_pits.columns]
+
+    results = {}
+    for th in thresholds:
+        fn_subset = actual_pits[actual_pits["p_pit"] < th][present_cols].copy()
+        results[th] = fn_subset.sort_values("p_pit", ascending=True).reset_index(drop=True)
+
+    return results

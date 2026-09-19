@@ -293,10 +293,11 @@ def generate_all_14_figures(
     fig = plt.figure(figsize=(24, 28), facecolor=F1_BG_COLOR)
     gs = fig.add_gridspec(5, 3, hspace=0.35, wspace=0.25)
 
+    y_test_arr = np.asarray(getattr(y_test, "values", y_test))
     y_pred = (calib_probs >= 0.5).astype(int)
     from .evaluate import compute_calibration_errors
-    _, _, raw_bins = compute_calibration_errors(y_test, raw_probs)
-    _, _, calib_bins = compute_calibration_errors(y_test, calib_probs)
+    _, _, raw_bins = compute_calibration_errors(y_test_arr, raw_probs)
+    _, _, calib_bins = compute_calibration_errors(y_test_arr, calib_probs)
 
     ax1 = fig.add_subplot(gs[0, 0])
     plot_confusion_matrix(y_test, y_pred, ax1)

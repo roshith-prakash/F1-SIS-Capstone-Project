@@ -44,11 +44,11 @@ The model beats the empirical baseline Brier score (~0.0475), indicating true pr
 - **Maximum Calibration Error (MCE):** 1.0000
 
 ### Calibration Comparison (Test Set 2025):
-| Method | Brier Score | Log Loss | ECE | MCE | ROC-AUC | F1 |
-| --- | --- | --- | --- | --- | --- | --- |
-| Raw XGBoost | 0.0843 | 0.2719 | 0.1507 | 0.6275 | 0.7949 | 0.1880 |
-| Platt Scaling (Sigmoid) | 0.0266 | 0.1133 | 0.0021 | 0.0297 | 0.7949 | 0.0000 |
-| Isotonic Regression | 0.0267 | 0.1147 | 0.0021 | 1.0000 | 0.7949 | 0.0291 |
+| Method | ROC-AUC | PR-AUC | Brier Score | Log Loss | ECE | MCE | F1 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Raw XGBoost (Pre-calibration) | 0.7949 | 0.1458 | 0.0843 | 0.2719 | 0.1507 | 0.6275 | 0.1880 |
+| Platt Scaling (Sigmoid) | 0.7949 | 0.1458 | 0.0266 | 0.1133 | 0.0021 | 0.0297 | 0.0000 |
+| Isotonic Regression | 0.7949 | 0.1371 | 0.0267 | 0.1147 | 0.0021 | 1.0000 | 0.0291 |
 
 ---
 
@@ -57,11 +57,11 @@ The model beats the empirical baseline Brier score (~0.0475), indicating true pr
 **Answer: Empirical Finding from Ablation Study.**
 Comparing Model A (Race State Only), Model B (+ Foundational Models), and Model C (+ Derived Strategic Features):
 
-| Model | Accuracy | F1 | Precision | Recall | ROC-AUC | Brier Score | Log Loss | ECE | Action Error |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Model A (Race State Only) | 0.8386 | 0.1731 | 0.1017 | 0.5789 | 0.7938 | 0.1071 | 0.3314 | 0.1851 | 0.1614 |
-| Model B (+ Foundational Models) | 0.8712 | 0.1936 | 0.1184 | 0.5299 | 0.7953 | 0.0888 | 0.2849 | 0.1577 | 0.1288 |
-| Model C (+ Derived Strategic) | 0.8753 | 0.1880 | 0.1161 | 0.4946 | 0.7949 | 0.0843 | 0.2719 | 0.1507 | 0.1247 |
+| Model | ROC-AUC | PR-AUC | Accuracy | F1 | Precision | Recall | Brier Score | Log Loss | ECE | Action Error |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Model A (Race State Only) | 0.7938 | 0.1249 | 0.8386 | 0.1731 | 0.1017 | 0.5789 | 0.1071 | 0.3314 | 0.1851 | 0.1614 |
+| Model B (+ Foundational Models) | 0.7953 | 0.1325 | 0.8712 | 0.1936 | 0.1184 | 0.5299 | 0.0888 | 0.2849 | 0.1577 | 0.1288 |
+| Model C (+ Derived Strategic) | 0.7949 | 0.1458 | 0.8753 | 0.1880 | 0.1161 | 0.4946 | 0.0843 | 0.2719 | 0.1507 | 0.1247 |
 
 - Incorporating foundational models (LapTime pace, TyreDeg degradation pace, and SCRisk hazard) improves the model's ability to identify degradation cliffs and safety car opportunity windows.
 - Derived features (pace delta, deg acceleration, gap ratio) further sharpen discrimination.

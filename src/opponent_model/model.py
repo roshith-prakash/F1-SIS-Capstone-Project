@@ -112,20 +112,59 @@ class OpponentModel:
                 "confidence": float,
             }
         """
-        # Convert state vector if dataclass
-        if isinstance(opponent_state, OpponentStateVector):
+        # Convert state vector if dataclass, object with to_dict, or dict
+        if hasattr(opponent_state, "to_dict"):
             state_dict = opponent_state.to_dict()
-            feat_dict = opponent_state.to_feature_dict("C")
-        else:
+            if hasattr(opponent_state, "to_feature_dict"):
+                feat_dict = opponent_state.to_feature_dict(feature_names=self.feature_names)
+            else:
+                feat_dict = {col: float(state_dict.get(col, 0.0)) for col in self.feature_names}
+        elif isinstance(opponent_state, dict):
             state_dict = dict(opponent_state)
-            feat_dict = {}
             # One-hot encode compound if missing
             comp = str(state_dict.get("tyre_compound", "MEDIUM")).strip().upper()
             state_dict["compound_SOFT"] = 1.0 if comp == "SOFT" else 0.0
             state_dict["compound_MEDIUM"] = 1.0 if comp == "MEDIUM" else 0.0
             state_dict["compound_HARD"] = 1.0 if comp == "HARD" else 0.0
-            for col in self.feature_names:
-                feat_dict[col] = float(state_dict.get(col, 0.0))
+
+            # Ensure reasonable pace if missing
+            pred_lt = float(state_dict.get("predicted_lap_time", 90.0))
+            if "last_lap_time" not in state_dict or float(state_dict.get("last_lap_time", 0.0)) <= 0.0:
+                state_dict["last_lap_time"] = pred_lt
+            if "rolling_3_lap_avg" not in state_dict or float(state_dict.get("rolling_3_lap_avg", 0.0)) <= 0.0:
+                state_dict["rolling_3_lap_avg"] = pred_lt
+            if "tyre_age_squared" not in state_dict:
+                state_dict["tyre_age_squared"] = float(state_dict.get("tyre_age", 0) ** 2)
+
+            # If derived strategic features missing, compute them
+            if "cost_of_staying" not in state_dict:
+                from .features import compute_derived_features
+                derived = compute_derived_features(
+                    tyre_compound=comp,
+                    tyre_age=float(state_dict.get("tyre_age", 0)),
+                    gap_ahead=float(state_dict.get("gap_ahead", 10.0)),
+                    gap_behind=float(state_dict.get("gap_behind", 10.0)),
+                    position=int(state_dict.get("position", 5)),
+                    predicted_lap_time=pred_lt,
+                    field_median_lap_time=float(state_dict.get("field_median_lap_time", pred_lt)),
+                    predicted_degradation=float(state_dict.get("predicted_degradation", 0.0)),
+                    predicted_degradation_t1=float(state_dict.get("predicted_degradation_t1", state_dict.get("predicted_degradation", 0.0))),
+                    p_sc_h1=float(state_dict.get("p_sc_h1", 0.0)),
+                    pit_loss=float(state_dict.get("pit_loss_seconds", 22.0)),
+                    gap_to_ego=float(state_dict.get("gap_to_ego", 0.0)),
+                    ego_tyre_age=float(state_dict.get("ego_tyre_age", 0.0)),
+                    ego_recently_pitted=int(state_dict.get("ego_recently_pitted", 0)),
+                )
+                state_dict.update(derived)
+
+            feat_dict = {col: float(state_dict.get(col, 0.0)) for col in self.feature_names}
+        else:
+            try:
+                state_dict = dict(opponent_state)
+                feat_dict = {col: float(state_dict.get(col, 0.0)) for col in self.feature_names}
+            except Exception:
+                state_dict = {}
+                feat_dict = {col: 0.0 for col in self.feature_names}
 
         # Model Inference
         df_row = pd.DataFrame([feat_dict])[self.feature_names].fillna(0.0)
@@ -138,11 +177,21 @@ class OpponentModel:
             # Fallback empirical estimate
             p_ml = 0.05
 
-        # Bayesian Online Updating Layer
+        # Bayesian Online Updating Layer (Online Evidence: pace residual anomaly & stint extension)
         if self.enable_bayesian and self.bayesian_updater is not None:
             tyre_age = state_dict.get("tyre_age", 0)
             compound = state_dict.get("tyre_compound", "MEDIUM")
-            p_pit = float(self.bayesian_updater.update(p_ml, tyre_age, compound))
+            pace_res = float(state_dict.get("last_lap_time", 90.0) - state_dict.get("predicted_lap_time", 90.0))
+            laps_past = float(state_dict.get("laps_past_nominal", 0.0))
+            p_pit = float(
+                self.bayesian_updater.update(
+                    p_ml=p_ml,
+                    tyre_age=tyre_age,
+                    compound=compound,
+                    pace_residual=pace_res,
+                    laps_past_nominal=laps_past,
+                )
+            )
         else:
             p_pit = float(p_ml)
 
@@ -156,22 +205,54 @@ class OpponentModel:
         predicted_deg = float(state_dict.get("predicted_degradation", 0.0))
 
         # Multi-horizon pit probabilities using survival hazard formulation:
-        # P(pit within n laps) = 1 - (1 - h_t)^n
+        # P(pit within n laps) = 1 - (1 - h_t)^n (derived constant-hazard approximation)
         p_pit_3 = float(1.0 - (1.0 - p_pit) ** 3)
         p_pit_5 = float(1.0 - (1.0 - p_pit) ** 5)
+
+        # Operational alert levels (derived on validation: LOW < 0.05, MED 0.05-0.15, HIGH >= 0.15)
+        alert_level = "LOW" if p_pit < 0.05 else ("MEDIUM" if p_pit < 0.15 else "HIGH")
 
         return {
             "p_pit": p_pit,
             "p_stay": p_stay,
+            "p_pit_next": p_pit,
+            "p_stay_next": p_stay,
+            "p_pit_3": p_pit_3,
+            "p_pit_5": p_pit_5,
+            "pit_alert_level": alert_level,
             "p_pit_next_lap": p_pit,
             "p_stay_next_lap": p_stay,
             "p_pit_window_3laps": p_pit_3,
             "p_pit_window_5laps": p_pit_5,
+            "p_pit_window_3laps_approx": p_pit_3,
+            "p_pit_window_5laps_approx": p_pit_5,
+            "multi_horizon_method": "derived_constant_hazard_survival_approximation",
             "horizons": {1: p_pit, 3: p_pit_3, 5: p_pit_5},
             "predicted_pace": predicted_pace,
             "predicted_degradation": predicted_deg,
+            "opponent_predicted_lap_time": predicted_pace,
+            "opponent_predicted_degradation": predicted_deg,
             "confidence": confidence,
         }
+
+    def predict_opponent(
+        self,
+        state: Any,
+        opponent_driver: str | None = None,
+        ego_driver: str | None = None,
+        horizons: list[int] | None = None,
+        include_explanation: bool = True,
+    ) -> dict[str, Any]:
+        """Convenience method matching the Strategy Engine interface."""
+        from .interface import predict_opponent
+        return predict_opponent(
+            state=state,
+            opponent_driver=opponent_driver,
+            ego_driver=ego_driver,
+            model=self,
+            horizons=horizons,
+            include_explanation=include_explanation,
+        )
 
     def predict_batch(self, states: list[dict[str, Any] | OpponentStateVector]) -> list[dict[str, Any]]:
         """Vectorized batch prediction for Monte Carlo rollout efficiency."""

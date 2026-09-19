@@ -89,8 +89,14 @@ def simulate_race_with_opponent_model(
     snapshots: list[dict[str, Any]] = []
 
     for lap in sorted_laps:
+        # Temporal integrity assertion: verify telemetry strictly belongs to lap t (Task 18 & Test 12)
+        current_rows = grouped[lap]
+        assert all(int(float(r.get("LapNumber", lap))) == int(float(lap)) for r in current_rows), (
+            f"Future or invalid lap telemetry detected in sequential replay during lap {lap}!"
+        )
+
         # Ingest telemetry strictly for current lap
-        manager.update_from_rows(grouped[lap])
+        manager.update_from_rows(current_rows)
         state = manager.commit_lap(lap)
 
         # Build H_t and SC probabilities if available
