@@ -1,0 +1,5 @@
+{
+  "model_version": "C",
+  "best_calibrator": "isotonic",
+  "feature_count": 38
+}

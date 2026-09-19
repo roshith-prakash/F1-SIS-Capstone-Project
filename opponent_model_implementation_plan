@@ -1,0 +1,1040 @@
+# Block A — Opponent Model: Implementation Plan
+
+## Background & Goal
+
+This plan covers the design and implementation of the **F1 SIS Opponent Model**, which produces calibrated per-lap probabilities `P(PIT | state_t)` and `P(STAY | state_t)` for each opponent. These probabilities feed directly into the Monte Carlo Strategy Engine.
+
+The plan is grounded in a complete inspection of the existing codebase. All model interfaces and data schemas described here reflect what actually exists — no outputs have been invented.
+
+---
+
+## TASK 1 — Foundational Model Inspection
+
+### 1A. Lap-Time Model ([`lap_time/adapter.py`](file:///c:/Roshith/Projects/F1-SIS/src/lap_time/adapter.py))
+
+**Model type:** scikit-learn regressor (loaded from `laptime_model.pkl`)  
+**Training data:** 2018–2024 races (from `f1_consolidated_data.csv` and per-race CSVs)
+
+**Inputs (15 features):**
+
+| Feature | Description | Unit |
+|---|---|---|
+| `Track_encoded` | LabelEncoded circuit | int |
+| `Team_encoded` | LabelEncoded constructor | int |
+| `LapNumber` | Absolute race lap | int |
+| `TyreLife` | Tyre age | laps |
+| `tyre_age_squared` | Non-linear degradation proxy | laps² |
+| `Compound_HARD/MEDIUM/SOFT` | One-hot compound flags | binary |
+| `fuel_load` | 110 × (1 − lap/total) | kg |
+| `race_progress_pct` | lap/total × 100 | % |
+| `stint_number` | Stint index | int |
+| `is_fresh_tyre` | Was tyre new at start of stint | binary |
+| `Position` | Current race position | int |
+| `fuel_tyre_interaction` | (fuel_load/110) × tyre_life | composite |
+| `Event_Dry_Base` | Calibrated circuit dry lap baseline | seconds |
+
+**Outputs:**
+
+- `predict_lap_time(state, driver)` → `float` (seconds) — predicted total dry lap time
+- `predict_all(state)` → `dict[driver_code → float]` (seconds) — batch for all active drivers
+- Internal: predicts `delta_from_dry_base`; final = `Event_Dry_Base + delta`
+- Includes **dynamic calibration** from observed clean green-flag laps
+
+**Horizon:** current lap (single-lap prediction, not multi-lap rollout)  
+**Can apply to opponent:** ✅ Yes — `predict_lap_time(state, opponent_code)` works for any driver in the state  
+**Predicts future lap time:** ❌ Not directly. It predicts expected pace for the **current lap's conditions** (tyre age, compound, lap number). You can approximate `t+k` by incrementing `TyreLife` and `LapNumber` manually.  
+**Pace relative to another car:** ❌ Not built in, but derivable: `predict_lap_time(state, opp) - predict_lap_time(state, ego)`  
+**Uncertainty:** ❌ No prediction intervals from this model (point estimate only)  
+**Wet/Intermediate:** Returns `None` — model is dry-compound only
+
+---
+
+### 1B. Tyre Degradation Model ([`tyre_deg/adapter.py`](file:///c:/Roshith/Projects/F1-SIS/src/tyre_deg/adapter.py))
+
+**Model type:** XGBoost regressor (`xgboost_baseline.json`)  
+**Target:** `Target_Tyre_Degradation` = pure tyre-degradation pace deficit (seconds) relative to fuel-corrected benchmark  
+**Test performance:** MAE = 0.423 s/lap, RMSE = 0.712 s/lap, R² = 0.844 (2025 holdout)
+
+**Inputs (12 features):**
+
+| Feature | Description | Unit |
+|---|---|---|
+| `TyreAge` | Tyre age (laps) | laps |
+| `Log_TyreAge` | log1p(TyreAge) | — |
+| `StintLap` | Laps since last pit + 1 | laps |
+| `Compound_Encoded` | Ordinal: SOFT=1, MEDIUM=2, HARD=3 | int |
+| `RaceProgressFraction` | current_lap / total_laps | [0,1] |
+| `TrackTemp` | Track surface temperature | °C |
+| `AirTemp` | Ambient air temperature | °C |
+| `is_safety_car` | SC deployed this lap | binary |
+| `is_vsc` | VSC deployed this lap | binary |
+| `Lag1_Pace_Residual` | Pace residual from 1 lap ago | seconds |
+| `Rolling3_Degradation_Trend` | Linear slope of last 3-lap residuals | s/lap |
+| `Team_Median_Pace_Lag1` | Team historical pace prior | seconds |
+
+**Outputs:**
+
+- `predict_degradation(state, driver)` → `float` (seconds) — pure tyre degradation component
+- `predict_all(state)` → `dict[driver_code → float]` — batch
+- `predict_lap_time(state, driver)` → `float` — `base + fuel_penalty + degradation`
+- `observe_lap(state)` — call every lap boundary to update internal residual history
+
+**Compounds supported:** SOFT, MEDIUM, HARD (wet/inter return valid values but are mechanically excluded from the model's meaningful range)  
+**Tyre-age dependency:** ✅ Explicit via `TyreAge` and `Log_TyreAge`; `Rolling3_Degradation_Trend` captures acceleration of degradation  
+**Uncertainty:** ❌ Point estimate only  
+**Can apply to opponent:** ✅ Yes — works for any driver in state  
+**Future degradation:** ❌ Not directly. Can approximate by advancing `TyreAge` manually.
+
+---
+
+### 1C. Safety Car / Race-State Model ([`sc_risk/adapter.py`](file:///c:/Roshith/Projects/F1-SIS/src/sc_risk/adapter.py) + `SC_Risk_Estimation.ipynb`)
+
+**Model type:** Logistic Regression hazard model (primary), XGBoost with Platt calibration (higher-horizon)  
+**Training seasons:** 2018–2023  **Validation:** 2024  **Test:** 2025  
+
+**`SCRiskAdapter.build_H_t(state)`** produces an 8-feature dict:
+
+| Feature | Description | Unit |
+|---|---|---|
+| `logit_p_sc_hist` | Logit of historical SC rate for this circuit × progress bin | logit |
+| `logit_p_vsc_hist` | Logit of historical VSC rate for this circuit × progress bin | logit |
+| `close_battles` | Count of gaps < 1 s between adjacent cars | count |
+| `field_spread` | Std dev of gap-to-leader across field | seconds |
+| `sector_anomaly_score` | Max sector slowdown vs. rolling median (anomaly signal) | fraction |
+| `recent_retirements` | New retirements in last 3 laps | count |
+| `yellow_last3` | Sum of yellow-flag laps in last 3 laps | count |
+| `sc_count_cumul` | Cumulative SC deployments so far in race | count |
+
+**`get_fcy_probabilities(H_t, logit_sc, logit_vsc, X_sc, X_vsc)`** returns:
+
+```python
+{
+    'SC':  {1: 0.03, 3: 0.08, 5: 0.14, 10: 0.25},   # P(SC within n laps)
+    'VSC': {1: 0.02, 3: 0.06, 5: 0.10, 10: 0.18},
+}
+```
+
+**Horizons:** 1, 3, 5, 10 laps  
+**Transition probabilities:** ❌ Not modelled (no state machine; each call is independent)  
+**Per-driver output:** ❌ Field-level only — SC/VSC probability applies to the entire race, not a specific opponent  
+**Can apply to opponent:** Partially — SC probability affects all drivers equally; it doesn't predict an individual opponent's strategic response to SC  
+**Uncertainty representation:** Calibrated probabilities via Platt scaling  
+**Leakage note:** Training seasons 2018–2023; validation 2024; test 2025. ✅ No leakage if Opponent Model test races ⊆ 2025.
+
+---
+
+### Foundational Model Summary Table
+
+| Model | Input | Output | Units | Horizon | Apply to Opponent? | Used by Opponent Model? |
+|---|---|---|---|---|---|---|
+| Lap-Time | 15 state features (tyre, fuel, circuit, team) | Predicted dry lap time | seconds | Current lap | ✅ Yes | ✅ `predicted_lap_time` |
+| Tyre Deg. | 12 features (tyre age, compound, temps, residuals) | Pace degradation component | seconds/lap | Current lap | ✅ Yes | ✅ `predicted_degradation` |
+| SC/Race State | 8 field-level features (battles, spread, anomaly) | P(SC/VSC) over n=1,3,5,10 laps | probability | 1–10 laps | ⚠️ Field-level only | ✅ `p_sc_h1`, `p_vsc_h1` |
+
+**Missing outputs identified:**
+- Neither lap-time nor tyre-deg model provides multi-lap forward predictions natively. We will approximate by manually advancing `TyreAge` and `LapNumber` by +1, +3 laps as derived features.
+- No model provides prediction uncertainty (confidence intervals). The Opponent Model must treat all foundational predictions as point estimates.
+
+---
+
+## TASK 2 — Training-Data Unit
+
+Each sample is:
+
+$$\text{Sample}_{i,r,t} = (\text{Driver } i, \text{ Race } r, \text{ Lap } t)$$
+
+The **target** is what driver `i` does on lap `t+1`:
+
+$$y_{i,r,t} = \mathbf{1}(\text{driver } i \text{ pits on lap } t+1)$$
+
+**Pit detection:** A row has `PitInTimeSeconds` populated if the driver pitted at the end of that lap. Formally:
+
+```python
+target = 1 if df.loc[(driver, lap+1), 'PitInTimeSeconds'].notna() else 0
+```
+
+All features must come exclusively from laps ≤ t.
+
+---
+
+## TASK 3 — Dataset Split
+
+**Available data:** 172 races across 8 years (2018–2025).
+
+| Season | Races | Proposed Split |
+|---|---|---|
+| 2018 | 20 | TRAIN |
+| 2019 | 21 | TRAIN |
+| 2020 | 17 | TRAIN |
+| 2021 | 22 | TRAIN |
+| 2022 | 22 | TRAIN |
+| 2023 | 22 | TRAIN |
+| 2024 | 24 | VALIDATION |
+| 2025 | 24 | TEST |
+
+**Rationale:**
+- Season-level split preserves race-level separation naturally.
+- Matches the SC model's split: trained 2018–2023, validated 2024, tested 2025 — eliminates foundational-model leakage entirely.
+- 2020 data is included but flagged: COVID calendar had no fans and fewer races; may exhibit anomalous strategy behaviour.
+- Total ~128 train races × ~14 drivers × ~45 clean laps/driver ≈ **~80,000 training samples** (rough estimate before exclusions).
+
+> [!IMPORTANT]
+> All rows from a single race must remain in the same split. No random row-level shuffling.
+
+---
+
+## TASK 4 — Data Leakage Prevention
+
+### Feature Availability Table
+
+| Feature | Available at t? | Source | Leakage Risk | Action |
+|---|---|---|---|---|
+| `lap_number` | ✅ | Race CSV | None | Use |
+| `remaining_laps` | ✅ | `total_laps - lap` | None | Use |
+| `position` | ✅ | Race CSV (end of lap t) | None | Use |
+| `tyre_compound` | ✅ | Race CSV | None | Use |
+| `tyre_age` | ✅ | Race CSV | None | Use |
+| `gap_ahead` | ✅ | `IntervalToPositionAheadSeconds` at lap t | None | Use |
+| `gap_behind` | ✅ | Derived from classification at lap t | None | Use |
+| `pit_count` | ✅ | Count of `PitInTimeSeconds` ≠ NaN up to lap t | None | Use |
+| `laps_since_last_pit` | ✅ | Derived from `last_pit_lap` | None | Use |
+| `has_safety_car` | ✅ | `HasSafetyCar` at lap t | None | Use |
+| `has_vsc` | ✅ | `HasVSC` at lap t | None | Use |
+| `last_lap_time` | ✅ | `LapTimeSeconds` at lap t | None | Use |
+| `rolling_3_lap_avg` | ✅ | Computed from laps ≤ t | None | Use |
+| `predicted_lap_time` (LT model) | ✅ | Uses only lap-t state | None | Use |
+| `predicted_degradation` (TyreDeg) | ✅ | Uses only lap-t state | None | Use |
+| `p_sc_h1` (SC model) | ✅ | Uses only lap-t state | None | Use |
+| `target` (`pits_on_t+1`) | ❌ (future) | Lap t+1 `PitInTimeSeconds` | **HIGH** | Target only, never a feature |
+| `next_compound` | ❌ (future) | Unknown until pit occurs | **HIGH** | Exclude |
+| `final_position` | ❌ (future) | End of race | **HIGH** | Exclude |
+| `total_race_time` | ❌ (future) | End of race | **HIGH** | Exclude |
+
+**Critical leakage check on foundational models:**  
+The SC model was trained on 2018–2023, validated on 2024, tested on 2025. Our Opponent Model train/val/test splits are identical. Therefore:
+- During **training**: SC model was trained on same races → **potential leakage** (SC model has seen these laps). This is an accepted architectural limitation for the MVP — the SC model's per-lap probability outputs are derived from a model that has seen the training set.
+- During **validation**: SC model did not see 2024 data during training → ✅ clean.
+- During **test**: SC model did not see 2025 data → ✅ clean.
+
+> [!WARNING]
+> The SC model leakage during training-set feature generation is a known limitation. The ablation study (Task 10) will measure whether SC features actually help — if they don't, the leakage is moot. If they do help, this should be documented as a limitation.
+
+---
+
+## TASK 5 — Opponent State Design
+
+### A. Observed Opponent State
+
+| Feature | Formula/Source | Units | Rationale |
+|---|---|---|---|
+| `lap_number` | `state.current_lap` | int | Race phase |
+| `remaining_laps` | `total_laps - lap_number` | int | Urgency — late race forces decisions |
+| `race_progress_fraction` | `lap / total_laps` | [0,1] | Normalized race phase |
+| `position` | `participant.position` | int | Track position affects pitting cost |
+| `tyre_compound` | `participant.compound` | categorical | Compound defines nominal stint length |
+| `tyre_age` | `participant.tyre_life` | laps | Primary strategic trigger |
+| `tyre_age_squared` | `tyre_age²` | laps² | Non-linear degradation acceleration |
+| `laps_since_last_pit` | `participant.laps_since_last_pit` | laps | Redundant with tyre_age but useful if fresh=False |
+| `pit_count` | `participant.pit_count` | int | Multi-stop strategy context |
+| `gap_ahead` | `participant.interval_to_position_ahead_seconds` | seconds | Pit cost in track position |
+| `gap_behind` | `participant.gap_behind_seconds` | seconds | Undercut threat from behind |
+| `last_lap_time` | `participant.last_lap_time_seconds` | seconds | Direct pace signal |
+| `rolling_3_lap_avg` | `participant.rolling_3_lap_avg` | seconds | Smoothed pace trend |
+| `is_safety_car` | `conditions.has_safety_car` | binary | SC dramatically lowers pit cost |
+| `is_vsc` | `conditions.has_vsc` | binary | VSC window opportunity |
+| `track_temp` | `conditions.track_temp` | °C | Affects tyre behaviour |
+| `air_temp` | `conditions.air_temp` | °C | Affects tyre behaviour |
+| `rainfall` | `conditions.rainfall` | binary | Compound strategy reset |
+
+### B. Foundational-Model Outputs
+
+> Only outputs that provably exist are listed here.
+
+| Feature | Source | Formula/Call | Units | Rationale |
+|---|---|---|---|---|
+| `predicted_lap_time` | LapTimeAdapter | `predict_lap_time(state, opp)` | seconds | Expected pace under current conditions |
+| `predicted_degradation` | TyreDegAdapter | `predict_degradation(state, opp)` | seconds | Current tyre degradation component |
+| `predicted_lap_time_t1` | LapTimeAdapter (advanced) | `predict_lap_time` with `TyreLife+1, LapNumber+1` | seconds | Expected pace on next lap if no stop |
+| `predicted_degradation_t1` | TyreDegAdapter (advanced) | `predict_degradation` with `TyreAge+1` | seconds | Projected degradation increase on next lap |
+| `p_sc_h1` | SCRiskAdapter | `get_fcy_probabilities(H_t)['SC'][1]` | probability | P(SC next lap) — window opportunity signal |
+| `p_vsc_h1` | SCRiskAdapter | `get_fcy_probabilities(H_t)['VSC'][1]` | probability | P(VSC next lap) — window signal |
+| `p_sc_h3` | SCRiskAdapter | `get_fcy_probabilities(H_t)['SC'][3]` | probability | P(SC in next 3 laps) — medium-horizon |
+
+### C. Derived Strategic Features
+
+| Feature | Formula | Units | Rationale |
+|---|---|---|---|
+| `pace_delta` | `predicted_lap_time - field_median_lap_time` | seconds | Pace relative to field; large positive means suffering |
+| `deg_rate_acceleration` | `predicted_degradation_t1 - predicted_degradation` | s/lap² | Is the tyre cliff approaching? |
+| `cost_of_staying` | `predicted_degradation × remaining_laps_in_stint` | seconds | Integrated future pace loss |
+| `pit_position_cost` | `gap_ahead - pit_loss` | seconds | Estimated position cost of pitting now (pit_loss ≈ 22 s) |
+| `gap_ratio` | `gap_ahead / (gap_ahead + gap_behind + ε)` | [0,1] | Is driver a sitting duck (small gap ahead, large behind)? |
+| `undercut_threat` | `gap_behind < 2.0` | binary | Is there an immediate undercut threat? |
+| `overcut_window` | `gap_ahead > 5.0` | binary | Can driver gain by staying out while ahead pits? |
+| `tyre_life_fraction` | `tyre_age / compound_nominal_stint` | [0,1+] | How far through nominal stint (Soft≈18, Med≈28, Hard≈38) |
+| `laps_past_nominal` | `max(0, tyre_age - compound_nominal)` | laps | How many laps past typical pit window |
+| `position_pressure` | `max(0, 10 - position)` | int | Pressure to make up positions (front runners protect) |
+| `sc_adjusted_pit_cost` | `gap_ahead × (1 - p_sc_h1)` | seconds | Expected pit cost accounting for SC neutralisation |
+
+---
+
+## TASK 6 — Dataset Schema
+
+### Column Specification
+
+**Identity columns (not features):**
+
+| Column | Type | Description |
+|---|---|---|
+| `race_id` | str | e.g. `"2023_Bahrain_Grand_Prix"` |
+| `year` | int | Season |
+| `grand_prix` | str | Race name |
+| `driver` | str | 3-letter code |
+| `lap_number` | int | Lap t |
+
+**Raw observed state:**
+
+| Column | Type | Notes |
+|---|---|---|
+| `remaining_laps` | int | |
+| `race_progress_fraction` | float | |
+| `position` | int | |
+| `tyre_compound` | str | SOFT/MEDIUM/HARD |
+| `tyre_age` | int | |
+| `tyre_age_squared` | float | |
+| `laps_since_last_pit` | int | |
+| `pit_count` | int | |
+| `gap_ahead` | float | seconds; NaN if P1 |
+| `gap_behind` | float | seconds; NaN if last |
+| `last_lap_time` | float | seconds |
+| `rolling_3_lap_avg` | float | seconds |
+| `is_safety_car` | int | binary |
+| `is_vsc` | int | binary |
+| `track_temp` | float | °C |
+| `air_temp` | float | °C |
+| `rainfall` | int | binary |
+
+**Foundational model outputs:**
+
+| Column | Type | Notes |
+|---|---|---|
+| `predicted_lap_time` | float | LT model current lap |
+| `predicted_degradation` | float | Tyre deg current lap |
+| `predicted_lap_time_t1` | float | LT model t+1 (advanced) |
+| `predicted_degradation_t1` | float | Tyre deg t+1 (advanced) |
+| `p_sc_h1` | float | SC prob in 1 lap |
+| `p_vsc_h1` | float | VSC prob in 1 lap |
+| `p_sc_h3` | float | SC prob in 3 laps |
+
+**Derived strategic features:**
+
+| Column | Type | Notes |
+|---|---|---|
+| `pace_delta` | float | seconds above/below field |
+| `deg_rate_acceleration` | float | s/lap change |
+| `cost_of_staying` | float | integrated pace loss |
+| `pit_position_cost` | float | effective track cost |
+| `gap_ratio` | float | [0,1] |
+| `undercut_threat` | int | binary |
+| `overcut_window` | int | binary |
+| `tyre_life_fraction` | float | |
+| `laps_past_nominal` | int | |
+| `position_pressure` | int | |
+| `sc_adjusted_pit_cost` | float | |
+
+**Target:**
+
+| Column | Type | Notes |
+|---|---|---|
+| `target` | int | 1 = pitted on lap t+1, 0 = stayed |
+
+---
+
+## TASK 7 — Valid Training Samples
+
+**Exclude the following rows:**
+
+| Exclusion Criterion | Rule | Reasoning |
+|---|---|---|
+| Formation lap | `lap_number == 1` | No meaningful lap-time data |
+| Final lap | `lap_number == total_laps` | No subsequent decision possible |
+| Pit-out lap | `is_pit_out_lap == True` | Driver just pitted; target is trivially STAY |
+| Pit-in lap | `is_pit_in_lap == True` | Driver is already pitting; not a decision point |
+| Retirement | `is_active == False` on lap t+1 | No subsequent decision |
+| Missing lap time | `LapTimeSeconds` is NaN | Cannot compute pace features |
+| SC/VSC lap | `is_safety_car == 1` or `is_vsc == 1` | Optional; keep but flag as SC context |
+| Wet/Intermediate tyre | `Compound in ['INTERMEDIATE','WET']` | LT model returns None; degradation model less reliable |
+
+**Mandatory pit stops** (e.g., tyre regulations requiring at least one stop):  
+For the **MVP**, treat mandatory pit stops identically to strategic pits. The model should learn that mandatory windows correlate with specific tyre ages and lap numbers. A separate "mandatory stop" label is a future extension.
+
+**Red flag restarts:**  
+Exclude all laps immediately following a red-flag restart (`lap after last red-flag lap`), as the tyre state and gap information are reset and not representative of normal strategic decisions.
+
+**Expected class balance** (rough estimate):  
+- ~4–5% of clean laps result in a pit on the next lap.
+- Class imbalance is approximately **19:1 (STAY:PIT)**.
+- This requires explicit handling (see Task 9).
+
+---
+
+## TASK 8 — Prediction Problem Definition
+
+**Binary next-lap prediction:**
+
+$$P(\text{PIT}_{t+1} \mid X_t) \in [0, 1]$$
+
+$$P(\text{STAY}_{t+1} \mid X_t) = 1 - P(\text{PIT}_{t+1} \mid X_t)$$
+
+**Input:** $X_t$ = feature vector from Tasks 5 and 6, available at lap t  
+**Output:** calibrated probability, not a class label
+
+**Scope of MVP:**
+- Binary PIT/STAY only (no compound selection, no multi-lap forecasting)
+- Applied to a single specified opponent driver at a time
+- Called every lap during Monte Carlo rollout
+
+---
+
+## TASK 9 — Baseline Models
+
+### Feature Preprocessing
+
+| Feature Type | Treatment |
+|---|---|
+| Categorical (`tyre_compound`) | One-hot encode (SOFT, MEDIUM, HARD, OTHER) |
+| Binary flags | Already 0/1; pass through |
+| Continuous | No standardization for tree models; StandardScaler for Logistic Regression |
+| Missing `gap_ahead` (P1) | Fill with 0.0 (no car ahead) |
+| Missing `gap_behind` (last) | Fill with 50.0 (no threat from behind) |
+| Missing `predicted_lap_time` | Fill with `rolling_3_lap_avg` (wet tyres/model unavailable) |
+| Missing SC probabilities | Fill with 0.0 (no risk estimated) |
+| Missing `rolling_3_lap_avg` | Fill with `last_lap_time` |
+
+### Class Imbalance
+
+Pit events occur on ~5% of laps. Strategies:
+- **Primary:** `scale_pos_weight` in XGBoost (= N_STAY / N_PIT ≈ 19)
+- **Alternative:** SMOTE on training set only (never on val/test)
+- **Do not** apply oversampling to validation or test sets
+
+### Model Specifications
+
+**Logistic Regression:**
+- Solver: `lbfgs`, max_iter=1000
+- Regularization: L2, C tuned via val set
+- Probability output: `.predict_proba()[:, 1]`
+- Class weight: `balanced`
+
+**Random Forest:**
+- n_estimators: 300
+- max_depth: 10
+- class_weight: `balanced`
+- Probability output: `.predict_proba()[:, 1]`
+
+**XGBoost (primary candidate):**
+- n_estimators: 500
+- max_depth: 6
+- learning_rate: 0.05
+- subsample: 0.8
+- colsample_bytree: 0.8
+- scale_pos_weight: 19
+- eval_metric: `logloss`
+- early_stopping_rounds: 50 on validation set
+- Probability output: `.predict_proba()[:, 1]`
+
+**Hyperparameter tuning:** Optuna or manual grid on validation set. Never touch test set during tuning.
+
+---
+
+## TASK 10 — Ablation Study
+
+Three models trained and evaluated on **identical held-out test races (2025)**:
+
+| Model | Feature Set |
+|---|---|
+| **A** — Race State Only | All observed state features (Section A, Task 5) |
+| **B** — Race State + Foundational | Model A features + Section B features |
+| **C** — Race State + Foundational + Derived | Model B features + Section C features |
+
+**Primary question:** Does integrating our foundational models (LT, TyreDeg, SC) improve opponent prediction?
+
+The answer is **empirical** — the ablation table will report it. Do not assume yes.
+
+**Ablation result table template:**
+
+| Model | Accuracy | F1 | ROC-AUC | Brier | Log Loss | ECE |
+|---|---|---|---|---|---|---|
+| A — Race State Only | | | | | | |
+| B — + Foundational Models | | | | | | |
+| C — + Derived Features | | | | | | |
+
+---
+
+## TASK 11 — Probability Calibration
+
+**Why:** XGBoost pit probabilities are often overconfident (pushed toward 0 or 1). The Monte Carlo engine needs calibrated probabilities.
+
+**Methods to compare:**
+1. Raw XGBoost probabilities
+2. Platt scaling (sigmoid fitting on validation set)
+3. Isotonic regression (on validation set)
+
+**Calibration is fitted on the validation set (2024) only.** The calibrated model is evaluated on test (2025).
+
+**Calibration metrics:**
+- Brier Score
+- Log Loss
+- ECE (10 equal-width bins, [0,1])
+- MCE (maximum bin error)
+- Reliability diagram (predicted probability vs. observed frequency)
+
+---
+
+## TASK 12–18 — Evaluation Metrics
+
+All metrics computed on test set (2025 races), never used for model selection.
+
+### Classification
+
+- Accuracy, Precision, Recall, F1 (PIT class primary)
+- ROC-AUC
+- Confusion matrix
+- PIT precision, PIT recall, STAY precision, STAY recall
+
+### Probability Quality
+
+- Brier Score: $BS = \frac{1}{N}\sum(p_i - y_i)^2$
+- Log Loss
+- Probability MAE: $\frac{1}{N}\sum|p_i - y_i|$
+- Probability RMSE: $\sqrt{\frac{1}{N}\sum(p_i-y_i)^2}$
+
+### Action Error
+
+$$\text{ActionError} = \frac{FP+FN}{N}$$
+$$\text{FalsePITRate} = \frac{FP}{FP+TN}$$
+$$\text{MissedPITRate} = \frac{FN}{FN+TP}$$
+
+### Error Breakdown (Task 16)
+
+Errors broken down by:
+- Tyre age bins: [0–5], [6–10], [11–15], [16–20], [21+]
+- Race phase: Early (0–33%), Middle (33–66%), Late (66–100%)
+- Compound: Soft, Medium, Hard
+- Track status: Normal, VSC, SC
+- Predicted probability bins: [0–0.2], [0.2–0.4], [0.4–0.6], [0.6–0.8], [0.8–1.0]
+
+### Driver-Level Error (Task 18)
+
+Reported where driver has ≥ 50 PIT samples in the test set. Drivers with fewer are grouped as "Other".
+
+---
+
+## TASK 19 — Temporal Generalization
+
+Final evaluation table:
+
+| Metric | Train (2018–2023) | Validation (2024) | Test (2025) |
+|---|---|---|---|
+| Accuracy | | | |
+| F1 | | | |
+| ROC-AUC | | | |
+| Brier | | | |
+| Log Loss | | | |
+| ECE | | | |
+
+Large train–test gaps indicate overfitting to historical strategies or driver/team changes between seasons.
+
+---
+
+## TASK 20 — Bayesian Online Updating
+
+**Motivation:** The ML model uses historical patterns. During a live race, we can accumulate race-specific evidence (e.g., this opponent has already extended beyond their normal stint length multiple times) to update the prior.
+
+### Design
+
+**Prior:** $P_0(\text{PIT}) = p_{XGB}$ — the calibrated ML model output.
+
+**Evidence at each lap:** Current tyre age vs. compound nominal window.
+
+**Likelihood:** Construct a simple Gaussian-based likelihood from how far the driver is past their nominal stint window:
+
+$$L(\text{PIT} \mid \text{TyreAge}) = \sigma\left(\frac{\text{TyreAge} - \mu_{compound}}{\sigma_{compound}}\right)$$
+
+where $\mu_{compound}$ and $\sigma_{compound}$ are the historical median and std of stint lengths for this compound (Soft: 18±4, Medium: 28±6, Hard: 38±8).
+
+**Bayesian update (log-odds form):**
+
+$$\text{logit}(P_{posterior}) = \text{logit}(P_{ML}) + \lambda \cdot \text{logit}(L)$$
+
+where $\lambda \in [0,1]$ is a blending weight tuned on the validation set.
+
+**Normalization:** $P(\text{PIT}) + P(\text{STAY}) = 1$ always.
+
+**Update frequency:** Once per lap, after observing the previous lap's outcome.
+
+**Race-specific history:** Track whether opponent has already deviated significantly from normal stint lengths in this race — adjust $\mu_{compound}$ accordingly.
+
+---
+
+## TASK 21 — Bayesian Layer Testing
+
+Compare on identical held-out test races:
+
+| Metric | Base ML | + Bayesian |
+|---|---|---|
+| Brier | | |
+| Log Loss | | |
+| ECE | | |
+| Precision | | |
+| Recall | | |
+| Action Error | | |
+
+$\Delta BS = BS_{base} - BS_{Bayesian}$ (positive = Bayesian improves)
+
+Do not assume improvement. Report actual result.
+
+---
+
+## TASK 22 — Engineering Targets
+
+| Metric | Target | Basis |
+|---|---|---|
+| ROC-AUC | > 0.70 | Meaningful discrimination above random |
+| Brier | < empirical baseline (≈ 0.0475) | Must outperform $p(PIT)=\text{const}$ |
+| Log Loss | < empirical baseline | |
+| ECE | < 0.05 | Required for reliable MC sampling |
+| Probability MAE | < 0.20 | |
+| Action Accuracy | > empirical baseline | |
+
+**Empirical baseline Brier**: If $p(PIT) = 0.05$ always, $BS = 0.05 × (1-0.05)^2 + 0.95 × (0-0.05)^2 ≈ 0.0475$.
+
+These are **development targets**, not scientific acceptance criteria. If the model does not meet them, investigate features rather than forcing the model.
+
+---
+
+## TASK 23 — Monte Carlo Sensitivity Test
+
+Test how opponent probability error propagates through the MC engine.
+
+**Experiment:**
+1. Fix true opponent PIT probability at 0.70.
+2. Run 1000 MC rollouts with:
+   - Correct probability: 0.70
+   - Underestimated: 0.50
+   - Overestimated: 0.90
+3. Record: simulated finishing position distribution, podium probability, strategy rank.
+
+**Expected metric:** How many MC simulations predict the wrong strategy as optimal due to opponent probability error.
+
+This produces a **decision-error vs. probability-error** curve that quantifies how much calibration precision the MC engine actually requires.
+
+---
+
+## TASK 24 — OpponentModel API
+
+### Interface
+
+```python
+class OpponentModel:
+    def predict(self, opponent_state: dict) -> dict:
+        """
+        Args:
+            opponent_state: Dict containing all observed features,
+                           foundational model outputs, and derived features
+                           for one opponent at one decision point.
+        Returns:
+            {
+                "p_pit": float,   # calibrated P(PIT on next lap)
+                "p_stay": float,  # = 1 - p_pit
+                "predicted_pace": float,     # from LT model (seconds)
+                "predicted_degradation": float,  # from TyreDeg model (seconds)
+                "confidence": float,         # 1 - abs(p_pit - 0.5) * 2 (certainty proxy)
+            }
+        """
+```
+
+### Integration Point
+
+```python
+# During Monte Carlo rollout at lap t, for each opponent:
+opponent_state = build_opponent_state(race_state, opponent_driver)
+prediction = opponent_model.predict(opponent_state)
+
+# Sample action:
+import random
+action = "PIT" if random.random() < prediction["p_pit"] else "STAY"
+```
+
+---
+
+## TASK 25 — Complete Race Example (Illustrative)
+
+> All numerical values below marked **[ILL]** are illustrative. They represent the type and scale of output, not actual model runs.
+
+**Scenario:** Lap 35, Opponent at P4, Medium tyre, age 22, gap ahead 1.4 s, gap behind 8.0 s, remaining 20 laps.
+
+```
+Step 1: Observed State
+  lap=35, position=4, compound=MEDIUM, tyre_age=22,
+  gap_ahead=1.4s, gap_behind=8.0s, remaining=20
+
+Step 2: Lap-Time Model (LapTimeAdapter.predict_lap_time)
+  predicted_lap_time = 88.2 s [ILL]  ← expected pace given age/compound/circuit
+
+Step 3: Tyre Degradation Model (TyreDegAdapter.predict_degradation)
+  predicted_degradation = 1.8 s [ILL]  ← pace loss from tyre wear at age 22
+
+Step 4: SC/Race-State Model (SCRiskAdapter + get_fcy_probabilities)
+  p_sc_h1 = 0.04 [ILL]   ← low SC risk this lap
+
+Step 5: Derived Features
+  tyre_life_fraction = 22/28 = 0.786  ← close to nominal Medium stint
+  laps_past_nominal = max(0, 22-28) = 0  ← not yet past window
+  cost_of_staying = 1.8 × 5 ≈ 9.0 s [ILL]  ← pace loss if continue 5 more laps
+  undercut_threat = (8.0 > 2.0) → 0 (no threat)
+  sc_adjusted_pit_cost = 1.4 × (1-0.04) ≈ 1.34 s
+
+Step 6: XGBoost Prediction
+  Base P(PIT) = 0.31 [ILL]  ← tyre not yet in cliff zone; gap ahead is narrow
+
+Step 7: Bayesian Update
+  L(PIT | age=22, medium) = σ((22-28)/6) = σ(-1.0) ≈ 0.27 [ILL]
+  Posterior logit = logit(0.31) + 0.3 × logit(0.27) ≈ -0.79 [ILL]
+  Posterior P(PIT) ≈ 0.31 → 0.30 [ILL]  (small update, tyre still within window)
+
+Final Output:
+  {"p_pit": 0.30, "p_stay": 0.70, "predicted_pace": 88.2, "predicted_degradation": 1.8}
+```
+
+---
+
+## TASK 26 — Final Architecture Summary
+
+```
+HISTORICAL RACE DATA (2018–2023 for training)
+                 │
+                 ▼
+       ┌───────────────────┐
+       │ Foundational      │ ← Pre-trained, serialized
+       │ Models            │
+       │ - LapTimeAdapter  │   predict_lap_time(state, opp)
+       │ - TyreDegAdapter  │   predict_degradation(state, opp)
+       │ - SCRiskAdapter   │   build_H_t → get_fcy_probs
+       └─────────┬─────────┘
+                 │
+                 ▼
+          Unified Race State (RaceStateManager)
+                 │
+                 ▼
+          Opponent State Builder
+       (one vector per driver × lap)
+                 │
+         ┌───────┴────────┐
+         ▼                ▼
+   Observed State   Foundational Outputs
+         │                │
+         └───────┬────────┘
+                 ▼
+          Derived Features
+                 │
+                 ▼
+          XGBoost Classifier
+          (calibrated via Platt/Isotonic on 2024)
+                 │
+                 ▼
+          Base P(PIT/STAY)
+                 │
+                 ▼
+          Bayesian Updater
+          (race-specific evidence)
+                 │
+                 ▼
+         Final P(PIT/STAY)
+                 │
+                 ▼
+          Monte Carlo Engine
+```
+
+---
+
+## TASK 29 — Implementation Phases
+
+### Phase A1 — Inspect Existing Models ✅ (complete — this document)
+
+**Deliverable:** This implementation plan.
+
+---
+
+### Phase A2 — Opponent State Interface
+
+**File:** `src/opponent_model/state.py`
+
+```python
+@dataclass
+class OpponentStateVector:
+    # Identity
+    race_id: str; driver: str; lap_number: int
+    # Observed state (raw)
+    remaining_laps: int; race_progress_fraction: float
+    position: int; tyre_compound: str; tyre_age: int
+    gap_ahead: float; gap_behind: float
+    last_lap_time: float; rolling_3_lap_avg: float
+    is_safety_car: int; is_vsc: int
+    track_temp: float; air_temp: float; rainfall: int
+    pit_count: int; laps_since_last_pit: int
+    # Foundational model outputs
+    predicted_lap_time: float; predicted_degradation: float
+    predicted_lap_time_t1: float; predicted_degradation_t1: float
+    p_sc_h1: float; p_vsc_h1: float; p_sc_h3: float
+    # Derived
+    pace_delta: float; deg_rate_acceleration: float
+    tyre_life_fraction: float; laps_past_nominal: int
+    undercut_threat: int; overcut_window: int
+    sc_adjusted_pit_cost: float
+```
+
+---
+
+### Phase A3 — Dataset Generator
+
+**File:** `src/opponent_model/dataset.py`
+
+**Algorithm:**
+```
+For each year in [2018..2025]:
+  For each race CSV in that year:
+    Load CSV into RaceStateManager
+    Initialize LapTimeAdapter, TyreDegAdapter, SCRiskAdapter
+    For each lap t (in order):
+      Commit lap to manager → state
+      For each driver in state.participants:
+        If driver active and not on pit_in/pit_out lap:
+          1. Extract observed features from state
+          2. Run LapTimeAdapter.predict_lap_time(state, driver)
+          3. Run TyreDegAdapter.predict_degradation(state, driver)
+             + observe_lap(state) to update residuals
+          4. Run SCRiskAdapter.build_H_t(state) → get_fcy_probabilities
+          5. Compute derived features
+          6. Look ahead to lap t+1 to get target
+          7. Append row to dataset
+    Save dataset for this race as parquet
+Concatenate all race parquets → master dataset
+```
+
+**Lap t+1 target lookup:** Use pre-built index: for each (driver, race), store lap → is_pit_in_lap.
+
+---
+
+### Phase A4 — Target Generation
+
+```python
+def build_target(df_race: pd.DataFrame) -> pd.Series:
+    df = df_race.sort_values(['Driver', 'LapNumber'])
+    df['pitted_next_lap'] = (
+        df.groupby('Driver')['PitInTimeSeconds']
+          .shift(-1)
+          .notna()
+          .astype(int)
+    )
+    return df['pitted_next_lap']
+```
+
+Edge cases:
+- Final lap: target NaN → exclude
+- Retirement: driver not present on t+1 → exclude
+
+---
+
+### Phase A5 — Leakage Verification Script
+
+**File:** `src/opponent_model/leakage_check.py`
+
+- Assert: no future-lap columns in feature set
+- Assert: no `PitInTimeSeconds` from lap t+1 in features
+- Assert: train/val/test race IDs are disjoint
+- Assert: SC model was not fitted on val or test races
+
+---
+
+### Phase A6 — Baselines
+
+**File:** `src/opponent_model/baselines.py`
+
+```python
+class AlwaysStayBaseline:
+    def predict_proba(self, X): return np.full((len(X), 2), [0.95, 0.05])
+
+class AlwaysPitBaseline:
+    def predict_proba(self, X): return np.full((len(X), 2), [0.05, 0.95])
+
+class EmpiricalBaseline:
+    def fit(self, y): self.p_pit = y.mean()
+    def predict_proba(self, X): return np.column_stack([1-self.p_pit, self.p_pit])
+```
+
+Plus Logistic Regression as first ML baseline.
+
+---
+
+### Phase A7 — Foundational Model Integration
+
+Run full pipeline using `LapTimeAdapter`, `TyreDegAdapter`, `SCRiskAdapter` during dataset generation (Phase A3). Features are pre-computed offline and stored in the parquet dataset.
+
+> Do not call foundational models online during model training. Pre-compute all features offline.
+
+---
+
+### Phase A8 — Ablation Testing
+
+Train models A, B, C using identical random seed and hyperparameters. Evaluate on 2025 test set with identical metric computation.
+
+---
+
+### Phase A9 — Calibration
+
+```python
+from sklearn.calibration import CalibratedClassifierCV
+platt_model = CalibratedClassifierCV(xgb_model, cv='prefit', method='sigmoid')
+platt_model.fit(X_val, y_val)
+
+iso_model = CalibratedClassifierCV(xgb_model, cv='prefit', method='isotonic')
+iso_model.fit(X_val, y_val)
+```
+
+Select best calibration method based on validation ECE, then report test set metrics.
+
+---
+
+### Phase A10 — Error Analysis
+
+Compute all metrics in Tasks 12–18 on test set. Generate all visualizations in Task 28.
+
+---
+
+### Phase A11 — Bayesian Update Layer
+
+**File:** `src/opponent_model/bayesian.py`
+
+```python
+class BayesianPitUpdater:
+    COMPOUND_PARAMS = {'SOFT': (18, 4), 'MEDIUM': (28, 6), 'HARD': (38, 8)}
+    
+    def update(self, p_ml: float, tyre_age: int, compound: str, 
+               lambda_: float = 0.3) -> float:
+        mu, sigma = self.COMPOUND_PARAMS.get(compound, (25, 6))
+        z = (tyre_age - mu) / sigma
+        p_likelihood = 1 / (1 + np.exp(-z))
+        
+        logit_posterior = logit(p_ml) + lambda_ * logit(p_likelihood)
+        return expit(logit_posterior)
+```
+
+`lambda_` is tuned on validation set.
+
+---
+
+### Phase A12 — Bayesian Evaluation
+
+Compare base calibrated model vs. base + Bayesian layer on 2025 test races.
+
+---
+
+### Phase A13 — OpponentModel Class
+
+**File:** `src/opponent_model/model.py`
+
+Production-ready class combining all components:
+- Load XGBoost + calibrator from disk
+- Build feature vector from `RaceState`
+- Apply Bayesian update
+- Return API dict
+
+---
+
+### Phase A14 — Historical Race Testing
+
+Replay 3–5 complete 2025 races through the full pipeline. Verify that `P(PIT)` spikes occur at expected lap numbers and that calibration holds in temporal sequence (not just aggregate).
+
+---
+
+### Phase A15 — Monte Carlo Integration
+
+**File:** `src/opponent_model/mc_interface.py`
+
+Expose `OpponentModel.predict_batch(states: list[dict]) -> list[dict]` for vectorized MC rollout.
+
+---
+
+## File Structure
+
+```
+src/
+└── opponent_model/
+    ├── __init__.py
+    ├── state.py         # OpponentStateVector dataclass
+    ├── dataset.py       # Dataset generator (Phase A3)
+    ├── targets.py       # Target generation (Phase A4)
+    ├── leakage_check.py # Leakage verification (Phase A5)
+    ├── baselines.py     # Baseline models (Phase A6)
+    ├── features.py      # Feature engineering helpers
+    ├── train.py         # Training pipeline (A6–A9)
+    ├── evaluate.py      # Evaluation suite (A10)
+    ├── bayesian.py      # Bayesian updater (A11)
+    ├── model.py         # OpponentModel API class (A13)
+    ├── mc_interface.py  # Monte Carlo batch interface (A15)
+    └── viz.py           # All 14 visualizations (Task 28)
+
+models/
+└── Opponent Model/
+    ├── opponent_xgb_model.json
+    ├── opponent_calibrator_platt.joblib
+    ├── opponent_metadata.json
+    └── opponent_feature_names.json
+
+data_fastf1_v1/
+└── opponent_model/
+    ├── train_dataset.parquet
+    ├── val_dataset.parquet
+    └── test_dataset.parquet
+```
+
+---
+
+## Open Questions
+
+> [!IMPORTANT]
+> **Q1: 2020 season anomaly.** The 2020 calendar was shortened and raced without fans. Should 2020 races be included in the training set, excluded entirely, or down-weighted?  
+> **Recommendation for MVP:** Include but add a `year` feature to the model so it can learn season-level differences.
+
+> [!IMPORTANT]
+> **Q2: Wet/Intermediate exclusion.** Wet tyre laps are excluded because the LT model returns `None`. Should we:
+> (a) Simply exclude all wet laps, or  
+> (b) Build a separate wet-strategy indicator and keep the rows with imputed predictions?  
+> **Recommendation for MVP:** Exclude wet laps. Extend later.
+
+> [!IMPORTANT]
+> **Q3: Bayesian lambda tuning.** The blending weight `λ` controls how much race-specific evidence overrides the ML prior. Should this be tuned as a global constant or per-compound?  
+> **Recommendation for MVP:** Tune as a single global constant on validation set.
+
+> [!NOTE]
+> **Q4: Mandatory pit stops.** Some circuits require compound variety (at least one non-SC stop). Should the model learn the mandatory window or should it be enforced as a hard constraint downstream?  
+> **Recommendation for MVP:** Let the model learn it from data (the pattern will appear in historical lap ages).
+
+> [!NOTE]
+> **Q5: Future t+1 approximation.** We approximate `predicted_lap_time_t1` by advancing `TyreAge+1` in the LT model. This is a simplification. Is this acceptable?  
+> **Recommendation for MVP:** Yes — it provides a gradient signal for degradation acceleration without needing a separate forward-prediction model.
+
+---
+
+## Final Questions the Implementation Must Answer
+
+1. **Can we predict whether an opponent will pit on the next lap?** → ROC-AUC on 2025 test races
+2. **How accurate is the prediction?** → Accuracy, F1, Precision, Recall tables
+3. **How large are the probability errors?** → Brier, Log Loss, Probability MAE, RMSE
+4. **Are the predicted probabilities calibrated?** → ECE, MCE, reliability diagram
+5. **Do the foundational models improve opponent prediction?** → Ablation table (Model A vs B vs C)
+6. **Does Bayesian online updating reduce prediction error?** → ΔBS, ΔLogLoss table
+7. **In which race situations does the model fail?** → Error breakdown by tyre age, compound, SC state, race phase
+8. **How does probability error affect MC strategy evaluation?** → Monte Carlo sensitivity experiment (Task 23)
+9. **Are the probabilities reliable enough for the Strategy Engine?** → Engineering targets vs. actual results comparison
