@@ -1,0 +1,190 @@
+{
+  "current_lap": 20,
+  "ego_driver": "VER",
+  "strategies": [
+    {
+      "strategy_id": "S01",
+      "pit_laps": [
+        20
+      ],
+      "compounds": [
+        "MEDIUM"
+      ],
+      "expected_position": 1.79,
+      "position_std": 0.5,
+      "expected_race_time": 7686.47,
+      "race_time_std": 444.56,
+      "p_win": 0.2533,
+      "p_podium": 1.0,
+      "p_top5": 1.0,
+      "tyre_risk": 0.9412,
+      "traffic_risk": 0.1659,
+      "robustness": 0.9004
+    },
+    {
+      "strategy_id": "S02",
+      "pit_laps": [
+        33
+      ],
+      "compounds": [
+        "SOFT"
+      ],
+      "expected_position": 1.7,
+      "position_std": 0.46,
+      "expected_race_time": 7610.78,
+      "race_time_std": 474.94,
+      "p_win": 0.3,
+      "p_podium": 1.0,
+      "p_top5": 1.0,
+      "tyre_risk": 0.8333,
+      "traffic_risk": 0.1528,
+      "robustness": 0.9083
+    },
+    {
+      "strategy_id": "S03",
+      "pit_laps": [
+        33
+      ],
+      "compounds": [
+        "MEDIUM"
+      ],
+      "expected_position": 1.99,
+      "position_std": 0.63,
+      "expected_race_time": 7647.05,
+      "race_time_std": 467.55,
+      "p_win": 0.2067,
+      "p_podium": 1.0,
+      "p_top5": 1.0,
+      "tyre_risk": 0.5882,
+      "traffic_risk": 0.2108,
+      "robustness": 0.8735
+    },
+    {
+      "strategy_id": "S04",
+      "pit_laps": [
+        44
+      ],
+      "compounds": [
+        "SOFT"
+      ],
+      "expected_position": 2.38,
+      "position_std": 1.03,
+      "expected_race_time": 7642.29,
+      "race_time_std": 466.58,
+      "p_win": 0.1067,
+      "p_podium": 0.9267,
+      "p_top5": 0.9733,
+      "tyre_risk": 0.375,
+      "traffic_risk": 0.3436,
+      "robustness": 0.7939
+    },
+    {
+      "strategy_id": "S05",
+      "pit_laps": [
+        44
+      ],
+      "compounds": [
+        "MEDIUM"
+      ],
+      "expected_position": 3.95,
+      "position_std": 2.28,
+      "expected_race_time": 7657.05,
+      "race_time_std": 466.84,
+      "p_win": 0.1,
+      "p_podium": 0.58,
+      "p_top5": 0.8067,
+      "tyre_risk": 0.2647,
+      "traffic_risk": 0.7595,
+      "robustness": 0.5443
+    },
+    {
+      "strategy_id": "S06",
+      "pit_laps": [
+        20,
+        36
+      ],
+      "compounds": [
+        "HARD",
+        "MEDIUM"
+      ],
+      "expected_position": 6.33,
+      "position_std": 2.09,
+      "expected_race_time": 7700.25,
+      "race_time_std": 454.39,
+      "p_win": 0.06,
+      "p_podium": 0.14,
+      "p_top5": 0.2267,
+      "tyre_risk": 0.5,
+      "traffic_risk": 0.6978,
+      "robustness": 0.5813
+    },
+    {
+      "strategy_id": "S07",
+      "pit_laps": [
+        20,
+        36
+      ],
+      "compounds": [
+        "MEDIUM",
+        "SOFT"
+      ],
+      "expected_position": 1.87,
+      "position_std": 0.68,
+      "expected_race_time": 7598.12,
+      "race_time_std": 489.7,
+      "p_win": 0.3,
+      "p_podium": 1.0,
+      "p_top5": 1.0,
+      "tyre_risk": 0.7083,
+      "traffic_risk": 0.2254,
+      "robustness": 0.8648
+    },
+    {
+      "strategy_id": "S08",
+      "pit_laps": [
+        23,
+        38
+      ],
+      "compounds": [
+        "HARD",
+        "MEDIUM"
+      ],
+      "expected_position": 6.68,
+      "position_std": 2.16,
+      "expected_race_time": 7687.08,
+      "race_time_std": 462.51,
+      "p_win": 0.08,
+      "p_podium": 0.12,
+      "p_top5": 0.18,
+      "tyre_risk": 0.4412,
+      "traffic_risk": 0.7194,
+      "robustness": 0.5684
+    },
+    {
+      "strategy_id": "S09",
+      "pit_laps": [
+        23,
+        38
+      ],
+      "compounds": [
+        "MEDIUM",
+        "SOFT"
+      ],
+      "expected_position": 2.05,
+      "position_std": 0.75,
+      "expected_race_time": 7662.67,
+      "race_time_std": 461.07,
+      "p_win": 0.24,
+      "p_podium": 0.9867,
+      "p_top5": 1.0,
+      "tyre_risk": 0.625,
+      "traffic_risk": 0.2488,
+      "robustness": 0.8507
+    }
+  ],
+  "simulation_metadata": {
+    "rollouts_per_strategy": 150,
+    "horizon_laps": 33,
+    "seed": 42
+  }
+}

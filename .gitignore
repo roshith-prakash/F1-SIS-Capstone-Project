@@ -44,3 +44,12 @@ Thumbs.db
 test files/
 scratch/
 */timing/
+
+# Distribution & Build
+*.egg-info/
+build/
+dist/
+
+# Package Manager Lockfiles (local tool runner)
+uv.lock
+

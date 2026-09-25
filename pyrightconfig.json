@@ -1,11 +1,11 @@
 {
   "include": [
     "src",
-    "tests",
-    "view_race_state.py",
-    "run_tests.py"
+    "tests"
   ],
   "extraPaths": [
     "src"
-  ]
+  ],
+  "venvPath": ".",
+  "venv": ".venv"
 }
