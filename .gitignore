@@ -1,103 +1,55 @@
 # Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
+.venv/
+env/
+venv/
+
+# Testing & Linting
+.pytest_cache/
+.coverage
+htmlcov/
 
 # Cache
 cache/
 f1_cache/
+catboost_info/
 
 # Large model files (exceed GitHub 100MB limit)
 models/laptime_model.pkl
 
-# Documents
+# Documents & Presentations
 *.pptx
 documents/
+Presentations/
+Learnings/
+my papers (race-state)/
+Research papers/F1-StratLab/
 
 # Notebook checkpoints
 .ipynb_checkpoints/
 
-# IDE
+# IDE & OS
 .vscode/
 .idea/
-
-# OS
+.gemini/
+.agents/
 Thumbs.db
 .DS_Store
 
-# Project-specific
-.agents
-Presentations
-Research papers/F1-StratLab
-test files
-*/timing
-.agents
-Presentations
-Research papers/F1-StratLab
-test files
-f1_cache
-*/timing
-__pycache__
-.venv/
-*.pyc
-my papers (race-state)/
-# Python
-__pycache__/
-*.pyc
+# Temporary & exploratory data / scripts
+test files/
+scratch/
+*/timing/
 
-# Cache
-cache/
-f1_cache/
+# Distribution & Build
+*.egg-info/
+build/
+dist/
 
-# Large model files (exceed GitHub 100MB limit)
-models/laptime_model.pkl
-
-# Documents
-*.pptx
-documents/
-
-# Notebook checkpoints
-.ipynb_checkpoints/
-
-# IDE
-.vscode/
-.idea/
-
-# OS
-Thumbs.db
-.DS_Store
-
-# Project-specific
-.agents
-Presentations
-Research papers/F1-StratLab
-test files
-*/timing
-.agents
-Presentations
-Research papers/F1-StratLab
-test files
-f1_cache
-*/timing
-__pycache__
-.venv/
-*.pyc
-my papers (race-state)/
-.agents
-Presentations
-Research papers/F1-StratLab
-test files
-f1_cache
-*/timing
-__pycache__
-.gemini
-catboost_info
-Learnings
-scratch
-
-.gemini
-catboost_info
-Learnings
-scratch
-
-tests
-.vscode
+# Package Manager Lockfiles (local tool runner)
+uv.lock
+

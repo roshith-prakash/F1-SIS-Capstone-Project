@@ -1,0 +1,52 @@
+{
+  "subsystem": "Strategy Engine",
+  "version": "1.0.0",
+  "description": "F1 Strategic AI Strategy Engine Configuration and Calibration Metadata",
+  "default_parameters": {
+    "horizon_laps": 10,
+    "default_rollouts": 150,
+    "pit_loss_green_seconds": 22.0,
+    "pit_loss_sc_seconds": 12.0,
+    "pit_loss_vsc_seconds": 15.0,
+    "minimum_stint_length": 4,
+    "max_tyre_age_soft": 24,
+    "max_tyre_age_medium": 34,
+    "max_tyre_age_hard": 46,
+    "enforce_f1_two_compound_rule": true,
+    "sc_duration_mean_laps": 3.2,
+    "sc_lap_time_delta_seconds": 15.0,
+    "sc_field_bunching_gap_seconds": 0.8,
+    "lap_time_noise_std": 0.25,
+    "tyre_deg_noise_std": 0.05,
+    "overtake_pace_advantage_threshold": 0.8,
+    "dirty_air_penalty_seconds": 0.35,
+    "fuel_penalty_per_lap_seconds": 0.065
+  },
+  "assumption_sources": {
+    "horizon_laps": "project_specification",
+    "default_rollouts": "project_specification",
+    "pit_loss_green_seconds": "project_specification",
+    "pit_loss_sc_seconds": "project_specification",
+    "pit_loss_vsc_seconds": "empirical_parameter",
+    "minimum_stint_length": "initial_engineering_assumption",
+    "max_tyre_age_soft": "empirical_parameter",
+    "max_tyre_age_medium": "empirical_parameter",
+    "max_tyre_age_hard": "empirical_parameter",
+    "enforce_f1_two_compound_rule": "project_specification",
+    "sc_duration_mean_laps": "empirical_parameter",
+    "sc_lap_time_delta_seconds": "project_specification",
+    "sc_field_bunching_gap_seconds": "project_specification",
+    "lap_time_noise_std": "empirical_parameter",
+    "tyre_deg_noise_std": "initial_engineering_assumption",
+    "overtake_pace_advantage_threshold": "empirical_parameter",
+    "dirty_air_penalty_seconds": "empirical_parameter",
+    "fuel_penalty_per_lap_seconds": "existing_model_output"
+  },
+  "risk_profiles": [
+    "balanced",
+    "aggressive",
+    "conservative",
+    "defensive",
+    "opportunistic"
+  ]
+}
