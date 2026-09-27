@@ -130,9 +130,7 @@ class CandidateStrategyGenerator:
         if strategy.num_stops >= 1:
             for i, stint in enumerate(strategy.stints):
                 # Subsequent stints always start on fresh (age=0) tyres after a pit stop
-                start_age = 0 if i > 0 else current_tyre_age
-                # Only validate stints *after* the first (stints after pit stops start fresh)
-                if stint.start_lap > curr_lap:
+                if i > 0:
                     viable, reason = self._is_stint_viable_hybrid(
                         compound=stint.compound,
                         stint_laps=stint.target_laps,
@@ -292,60 +290,93 @@ class CandidateStrategyGenerator:
             # Stop 1: curr_lap + 1 to 4 laps (or now)
             # Stop 2: mid-way through remaining distance
             stop1_options = [0, min(3, max(1, remaining_life_on_curr // 3))]
+            seen_offsets: set[int] = set()
             for s1_off in stop1_options:
+                if s1_off in seen_offsets:
+                    continue
+                seen_offsets.add(s1_off)
+
                 p1 = curr_lap + s1_off
                 p2 = p1 + max(self.config.minimum_stint_length + 2, (total_laps - p1) // 2)
 
                 if p2 >= total_laps - 2:
                     continue
 
-                for comp1 in ["HARD", "MEDIUM"]:
-                    comp2 = "MEDIUM" if comp1 == "HARD" else "SOFT"
-                    strat_id = f"S{strat_counter:02d}"
+                dry_compounds = [c.upper() for c in (self.config.dry_compounds or ["SOFT", "MEDIUM", "HARD"])]
+                for comp1 in dry_compounds:
+                    for comp2 in dry_compounds:
+                        # F1 Two-Compound Regulation (Dry race):
+                        # Across the entire race, at least 2 distinct dry compounds must be used.
+                        # If driver hasn't pitted yet (prior_pit_count == 0), the full compound sequence
+                        # [curr_compound, comp1, comp2] must contain at least 2 unique compounds.
+                        if self.config.enforce_f1_two_compound_rule and prior_pit_count == 0:
+                            if len({curr_compound, comp1, comp2}) < 2:
+                                continue
 
-                    stints = [
-                        StintPlan(
-                            stint_number=prior_pit_count + 1,
-                            compound=curr_compound,
-                            target_laps=curr_tyre_age + s1_off,
-                            start_lap=curr_lap - curr_tyre_age,
-                            end_lap=p1,
-                        ),
-                        StintPlan(
-                            stint_number=prior_pit_count + 2,
+                        # Hybrid check: verify stint 2 and stint 3 are viable under degradation model
+                        stint2_length = p2 - p1
+                        stint2_viable, _ = self._is_stint_viable_hybrid(
                             compound=comp1,
-                            target_laps=p2 - p1,
-                            start_lap=p1,
-                            end_lap=p2,
-                        ),
-                        StintPlan(
-                            stint_number=prior_pit_count + 3,
+                            stint_laps=stint2_length,
+                            start_age=0,
+                        )
+                        if not stint2_viable:
+                            continue
+
+                        stint3_length = total_laps - p2
+                        stint3_viable, _ = self._is_stint_viable_hybrid(
                             compound=comp2,
-                            target_laps=total_laps - p2,
-                            start_lap=p2,
-                            end_lap=total_laps,
-                        ),
-                    ]
+                            stint_laps=stint3_length,
+                            start_age=0,
+                        )
+                        if not stint3_viable:
+                            continue
 
-                    strat = Strategy(
-                        strategy_id=strat_id,
-                        name=f"2-Stop: {curr_compound[0]}->{comp1[0]}->{comp2[0]} (Laps {p1}, {p2})",
-                        num_stops=2,
-                        pit_laps=[p1, p2],
-                        compounds=[comp1, comp2],
-                        stints=stints,
-                        horizon_laps=h_laps,
-                        tactical_intent="aggressive_pace",
-                        assumptions={
-                            "pit_laps": [p1, p2],
-                            "compounds": [comp1, comp2],
-                        },
-                    )
+                        strat_id = f"S{strat_counter:02d}"
 
-                    is_valid, _ = self.validate_strategy(strat, state, ego_driver)
-                    if is_valid:
-                        candidates.append(strat)
-                        strat_counter += 1
+                        stints = [
+                            StintPlan(
+                                stint_number=prior_pit_count + 1,
+                                compound=curr_compound,
+                                target_laps=curr_tyre_age + s1_off,
+                                start_lap=curr_lap - curr_tyre_age,
+                                end_lap=p1,
+                            ),
+                            StintPlan(
+                                stint_number=prior_pit_count + 2,
+                                compound=comp1,
+                                target_laps=stint2_length,
+                                start_lap=p1,
+                                end_lap=p2,
+                            ),
+                            StintPlan(
+                                stint_number=prior_pit_count + 3,
+                                compound=comp2,
+                                target_laps=stint3_length,
+                                start_lap=p2,
+                                end_lap=total_laps,
+                            ),
+                        ]
+
+                        strat = Strategy(
+                            strategy_id=strat_id,
+                            name=f"2-Stop: {curr_compound[0]}->{comp1[0]}->{comp2[0]} (Laps {p1}, {p2})",
+                            num_stops=2,
+                            pit_laps=[p1, p2],
+                            compounds=[comp1, comp2],
+                            stints=stints,
+                            horizon_laps=h_laps,
+                            tactical_intent="aggressive_pace",
+                            assumptions={
+                                "pit_laps": [p1, p2],
+                                "compounds": [comp1, comp2],
+                            },
+                        )
+
+                        is_valid, _ = self.validate_strategy(strat, state, ego_driver)
+                        if is_valid:
+                            candidates.append(strat)
+                            strat_counter += 1
 
         # ---------------------------------------------------------------------
         # 3. ZERO-STOP / NO MORE PITS (If driver already completed mandatory stop)

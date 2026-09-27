@@ -90,6 +90,31 @@ class TestCandidateStrategyGenerator(unittest.TestCase):
             self.assertGreaterEqual(p2 - p1, self.config.minimum_stint_length)
             self.assertLess(p2, 57)
 
+    def test_2stop_same_compound_repeats(self):
+        """Test that 2-stop generation allows same-compound repeats while satisfying F1 2-compound rule."""
+        state = self._create_standard_state(current_lap=15, tyre_life=15.0, compound="MEDIUM")
+        candidates = self.generator.generate_candidates(state, "VER", max_stops=2)
+
+        two_stops = [c for c in candidates if c.num_stops == 2]
+        self.assertGreater(len(two_stops), 0)
+
+        # 1. Verify same-compound repeat where comp1 == curr_compound (e.g. M -> M -> H)
+        m_repeat_first = [c for c in two_stops if c.compounds[0] == "MEDIUM"]
+        self.assertGreater(len(m_repeat_first), 0, "Should generate 2-stop strategies repeating starting compound in stint 2 (M->M->X)")
+
+        # 2. Verify same-compound repeat where comp1 == comp2 (e.g. M -> H -> H or M -> S -> S)
+        same_subsequent = [c for c in two_stops if c.compounds[0] == c.compounds[1]]
+        self.assertGreater(len(same_subsequent), 0, "Should generate 2-stop strategies repeating compound in subsequent stints (e.g. M->H->H)")
+
+        # 3. Verify that all 2-stops strictly adhere to the 2-compound rule (no M->M->M)
+        for c in two_stops:
+            all_compounds = {"MEDIUM"} | set(c.compounds)
+            self.assertGreaterEqual(
+                len(all_compounds), 2,
+                f"Strategy {c.strategy_id} ({c.name}) violated F1 2-compound rule with only 1 compound: {all_compounds}"
+            )
+
+
     def test_f1_two_compound_rule_enforcement(self):
         """Validate rejection of strategies that only use 1 distinct dry compound."""
         state = self._create_standard_state(current_lap=20, tyre_life=20.0, compound="MEDIUM")
