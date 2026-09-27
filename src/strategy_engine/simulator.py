@@ -64,6 +64,14 @@ except ImportError:
     except ImportError:
         OvertakeAdapter = None
 
+try:
+    from pitstop.adapter import PitstopAdapter
+except ImportError:
+    try:
+        from src.pitstop.adapter import PitstopAdapter
+    except ImportError:
+        PitstopAdapter = None
+
 from .types import RolloutOutcome, SimulationResult, Strategy, StrategyEngineConfig
 
 
@@ -81,6 +89,7 @@ class RaceScenarioSimulator:
         sc_risk_adapter: Any = None,
         opponent_interface: Any = None,
         overtake_adapter: Any = None,
+        pitstop_adapter: Any = None,
         default_rollouts: int = 150,
         random_seed: int | None = 42,
     ):
@@ -94,6 +103,7 @@ class RaceScenarioSimulator:
         self.sc_risk_adapter = sc_risk_adapter
         self.opponent_interface = opponent_interface
         self.overtake_adapter = overtake_adapter
+        self.pitstop_adapter = pitstop_adapter
 
         # Compound baseline pace offsets relative to Medium
         self._compound_pace_offset = {
@@ -250,7 +260,14 @@ class RaceScenarioSimulator:
                 "track_temp": 30.0,
                 "air_temp": 25.0,
                 "rainfall": 0.0,
-                "pit_loss_seconds": self.config.pit_loss_green_seconds,
+                "pit_loss_seconds": (
+                    self.pitstop_adapter.predict_mean_duration(
+                        circuit=(state.location or state.grand_prix) if state is not None else None,
+                        team=opp.get("team"),
+                    )
+                    if self.pitstop_adapter is not None
+                    else self.config.pit_loss_green_seconds
+                ),
                 # Gap context (approximate from accumulated race time delta)
                 "gap_ahead": max(0.0, float(opp.get("gap_to_leader", 5.0)) - 2.0),
                 "gap_behind": 2.0,
@@ -418,7 +435,18 @@ class RaceScenarioSimulator:
         # 5. Pit lane time loss
         pit_delta = 0.0
         if is_pitting:
-            pit_delta = self.config.pit_loss_sc_seconds if (is_sc or is_vsc) else self.config.pit_loss_green_seconds
+            if self.pitstop_adapter is not None:
+                circuit_name = (state.location or state.grand_prix) if state is not None else None
+                team_name = car.get("team")
+                pit_delta = self.pitstop_adapter.sample_pit_duration(
+                    circuit=circuit_name,
+                    team=team_name,
+                    is_sc=is_sc,
+                    is_vsc=is_vsc,
+                    rng=rng,
+                )
+            else:
+                pit_delta = self.config.pit_loss_sc_seconds if (is_sc or is_vsc) else self.config.pit_loss_green_seconds
 
         # 6. Driver consistency noise
         noise = rng.normal(0.0, self.config.lap_time_noise_std)

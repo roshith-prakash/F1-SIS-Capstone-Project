@@ -10,16 +10,16 @@
       "compounds": [
         "MEDIUM"
       ],
-      "expected_position": 1.71,
-      "position_std": 0.47,
-      "expected_race_time": 7624.48,
-      "race_time_std": 473.51,
-      "p_win": 0.2933,
-      "p_podium": 1.0,
+      "expected_position": 1.85,
+      "position_std": 0.55,
+      "expected_race_time": 7701.42,
+      "race_time_std": 439.48,
+      "p_win": 0.22,
+      "p_podium": 0.9933,
       "p_top5": 1.0,
       "tyre_risk": 0.9412,
-      "traffic_risk": 0.1556,
-      "robustness": 0.9067
+      "traffic_risk": 0.1835,
+      "robustness": 0.8899
     },
     {
       "strategy_id": "S02",
@@ -29,16 +29,16 @@
       "compounds": [
         "SOFT"
       ],
-      "expected_position": 1.79,
-      "position_std": 0.4,
-      "expected_race_time": 7722.4,
-      "race_time_std": 414.96,
-      "p_win": 0.2067,
+      "expected_position": 1.73,
+      "position_std": 0.46,
+      "expected_race_time": 7634.32,
+      "race_time_std": 467.44,
+      "p_win": 0.28,
       "p_podium": 1.0,
       "p_top5": 1.0,
       "tyre_risk": 0.8333,
-      "traffic_risk": 0.135,
-      "robustness": 0.919
+      "traffic_risk": 0.1535,
+      "robustness": 0.9079
     },
     {
       "strategy_id": "S03",
@@ -48,16 +48,16 @@
       "compounds": [
         "MEDIUM"
       ],
-      "expected_position": 1.89,
-      "position_std": 0.52,
-      "expected_race_time": 7703.44,
-      "race_time_std": 434.06,
-      "p_win": 0.1667,
-      "p_podium": 0.9867,
-      "p_top5": 1.0,
+      "expected_position": 2.23,
+      "position_std": 1.33,
+      "expected_race_time": 7643.98,
+      "race_time_std": 471.44,
+      "p_win": 0.18,
+      "p_podium": 0.9267,
+      "p_top5": 0.96,
       "tyre_risk": 0.5882,
-      "traffic_risk": 0.1728,
-      "robustness": 0.8963
+      "traffic_risk": 0.4446,
+      "robustness": 0.7333
     },
     {
       "strategy_id": "S04",
@@ -67,16 +67,16 @@
       "compounds": [
         "SOFT"
       ],
-      "expected_position": 2.81,
-      "position_std": 1.94,
-      "expected_race_time": 7611.17,
-      "race_time_std": 481.31,
-      "p_win": 0.1133,
-      "p_podium": 0.8333,
-      "p_top5": 0.8867,
+      "expected_position": 3.51,
+      "position_std": 2.45,
+      "expected_race_time": 7588.4,
+      "race_time_std": 489.5,
+      "p_win": 0.1067,
+      "p_podium": 0.66,
+      "p_top5": 0.7933,
       "tyre_risk": 0.375,
-      "traffic_risk": 0.646,
-      "robustness": 0.6124
+      "traffic_risk": 0.8154,
+      "robustness": 0.5108
     },
     {
       "strategy_id": "S05",
@@ -86,16 +86,16 @@
       "compounds": [
         "MEDIUM"
       ],
-      "expected_position": 4.39,
-      "position_std": 2.76,
-      "expected_race_time": 7647.43,
-      "race_time_std": 467.56,
-      "p_win": 0.06,
-      "p_podium": 0.4933,
-      "p_top5": 0.7867,
+      "expected_position": 5.6,
+      "position_std": 3.26,
+      "expected_race_time": 7676.71,
+      "race_time_std": 456.09,
+      "p_win": 0.0467,
+      "p_podium": 0.2533,
+      "p_top5": 0.5867,
       "tyre_risk": 0.2647,
-      "traffic_risk": 0.9212,
-      "robustness": 0.4473
+      "traffic_risk": 0.95,
+      "robustness": 0.3472
     },
     {
       "strategy_id": "S06",
@@ -107,16 +107,16 @@
         "SOFT",
         "SOFT"
       ],
-      "expected_position": 1.75,
-      "position_std": 0.43,
-      "expected_race_time": 7670.3,
-      "race_time_std": 449.38,
-      "p_win": 0.2533,
-      "p_podium": 1.0,
+      "expected_position": 1.83,
+      "position_std": 0.54,
+      "expected_race_time": 7692.93,
+      "race_time_std": 443.89,
+      "p_win": 0.2267,
+      "p_podium": 0.9933,
       "p_top5": 1.0,
       "tyre_risk": 0.7083,
-      "traffic_risk": 0.145,
-      "robustness": 0.913
+      "traffic_risk": 0.1795,
+      "robustness": 0.8923
     },
     {
       "strategy_id": "S07",
@@ -128,16 +128,16 @@
         "SOFT",
         "MEDIUM"
       ],
-      "expected_position": 1.87,
-      "position_std": 0.55,
-      "expected_race_time": 7648.99,
-      "race_time_std": 470.28,
-      "p_win": 0.2267,
-      "p_podium": 1.0,
-      "p_top5": 1.0,
+      "expected_position": 2.61,
+      "position_std": 1.78,
+      "expected_race_time": 7596.0,
+      "race_time_std": 489.21,
+      "p_win": 0.2933,
+      "p_podium": 0.7467,
+      "p_top5": 0.9267,
       "tyre_risk": 0.5,
-      "traffic_risk": 0.1832,
-      "robustness": 0.8901
+      "traffic_risk": 0.5923,
+      "robustness": 0.6446
     },
     {
       "strategy_id": "S08",
@@ -149,16 +149,16 @@
         "SOFT",
         "HARD"
       ],
-      "expected_position": 4.96,
-      "position_std": 1.7,
-      "expected_race_time": 7684.68,
-      "race_time_std": 455.98,
-      "p_win": 0.04,
-      "p_podium": 0.1667,
-      "p_top5": 0.6333,
+      "expected_position": 7.07,
+      "position_std": 2.55,
+      "expected_race_time": 7696.84,
+      "race_time_std": 455.54,
+      "p_win": 0.0333,
+      "p_podium": 0.0733,
+      "p_top5": 0.1733,
       "tyre_risk": 0.3696,
-      "traffic_risk": 0.5681,
-      "robustness": 0.6591
+      "traffic_risk": 0.8504,
+      "robustness": 0.4898
     },
     {
       "strategy_id": "S09",
@@ -170,16 +170,16 @@
         "MEDIUM",
         "SOFT"
       ],
-      "expected_position": 1.81,
-      "position_std": 0.58,
-      "expected_race_time": 7647.35,
-      "race_time_std": 470.65,
-      "p_win": 0.28,
-      "p_podium": 1.0,
-      "p_top5": 1.0,
+      "expected_position": 2.68,
+      "position_std": 1.41,
+      "expected_race_time": 7680.2,
+      "race_time_std": 456.48,
+      "p_win": 0.2467,
+      "p_podium": 0.7333,
+      "p_top5": 0.9667,
       "tyre_risk": 0.7083,
-      "traffic_risk": 0.1939,
-      "robustness": 0.8836
+      "traffic_risk": 0.4688,
+      "robustness": 0.7187
     },
     {
       "strategy_id": "S10",
@@ -191,16 +191,16 @@
         "MEDIUM",
         "MEDIUM"
       ],
-      "expected_position": 3.63,
-      "position_std": 1.52,
-      "expected_race_time": 7692.46,
-      "race_time_std": 453.69,
-      "p_win": 0.14,
-      "p_podium": 0.38,
-      "p_top5": 0.9133,
+      "expected_position": 5.08,
+      "position_std": 2.4,
+      "expected_race_time": 7704.42,
+      "race_time_std": 451.17,
+      "p_win": 0.1533,
+      "p_podium": 0.2333,
+      "p_top5": 0.52,
       "tyre_risk": 0.5,
-      "traffic_risk": 0.5056,
-      "robustness": 0.6966
+      "traffic_risk": 0.8005,
+      "robustness": 0.5197
     },
     {
       "strategy_id": "S11",
@@ -212,16 +212,16 @@
         "MEDIUM",
         "HARD"
       ],
-      "expected_position": 7.15,
-      "position_std": 1.9,
-      "expected_race_time": 7724.98,
-      "race_time_std": 441.74,
+      "expected_position": 8.25,
+      "position_std": 2.53,
+      "expected_race_time": 7757.09,
+      "race_time_std": 425.39,
       "p_win": 0.0133,
-      "p_podium": 0.06,
-      "p_top5": 0.1067,
+      "p_podium": 0.04,
+      "p_top5": 0.0667,
       "tyre_risk": 0.3696,
-      "traffic_risk": 0.6345,
-      "robustness": 0.6193
+      "traffic_risk": 0.845,
+      "robustness": 0.493
     },
     {
       "strategy_id": "S12",
@@ -233,16 +233,16 @@
         "HARD",
         "SOFT"
       ],
-      "expected_position": 3.35,
-      "position_std": 1.77,
-      "expected_race_time": 7608.26,
-      "race_time_std": 490.92,
-      "p_win": 0.28,
-      "p_podium": 0.46,
-      "p_top5": 0.9133,
+      "expected_position": 5.25,
+      "position_std": 2.25,
+      "expected_race_time": 7716.81,
+      "race_time_std": 445.35,
+      "p_win": 0.12,
+      "p_podium": 0.2133,
+      "p_top5": 0.4667,
       "tyre_risk": 0.7083,
-      "traffic_risk": 0.59,
-      "robustness": 0.646
+      "traffic_risk": 0.7505,
+      "robustness": 0.5497
     },
     {
       "strategy_id": "S13",
@@ -254,16 +254,16 @@
         "HARD",
         "MEDIUM"
       ],
-      "expected_position": 5.9,
-      "position_std": 2.42,
-      "expected_race_time": 7678.74,
-      "race_time_std": 468.1,
-      "p_win": 0.14,
-      "p_podium": 0.2,
-      "p_top5": 0.2533,
+      "expected_position": 7.12,
+      "position_std": 2.4,
+      "expected_race_time": 7644.94,
+      "race_time_std": 484.74,
+      "p_win": 0.0733,
+      "p_podium": 0.1,
+      "p_top5": 0.1333,
       "tyre_risk": 0.5,
-      "traffic_risk": 0.8053,
-      "robustness": 0.5168
+      "traffic_risk": 0.799,
+      "robustness": 0.5206
     },
     {
       "strategy_id": "S14",
@@ -275,16 +275,16 @@
         "SOFT",
         "SOFT"
       ],
-      "expected_position": 1.65,
-      "position_std": 0.48,
-      "expected_race_time": 7577.25,
-      "race_time_std": 488.51,
-      "p_win": 0.3467,
-      "p_podium": 1.0,
-      "p_top5": 1.0,
+      "expected_position": 1.92,
+      "position_std": 0.79,
+      "expected_race_time": 7683.99,
+      "race_time_std": 450.42,
+      "p_win": 0.2,
+      "p_podium": 0.98,
+      "p_top5": 0.9933,
       "tyre_risk": 0.625,
-      "traffic_risk": 0.1586,
-      "robustness": 0.9048
+      "traffic_risk": 0.2625,
+      "robustness": 0.8425
     },
     {
       "strategy_id": "S15",
@@ -296,16 +296,16 @@
         "SOFT",
         "MEDIUM"
       ],
-      "expected_position": 2.05,
-      "position_std": 0.71,
-      "expected_race_time": 7670.06,
-      "race_time_std": 460.94,
-      "p_win": 0.2133,
-      "p_podium": 0.9867,
-      "p_top5": 1.0,
+      "expected_position": 3.39,
+      "position_std": 1.81,
+      "expected_race_time": 7698.26,
+      "race_time_std": 447.97,
+      "p_win": 0.1267,
+      "p_podium": 0.6,
+      "p_top5": 0.86,
       "tyre_risk": 0.4412,
-      "traffic_risk": 0.2352,
-      "robustness": 0.8589
+      "traffic_risk": 0.6036,
+      "robustness": 0.6379
     },
     {
       "strategy_id": "S16",
@@ -317,16 +317,16 @@
         "SOFT",
         "HARD"
       ],
-      "expected_position": 4.95,
-      "position_std": 1.69,
-      "expected_race_time": 7688.79,
-      "race_time_std": 454.98,
-      "p_win": 0.06,
-      "p_podium": 0.1533,
-      "p_top5": 0.6133,
+      "expected_position": 6.57,
+      "position_std": 2.59,
+      "expected_race_time": 7680.58,
+      "race_time_std": 464.04,
+      "p_win": 0.0533,
+      "p_podium": 0.0867,
+      "p_top5": 0.2333,
       "tyre_risk": 0.3261,
-      "traffic_risk": 0.5635,
-      "robustness": 0.6619
+      "traffic_risk": 0.8627,
+      "robustness": 0.4824
     },
     {
       "strategy_id": "S17",
@@ -338,16 +338,16 @@
         "MEDIUM",
         "SOFT"
       ],
-      "expected_position": 1.96,
-      "position_std": 0.63,
-      "expected_race_time": 7692.13,
-      "race_time_std": 448.8,
-      "p_win": 0.2133,
-      "p_podium": 0.9933,
-      "p_top5": 1.0,
+      "expected_position": 3.33,
+      "position_std": 1.9,
+      "expected_race_time": 7682.81,
+      "race_time_std": 457.43,
+      "p_win": 0.1933,
+      "p_podium": 0.5733,
+      "p_top5": 0.8667,
       "tyre_risk": 0.625,
-      "traffic_risk": 0.2104,
-      "robustness": 0.8738
+      "traffic_risk": 0.633,
+      "robustness": 0.6202
     },
     {
       "strategy_id": "S18",
@@ -359,16 +359,16 @@
         "MEDIUM",
         "MEDIUM"
       ],
-      "expected_position": 4.19,
-      "position_std": 1.68,
-      "expected_race_time": 7719.94,
-      "race_time_std": 439.47,
-      "p_win": 0.12,
-      "p_podium": 0.2667,
-      "p_top5": 0.78,
+      "expected_position": 6.13,
+      "position_std": 2.67,
+      "expected_race_time": 7698.82,
+      "race_time_std": 455.99,
+      "p_win": 0.0867,
+      "p_podium": 0.16,
+      "p_top5": 0.3133,
       "tyre_risk": 0.4412,
-      "traffic_risk": 0.5587,
-      "robustness": 0.6648
+      "traffic_risk": 0.89,
+      "robustness": 0.466
     },
     {
       "strategy_id": "S19",
@@ -380,16 +380,16 @@
         "MEDIUM",
         "HARD"
       ],
-      "expected_position": 7.22,
-      "position_std": 2.08,
-      "expected_race_time": 7695.12,
-      "race_time_std": 460.41,
-      "p_win": 0.0,
-      "p_podium": 0.0533,
-      "p_top5": 0.12,
+      "expected_position": 8.81,
+      "position_std": 2.97,
+      "expected_race_time": 7729.49,
+      "race_time_std": 443.02,
+      "p_win": 0.0133,
+      "p_podium": 0.0267,
+      "p_top5": 0.0467,
       "tyre_risk": 0.3261,
-      "traffic_risk": 0.6948,
-      "robustness": 0.5831
+      "traffic_risk": 0.95,
+      "robustness": 0.407
     },
     {
       "strategy_id": "S20",
@@ -401,16 +401,16 @@
         "HARD",
         "SOFT"
       ],
-      "expected_position": 4.27,
-      "position_std": 1.88,
-      "expected_race_time": 7687.53,
-      "race_time_std": 455.62,
-      "p_win": 0.1667,
-      "p_podium": 0.2667,
-      "p_top5": 0.7733,
+      "expected_position": 5.56,
+      "position_std": 2.54,
+      "expected_race_time": 7666.69,
+      "race_time_std": 470.26,
+      "p_win": 0.1533,
+      "p_podium": 0.2,
+      "p_top5": 0.38,
       "tyre_risk": 0.625,
-      "traffic_risk": 0.6276,
-      "robustness": 0.6234
+      "traffic_risk": 0.8481,
+      "robustness": 0.4912
     },
     {
       "strategy_id": "S21",
@@ -422,16 +422,16 @@
         "HARD",
         "MEDIUM"
       ],
-      "expected_position": 6.53,
-      "position_std": 2.62,
-      "expected_race_time": 7620.44,
-      "race_time_std": 491.64,
-      "p_win": 0.1133,
-      "p_podium": 0.1667,
-      "p_top5": 0.1933,
+      "expected_position": 7.73,
+      "position_std": 2.9,
+      "expected_race_time": 7661.08,
+      "race_time_std": 478.83,
+      "p_win": 0.0533,
+      "p_podium": 0.0867,
+      "p_top5": 0.1267,
       "tyre_risk": 0.4412,
-      "traffic_risk": 0.8732,
-      "robustness": 0.4761
+      "traffic_risk": 0.95,
+      "robustness": 0.4199
     }
   ],
   "simulation_metadata": {

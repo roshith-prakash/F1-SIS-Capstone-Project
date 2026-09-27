@@ -260,6 +260,7 @@ class StrategyEngineConfig:
 
     # 2. Pit Lane Time Loss Parameters
     # [Project Specification: Section 5.5 - green flag ~22s, SC ~0-12s loss]
+    # Retained as baseline / fallback values when PitstopAdapter is not loaded.
     pit_loss_green_seconds: float = 22.0
     pit_loss_sc_seconds: float = 12.0
     pit_loss_vsc_seconds: float = 15.0

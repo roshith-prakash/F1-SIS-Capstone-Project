@@ -57,6 +57,7 @@ class StrategyEngine:
         sc_risk_adapter: Any = None,
         opponent_interface: Any = None,
         overtake_adapter: Any = None,
+        pitstop_adapter: Any = None,
         default_horizon_laps: int | None = None,
         default_rollouts: int | None = None,
         default_profile: str = "balanced",
@@ -67,6 +68,7 @@ class StrategyEngine:
         self.default_rollouts = default_rollouts or self.config.default_n_rollouts
         self.default_profile = default_profile
         self.random_seed = random_seed
+        self.pitstop_adapter = pitstop_adapter
 
         # Component 1: Candidate Generator
         self.candidate_generator = candidate_generator or CandidateStrategyGenerator(config=self.config)
@@ -82,6 +84,7 @@ class StrategyEngine:
                 sc_risk_adapter=sc_risk_adapter,
                 opponent_interface=opponent_interface,
                 overtake_adapter=overtake_adapter,
+                pitstop_adapter=pitstop_adapter,
                 default_rollouts=self.default_rollouts,
                 random_seed=self.random_seed,
             )
@@ -161,6 +164,18 @@ class StrategyEngine:
             except Exception:
                 pass
 
+        # Load Pitstop Adapter
+        pitstop_adapter = None
+        try:
+            from pitstop.adapter import PitstopAdapter
+            pitstop_adapter = PitstopAdapter()
+        except Exception:
+            try:
+                from src.pitstop.adapter import PitstopAdapter
+                pitstop_adapter = PitstopAdapter()
+            except Exception:
+                pass
+
         return cls(
             config=cfg,
             lap_time_adapter=lt_adapter,
@@ -168,6 +183,7 @@ class StrategyEngine:
             sc_risk_adapter=sc_adapter,
             opponent_interface=opp_interface,
             overtake_adapter=overtake_adapter,
+            pitstop_adapter=pitstop_adapter,
             default_profile=default_profile,
             random_seed=random_seed,
         )

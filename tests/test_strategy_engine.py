@@ -315,6 +315,8 @@ class TestStrategyEngineIntegration(unittest.TestCase):
         self.assertIsNotNone(engine.simulator)
         self.assertIsNotNone(engine.evaluator)
         self.assertIsNotNone(engine.formatter)
+        self.assertIsNotNone(engine.simulator.overtake_adapter)
+        self.assertIsNotNone(engine.simulator.pitstop_adapter)
 
 
 if __name__ == "__main__":
