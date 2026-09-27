@@ -18,7 +18,10 @@ from __future__ import annotations
 import math
 from typing import Any, Optional
 
-from race_state.models import ParticipantState, RaceState, normalize_driver
+try:
+    from race_state.models import ParticipantState, RaceState, normalize_driver
+except ImportError:
+    from src.race_state.models import ParticipantState, RaceState, normalize_driver
 
 from .types import StintPlan, Strategy, StrategyEngineConfig
 

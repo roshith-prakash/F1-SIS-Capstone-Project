@@ -1,0 +1,18 @@
+{
+  "model_type": "xgboost_classifier",
+  "model_version": "Model_C",
+  "best_calibrator": "isotonic",
+  "feature_count": 20,
+  "train_seasons": [
+    2022,
+    2023
+  ],
+  "val_seasons": [
+    2024
+  ],
+  "test_seasons": [
+    2025
+  ],
+  "era": "ground_effect_2022_plus",
+  "description": "Wheel-to-wheel overtake probability and dirty air dynamics model"
+}

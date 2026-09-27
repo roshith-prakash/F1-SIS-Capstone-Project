@@ -1,0 +1,22 @@
+[
+  "gap_seconds",
+  "gap_lt_1s",
+  "gap_lt_0_5s",
+  "is_sc",
+  "is_vsc",
+  "is_sc_restart",
+  "pace_delta",
+  "rolling_3lap_pace_delta",
+  "tyre_age_delta",
+  "compound_delta",
+  "is_fresh_tyre_behind",
+  "circuit_overtake_difficulty",
+  "circuit_drs_zones",
+  "pit_straight_length_m",
+  "predicted_lap_time_behind",
+  "predicted_lap_time_ahead",
+  "predicted_pace_delta",
+  "predicted_deg_behind",
+  "predicted_deg_ahead",
+  "predicted_deg_delta"
+]

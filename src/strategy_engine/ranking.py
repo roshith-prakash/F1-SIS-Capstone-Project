@@ -17,7 +17,10 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Optional
 
-from race_state.models import RaceState
+try:
+    from race_state.models import RaceState
+except ImportError:
+    from src.race_state.models import RaceState
 
 from .types import StrategyEngineConfig, StrategyEngineResult, StrategyEvaluation
 

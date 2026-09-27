@@ -322,9 +322,9 @@ class StrategyEngineConfig:
     tyre_deg_noise_std: float = 0.05
 
     # 6. Traffic, Dirty Air, & Overtaking Dynamics
-    # [Empirical Parameter: pace advantage delta needed to overtake without DRS]
+    # [Fallback empirical parameter when OvertakeAdapter is absent: pace advantage delta needed to overtake]
     overtake_pace_advantage_threshold: float = 0.80
-    # [Empirical Parameter: dirty air pace penalty when trailing car < 1.0s]
+    # [Fallback empirical parameter when OvertakeAdapter is absent: dirty air pace penalty when trailing car < 1.0s]
     dirty_air_penalty_seconds: float = 0.35
     # [Empirical Parameter: DRS advantage delta]
     drs_boost_seconds: float = 0.40
