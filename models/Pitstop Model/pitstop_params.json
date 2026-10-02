@@ -1,0 +1,150 @@
+{
+  "version": "1.0.0",
+  "data_years": "2022-2025",
+  "total_samples": 3125,
+  "global_mean": 24.317,
+  "global_std": 4.538,
+  "circuit_params": {
+    "Abu_Dhabi": {
+      "mean": 22.754,
+      "std": 2.662,
+      "count": 123
+    },
+    "Australia": {
+      "mean": 18.399,
+      "std": 3.7,
+      "count": 144
+    },
+    "Austria": {
+      "mean": 22.339,
+      "std": 3.347,
+      "count": 182
+    },
+    "Azerbaijan": {
+      "mean": 21.714,
+      "std": 2.764,
+      "count": 93
+    },
+    "Bahrain": {
+      "mean": 25.826,
+      "std": 2.927,
+      "count": 192
+    },
+    "Belgium": {
+      "mean": 23.64,
+      "std": 1.458,
+      "count": 135
+    },
+    "Brazil": {
+      "mean": 24.718,
+      "std": 3.377,
+      "count": 147
+    },
+    "Canada": {
+      "mean": 23.334,
+      "std": 4.141,
+      "count": 186
+    },
+    "China": {
+      "mean": 23.565,
+      "std": 3.2,
+      "count": 64
+    },
+    "Emilia_Romagna": {
+      "mean": 30.917,
+      "std": 1.766,
+      "count": 88
+    },
+    "France": {
+      "mean": 37.811,
+      "std": 2.219,
+      "count": 24
+    },
+    "Great_Britain": {
+      "mean": 29.694,
+      "std": 2.169,
+      "count": 134
+    },
+    "Hungary": {
+      "mean": 22.41,
+      "std": 1.89,
+      "count": 147
+    },
+    "Italy": {
+      "mean": 25.423,
+      "std": 2.755,
+      "count": 102
+    },
+    "Japan": {
+      "mean": 25.081,
+      "std": 4.341,
+      "count": 120
+    },
+    "Las_Vegas": {
+      "mean": 22.803,
+      "std": 3.759,
+      "count": 93
+    },
+    "Mexico": {
+      "mean": 23.802,
+      "std": 3.29,
+      "count": 91
+    },
+    "Miami": {
+      "mean": 22.46,
+      "std": 3.674,
+      "count": 91
+    },
+    "Monaco": {
+      "mean": 26.081,
+      "std": 3.275,
+      "count": 117
+    },
+    "Netherlands": {
+      "mean": 21.192,
+      "std": 4.977,
+      "count": 219
+    },
+    "Qatar": {
+      "mean": 29.529,
+      "std": 3.987,
+      "count": 155
+    },
+    "Saudi_Arabia": {
+      "mean": 22.163,
+      "std": 3.623,
+      "count": 80
+    },
+    "Singapore": {
+      "mean": 29.401,
+      "std": 3.323,
+      "count": 90
+    },
+    "Spain": {
+      "mean": 22.909,
+      "std": 2.128,
+      "count": 192
+    },
+    "United_States": {
+      "mean": 25.034,
+      "std": 2.518,
+      "count": 116
+    }
+  },
+  "team_offsets": {
+    "Alpine": -0.097,
+    "Aston Martin": -0.25,
+    "Ferrari": -0.5,
+    "Haas F1 Team": 0.795,
+    "McLaren": -0.036,
+    "Mercedes": -0.436,
+    "Racing Bulls": 0.019,
+    "Red Bull Racing": -0.392,
+    "Sauber": 0.42,
+    "Williams": 0.487
+  },
+  "sc_adjustment": -0.562,
+  "vsc_adjustment": 0.883,
+  "min_clip": 15.0,
+  "max_clip": 55.0
+}

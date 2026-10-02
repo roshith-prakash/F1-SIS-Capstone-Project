@@ -20,7 +20,10 @@ from __future__ import annotations
 from typing import Any, Optional
 from pathlib import Path
 
-from race_state.models import RaceState, normalize_driver
+try:
+    from race_state.models import RaceState, normalize_driver
+except ImportError:
+    from src.race_state.models import RaceState, normalize_driver
 
 from .candidate_generator import CandidateStrategyGenerator
 from .evaluator import StrategyEvaluator
@@ -53,6 +56,8 @@ class StrategyEngine:
         tyre_deg_adapter: Any = None,
         sc_risk_adapter: Any = None,
         opponent_interface: Any = None,
+        overtake_adapter: Any = None,
+        pitstop_adapter: Any = None,
         default_horizon_laps: int | None = None,
         default_rollouts: int | None = None,
         default_profile: str = "balanced",
@@ -63,6 +68,7 @@ class StrategyEngine:
         self.default_rollouts = default_rollouts or self.config.default_n_rollouts
         self.default_profile = default_profile
         self.random_seed = random_seed
+        self.pitstop_adapter = pitstop_adapter
 
         # Component 1: Candidate Generator
         self.candidate_generator = candidate_generator or CandidateStrategyGenerator(config=self.config)
@@ -77,6 +83,8 @@ class StrategyEngine:
                 tyre_deg_adapter=tyre_deg_adapter,
                 sc_risk_adapter=sc_risk_adapter,
                 opponent_interface=opponent_interface,
+                overtake_adapter=overtake_adapter,
+                pitstop_adapter=pitstop_adapter,
                 default_rollouts=self.default_rollouts,
                 random_seed=self.random_seed,
             )
@@ -144,12 +152,38 @@ class StrategyEngine:
         except Exception:
             pass
 
+        # Load Overtake Adapter
+        overtake_adapter = None
+        try:
+            from overtake.adapter import OvertakeAdapter
+            overtake_adapter = OvertakeAdapter()
+        except Exception:
+            try:
+                from src.overtake.adapter import OvertakeAdapter
+                overtake_adapter = OvertakeAdapter()
+            except Exception:
+                pass
+
+        # Load Pitstop Adapter
+        pitstop_adapter = None
+        try:
+            from pitstop.adapter import PitstopAdapter
+            pitstop_adapter = PitstopAdapter()
+        except Exception:
+            try:
+                from src.pitstop.adapter import PitstopAdapter
+                pitstop_adapter = PitstopAdapter()
+            except Exception:
+                pass
+
         return cls(
             config=cfg,
             lap_time_adapter=lt_adapter,
             tyre_deg_adapter=tyre_adapter,
             sc_risk_adapter=sc_adapter,
             opponent_interface=opp_interface,
+            overtake_adapter=overtake_adapter,
+            pitstop_adapter=pitstop_adapter,
             default_profile=default_profile,
             random_seed=random_seed,
         )

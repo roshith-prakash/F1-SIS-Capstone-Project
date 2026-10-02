@@ -260,6 +260,7 @@ class StrategyEngineConfig:
 
     # 2. Pit Lane Time Loss Parameters
     # [Project Specification: Section 5.5 - green flag ~22s, SC ~0-12s loss]
+    # Retained as baseline / fallback values when PitstopAdapter is not loaded.
     pit_loss_green_seconds: float = 22.0
     pit_loss_sc_seconds: float = 12.0
     pit_loss_vsc_seconds: float = 15.0
@@ -322,9 +323,9 @@ class StrategyEngineConfig:
     tyre_deg_noise_std: float = 0.05
 
     # 6. Traffic, Dirty Air, & Overtaking Dynamics
-    # [Empirical Parameter: pace advantage delta needed to overtake without DRS]
+    # [Fallback empirical parameter when OvertakeAdapter is absent: pace advantage delta needed to overtake]
     overtake_pace_advantage_threshold: float = 0.80
-    # [Empirical Parameter: dirty air pace penalty when trailing car < 1.0s]
+    # [Fallback empirical parameter when OvertakeAdapter is absent: dirty air pace penalty when trailing car < 1.0s]
     dirty_air_penalty_seconds: float = 0.35
     # [Empirical Parameter: DRS advantage delta]
     drs_boost_seconds: float = 0.40

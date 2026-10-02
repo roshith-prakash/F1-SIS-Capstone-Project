@@ -260,7 +260,7 @@ class OpponentDatasetBuilder:
 
     def generate_splits(
         self,
-        train_seasons: list[int] = [2018, 2019, 2020, 2021, 2022, 2023],
+        train_seasons: list[int] = [2022, 2023],
         val_seasons: list[int] = [2024],
         test_seasons: list[int] = [2025],
         max_races_per_season: int | None = None,

@@ -29,7 +29,10 @@ import random
 from typing import Any, Optional
 import numpy as np
 
-from race_state.models import CurrentConditions, ParticipantState, RaceState, normalize_driver
+try:
+    from race_state.models import CurrentConditions, ParticipantState, RaceState, normalize_driver
+except ImportError:
+    from src.race_state.models import CurrentConditions, ParticipantState, RaceState, normalize_driver
 
 try:
     from lap_time.adapter import LapTimeAdapter
@@ -53,6 +56,22 @@ except ImportError:
     MonteCarloOpponentInterface = None
     OpponentModel = None
 
+try:
+    from overtake.adapter import OvertakeAdapter
+except ImportError:
+    try:
+        from src.overtake.adapter import OvertakeAdapter
+    except ImportError:
+        OvertakeAdapter = None
+
+try:
+    from pitstop.adapter import PitstopAdapter
+except ImportError:
+    try:
+        from src.pitstop.adapter import PitstopAdapter
+    except ImportError:
+        PitstopAdapter = None
+
 from .types import RolloutOutcome, SimulationResult, Strategy, StrategyEngineConfig
 
 
@@ -69,6 +88,8 @@ class RaceScenarioSimulator:
         tyre_deg_adapter: Any = None,
         sc_risk_adapter: Any = None,
         opponent_interface: Any = None,
+        overtake_adapter: Any = None,
+        pitstop_adapter: Any = None,
         default_rollouts: int = 150,
         random_seed: int | None = 42,
     ):
@@ -81,6 +102,8 @@ class RaceScenarioSimulator:
         self.tyre_deg_adapter = tyre_deg_adapter
         self.sc_risk_adapter = sc_risk_adapter
         self.opponent_interface = opponent_interface
+        self.overtake_adapter = overtake_adapter
+        self.pitstop_adapter = pitstop_adapter
 
         # Compound baseline pace offsets relative to Medium
         self._compound_pace_offset = {
@@ -104,6 +127,8 @@ class RaceScenarioSimulator:
         """Clear model inference memoization caches."""
         self._deg_cache.clear()
         self._opp_pit_cache.clear()
+        if self.overtake_adapter is not None and hasattr(self.overtake_adapter, "clear_cache"):
+            self.overtake_adapter.clear_cache()
 
     # ------------------------------------------------------------------
     # Adapter Integration Helpers
@@ -235,7 +260,14 @@ class RaceScenarioSimulator:
                 "track_temp": 30.0,
                 "air_temp": 25.0,
                 "rainfall": 0.0,
-                "pit_loss_seconds": self.config.pit_loss_green_seconds,
+                "pit_loss_seconds": (
+                    self.pitstop_adapter.predict_mean_duration(
+                        circuit=(state.location or state.grand_prix) if state is not None else None,
+                        team=opp.get("team"),
+                    )
+                    if self.pitstop_adapter is not None
+                    else self.config.pit_loss_green_seconds
+                ),
                 # Gap context (approximate from accumulated race time delta)
                 "gap_ahead": max(0.0, float(opp.get("gap_to_leader", 5.0)) - 2.0),
                 "gap_behind": 2.0,
@@ -403,7 +435,18 @@ class RaceScenarioSimulator:
         # 5. Pit lane time loss
         pit_delta = 0.0
         if is_pitting:
-            pit_delta = self.config.pit_loss_sc_seconds if (is_sc or is_vsc) else self.config.pit_loss_green_seconds
+            if self.pitstop_adapter is not None:
+                circuit_name = (state.location or state.grand_prix) if state is not None else None
+                team_name = car.get("team")
+                pit_delta = self.pitstop_adapter.sample_pit_duration(
+                    circuit=circuit_name,
+                    team=team_name,
+                    is_sc=is_sc,
+                    is_vsc=is_vsc,
+                    rng=rng,
+                )
+            else:
+                pit_delta = self.config.pit_loss_sc_seconds if (is_sc or is_vsc) else self.config.pit_loss_green_seconds
 
         # 6. Driver consistency noise
         noise = rng.normal(0.0, self.config.lap_time_noise_std)
@@ -470,6 +513,10 @@ class RaceScenarioSimulator:
                 target_comp = strategy.compounds[idx] if idx < len(strategy.compounds) else "HARD"
                 ego_pit_plan[pl] = target_comp
 
+        # Safety Car restart tracking
+        sc_restart_counter = 0
+        was_sc = False
+
         # Roll forward lap-by-lap
         for step in range(1, horizon_laps + 1):
             sim_lap = current_lap + step
@@ -481,6 +528,13 @@ class RaceScenarioSimulator:
             # -------------------------------------------------------------
             is_sc = sc_remaining_laps > 0
             is_vsc = vsc_remaining_laps > 0
+
+            if was_sc and not is_sc:
+                sc_restart_counter = 2
+            is_sc_restart = (sc_restart_counter > 0)
+            if sc_restart_counter > 0 and not is_sc:
+                sc_restart_counter -= 1
+            was_sc = is_sc
 
             if is_sc:
                 sc_remaining_laps -= 1
@@ -599,22 +653,29 @@ class RaceScenarioSimulator:
             for rank_idx, c_dict in enumerate(sorted_cars):
                 c_dict["position"] = rank_idx + 1
 
-            # Check dirty air penalty when two cars are within 0.8s and pass is not made
+            # Check dirty air penalty and model-driven overtaking when two cars are within 0.8s
             for i in range(len(sorted_cars) - 1):
                 car_ahead = sorted_cars[i]
                 car_behind = sorted_cars[i + 1]
                 gap = car_behind["cumulative_race_time"] - car_ahead["cumulative_race_time"]
 
                 if gap < 0.8 and not is_sc:
-                    pace_delta = car_ahead["last_lap_time"] - car_behind["last_lap_time"]
-                    # If trailing car is significantly faster (fresh tyre delta), it overtakes
-                    if pace_delta > self.config.overtake_pace_advantage_threshold:
+                    p_overtake = self._get_overtake_probability(
+                        car_ahead=car_ahead,
+                        car_behind=car_behind,
+                        gap=gap,
+                        state=state,
+                        is_sc_restart=is_sc_restart,
+                        is_sc=is_sc,
+                    )
+                    if py_random.random() < p_overtake:
                         # Successful overtake: swap times slightly to reflect pass
                         car_behind["cumulative_race_time"] = car_ahead["cumulative_race_time"] - 0.1
                         car_ahead["cumulative_race_time"] += 0.2
                     else:
                         # Trailing car is stuck in dirty air; receives wake penalty
-                        car_behind["cumulative_race_time"] += self.config.dirty_air_penalty_seconds
+                        dirty_air = self._get_dirty_air_penalty(car_behind=car_behind, gap=gap, state=state)
+                        car_behind["cumulative_race_time"] += dirty_air
 
         # Re-sort final positions at horizon end
         final_sorted = sorted(cars.values(), key=lambda c: c["cumulative_race_time"])
@@ -818,3 +879,65 @@ class RaceScenarioSimulator:
             results[strat.strategy_id] = res
 
         return results
+
+    def _get_overtake_probability(
+        self,
+        car_ahead: dict[str, Any],
+        car_behind: dict[str, Any],
+        gap: float,
+        state: RaceState | None,
+        is_sc_restart: bool = False,
+        is_sc: bool = False,
+    ) -> float:
+        """
+        Query OvertakeAdapter for P(overtake). Falls back to pace_delta
+        threshold heuristic if adapter is unavailable.
+        """
+        pace_delta = car_ahead["last_lap_time"] - car_behind["last_lap_time"]
+        tyre_age_delta = float(car_ahead.get("tyre_age", 0.0) - car_behind.get("tyre_age", 0.0))
+        compound_behind = str(car_behind.get("compound", "MEDIUM")).strip().upper()
+        compound_ahead = str(car_ahead.get("compound", "MEDIUM")).strip().upper()
+        is_fresh = bool(car_behind.get("tyre_age", 0.0) <= 2.0)
+        circuit = getattr(state, "location", "unknown") if state else "unknown"
+
+        if self.overtake_adapter is not None:
+            try:
+                return float(self.overtake_adapter.predict_overtake_probability(
+                    gap_seconds=gap,
+                    pace_delta=pace_delta,
+                    tyre_age_delta=tyre_age_delta,
+                    compound_behind=compound_behind,
+                    compound_ahead=compound_ahead,
+                    is_fresh_tyre_behind=is_fresh,
+                    circuit=circuit,
+                    is_sc_restart=is_sc_restart,
+                    is_sc=is_sc,
+                ))
+            except Exception:
+                pass
+
+        # Fallback: sigmoid on pace delta centred at threshold
+        x = (pace_delta - self.config.overtake_pace_advantage_threshold) / 0.35
+        return float(1.0 / (1.0 + math.exp(-max(-6.0, min(6.0, x)))))
+
+    def _get_dirty_air_penalty(
+        self,
+        car_behind: dict[str, Any],
+        gap: float,
+        state: RaceState | None,
+    ) -> float:
+        """
+        Query OvertakeAdapter for dirty air wake penalty. Falls back to
+        config.dirty_air_penalty_seconds if adapter is unavailable.
+        """
+        circuit = getattr(state, "location", "unknown") if state else "unknown"
+        if self.overtake_adapter is not None:
+            try:
+                return float(self.overtake_adapter.predict_dirty_air_penalty(
+                    gap_seconds=gap,
+                    circuit=circuit,
+                ))
+            except Exception:
+                pass
+        return float(self.config.dirty_air_penalty_seconds)
+

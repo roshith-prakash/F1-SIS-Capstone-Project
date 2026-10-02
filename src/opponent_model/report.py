@@ -57,7 +57,7 @@ def generate_evaluation_report(
 ## Executive Summary
 
 The F1-SIS Opponent Model produces calibrated per-lap probabilities $P(\\text{{PIT}} \\mid \\text{{state}}_t)$ and $P(\\text{{STAY}} \\mid \\text{{state}}_t)$ for opponent drivers to feed the Monte Carlo Strategy Engine.
-The model was trained on historical data (2018–2023), calibrated on 2024, and evaluated strictly on the **held-out 2025 season (24 races, ~20,000 samples)**.
+The model was trained on ground-effect era data (2022–2023), calibrated on 2024, and evaluated strictly on the **held-out 2025 season (24 races, ~20,000 samples)**.
 
 ---
 

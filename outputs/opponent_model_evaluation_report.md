@@ -3,24 +3,24 @@
 ## Executive Summary
 
 The F1-SIS Opponent Model produces calibrated per-lap probabilities $P(\text{PIT} \mid \text{state}_t)$ and $P(\text{STAY} \mid \text{state}_t)$ for opponent drivers to feed the Monte Carlo Strategy Engine.
-The model was trained on historical data (2018–2023), calibrated on 2024, and evaluated strictly on the **held-out 2025 season (24 races, ~20,000 samples)**.
+The model was trained on ground-effect era data (2022–2023), calibrated on 2024, and evaluated strictly on the **held-out 2025 season (24 races, ~20,000 samples)**.
 
 ---
 
 ## 1. Can we predict whether an opponent will pit on the next lap?
 
 **Answer: YES.**  
-The calibrated XGBoost Opponent Model achieves an **ROC-AUC of 0.7949** on the held-out 2025 test season, substantially outperforming random guessing (0.50) and empirical baselines. This confirms strong discriminatory signal in predicting opponent pit entry one lap ahead.
+The calibrated XGBoost Opponent Model achieves an **ROC-AUC of 0.7661** on the held-out 2025 test season, substantially outperforming random guessing (0.50) and empirical baselines. This confirms strong discriminatory signal in predicting opponent pit entry one lap ahead.
 
 ---
 
 ## 2. How accurate is the prediction?
 
-- **Overall Action Accuracy:** 97.02%
-- **PIT Precision:** 29.41%
-- **PIT Recall:** 1.53%
-- **PIT F1 Score:** 0.0291
-- **Action Error Rate:** 2.98%
+- **Overall Action Accuracy:** 97.07%
+- **PIT Precision:** 42.86%
+- **PIT Recall:** 0.92%
+- **PIT F1 Score:** 0.0180
+- **Action Error Rate:** 2.93%
 
 Given the severe class imbalance (~19:1 STAY to PIT ratio), precision and recall reflect effective detection of the pit decision window without drowning the strategy engine in false alarms.
 
@@ -28,10 +28,10 @@ Given the severe class imbalance (~19:1 STAY to PIT ratio), precision and recall
 
 ## 3. How large are the probability errors?
 
-- **Brier Score:** 0.0267 (Development Target: < 0.0475)
-- **Log Loss:** 0.1147
-- **Probability MAE:** 0.0540
-- **Probability RMSE:** 0.1634
+- **Brier Score:** 0.0271 (Development Target: < 0.0475)
+- **Log Loss:** 0.1205
+- **Probability MAE:** 0.0542
+- **Probability RMSE:** 0.1646
 
 The model beats the empirical baseline Brier score (~0.0475), indicating true probabilistic skill beyond constant prior guessing.
 
@@ -40,15 +40,15 @@ The model beats the empirical baseline Brier score (~0.0475), indicating true pr
 ## 4. Are the predicted probabilities calibrated?
 
 **Answer: YES, after Platt / Isotonic scaling on 2024 validation data.**
-- **Expected Calibration Error (ECE):** 0.0021 (Target: < 0.0500)
-- **Maximum Calibration Error (MCE):** 1.0000
+- **Expected Calibration Error (ECE):** 0.0018 (Target: < 0.0500)
+- **Maximum Calibration Error (MCE):** 0.5487
 
 ### Calibration Comparison (Test Set 2025):
 | Method | ROC-AUC | PR-AUC | Brier Score | Log Loss | ECE | MCE | F1 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Raw XGBoost (Pre-calibration) | 0.7949 | 0.1458 | 0.0843 | 0.2719 | 0.1507 | 0.6275 | 0.1880 |
-| Platt Scaling (Sigmoid) | 0.7949 | 0.1458 | 0.0266 | 0.1133 | 0.0021 | 0.0297 | 0.0000 |
-| Isotonic Regression | 0.7949 | 0.1371 | 0.0267 | 0.1147 | 0.0021 | 1.0000 | 0.0291 |
+| Raw XGBoost (Pre-calibration) | 0.7648 | 0.1202 | 0.0549 | 0.1920 | 0.0774 | 0.6097 | 0.1734 |
+| Platt Scaling (Sigmoid) | 0.7648 | 0.1202 | 0.0272 | 0.1193 | 0.0037 | 0.0452 | 0.0000 |
+| Isotonic Regression | 0.7661 | 0.1112 | 0.0271 | 0.1205 | 0.0018 | 0.5487 | 0.0180 |
 
 ---
 
@@ -59,9 +59,9 @@ Comparing Model A (Race State Only), Model B (+ Foundational Models), and Model 
 
 | Model | ROC-AUC | PR-AUC | Accuracy | F1 | Precision | Recall | Brier Score | Log Loss | ECE | Action Error |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Model A (Race State Only) | 0.7938 | 0.1249 | 0.8386 | 0.1731 | 0.1017 | 0.5789 | 0.1071 | 0.3314 | 0.1851 | 0.1614 |
-| Model B (+ Foundational Models) | 0.7953 | 0.1325 | 0.8712 | 0.1936 | 0.1184 | 0.5299 | 0.0888 | 0.2849 | 0.1577 | 0.1288 |
-| Model C (+ Derived Strategic) | 0.7949 | 0.1458 | 0.8753 | 0.1880 | 0.1161 | 0.4946 | 0.0843 | 0.2719 | 0.1507 | 0.1247 |
+| Model A (Race State Only) | 0.7543 | 0.0962 | 0.8674 | 0.1569 | 0.0963 | 0.4227 | 0.0925 | 0.2924 | 0.1334 | 0.1326 |
+| Model B (+ Foundational Models) | 0.7649 | 0.1203 | 0.9204 | 0.1818 | 0.1298 | 0.3032 | 0.0576 | 0.1989 | 0.0814 | 0.0796 |
+| Model C (+ Derived Strategic) | 0.7648 | 0.1202 | 0.9233 | 0.1734 | 0.1265 | 0.2757 | 0.0549 | 0.1920 | 0.0774 | 0.0767 |
 
 - Incorporating foundational models (LapTime pace, TyreDeg degradation pace, and SCRisk hazard) improves the model's ability to identify degradation cliffs and safety car opportunity windows.
 - Derived features (pace delta, deg acceleration, gap ratio) further sharpen discrimination.
@@ -70,8 +70,8 @@ Comparing Model A (Race State Only), Model B (+ Foundational Models), and Model 
 
 ## 6. Does Bayesian online updating reduce prediction error?
 
-- **Base Calibrated Brier Score:** 0.02670
-- **Bayesian Posterior Brier Score:** 0.02670
+- **Base Calibrated Brier Score:** 0.02709
+- **Bayesian Posterior Brier Score:** 0.02709
 - **$\Delta$ Brier Score:** +0.00000
 
 The Bayesian layer incorporates compound-specific stint distributions ($L(\text{PIT} \mid \text{TyreAge})$), providing adaptive correction when drivers reach extreme tyre ages.
@@ -83,25 +83,25 @@ The Bayesian layer incorporates compound-specific stint distributions ($L(\text{
 ### By Tyre Age:
 | tyre_age_bin | samples | pit_count | brier_score | log_loss | accuracy | f1 | action_error | ece |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 0-5 | 3611.0 | 23.0 | 0.0063488183252972995 | 0.03776719299443405 | 0.9936305732484076 | 0.0 | 0.006369426751592357 | 0.0008763151015930688 |
-| 6-10 | 4870.0 | 74.0 | 0.014865979455936656 | 0.07624236702372907 | 0.9848049281314168 | 0.0 | 0.015195071868583163 | 0.00447451886437686 |
-| 11-15 | 4373.0 | 102.0 | 0.02204842578961862 | 0.10058459695387725 | 0.9762176995197804 | 0.0 | 0.02378230048021953 | 0.0017694624162901173 |
-| 16-20 | 3555.0 | 126.0 | 0.03248411484076954 | 0.13652595306323206 | 0.9639943741209565 | 0.015384615384615385 | 0.0360056258790436 | 0.010069776690432752 |
-| 21+ | 5969.0 | 328.0 | 0.04863029123189249 | 0.18994216171967737 | 0.9433740995141565 | 0.05056179775280899 | 0.056625900485843525 | 0.0050516157573462575 |
+| 0-5 | 3611.0 | 23.0 | 0.006390969352497999 | 0.05594294378814996 | 0.9936305732484076 | 0.0 | 0.006369426751592357 | 0.0018302616028973227 |
+| 6-10 | 4870.0 | 74.0 | 0.014968317138433445 | 0.07690187870217612 | 0.9848049281314168 | 0.0 | 0.015195071868583163 | 0.0041245621620453685 |
+| 11-15 | 4373.0 | 102.0 | 0.022092263135294284 | 0.10497864377186225 | 0.9764463754859364 | 0.0 | 0.02355362451406357 | 0.004206157893644382 |
+| 16-20 | 3555.0 | 126.0 | 0.03301194316395527 | 0.14291736194399018 | 0.9645569620253165 | 0.045454545454545456 | 0.035443037974683546 | 0.008567012775736517 |
+| 21+ | 5969.0 | 328.0 | 0.04961872803172608 | 0.19327886675039088 | 0.9448818897637795 | 0.01791044776119403 | 0.05511811023622047 | 0.005481905972157251 |
 
 ### By Safety Car / Track Status:
 | sc_status | samples | pit_count | brier_score | log_loss | accuracy | f1 | action_error | ece |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Normal Flag | 21084.0 | 576.0 | 0.02529756146197908 | 0.10831148283701408 | 0.9720166951242648 | 0.023178807947019868 | 0.027983304875735155 | 0.0035380474758736568 |
-| Virtual Safety Car (VSC) | 548.0 | 26.0 | 0.043612987196539825 | 0.18114874549414947 | 0.9525547445255474 | 0.0 | 0.04744525547445255 | 0.032946576751610536 |
-| Safety Car (SC) | 746.0 | 51.0 | 0.05391716176285975 | 0.2463000181848691 | 0.9316353887399463 | 0.10526315789473684 | 0.06836461126005362 | 0.03679353833521888 |
+| Normal Flag | 21084.0 | 576.0 | 0.025459517766716608 | 0.11409759817772747 | 0.9725858470878391 | 0.020338983050847456 | 0.02741415291216088 | 0.0030316473990232855 |
+| Virtual Safety Car (VSC) | 548.0 | 26.0 | 0.04403710869427146 | 0.19220482633975564 | 0.9525547445255474 | 0.0 | 0.04744525547445255 | 0.03312110690778992 |
+| Safety Car (SC) | 746.0 | 51.0 | 0.06058149986327519 | 0.24984517566157805 | 0.9316353887399463 | 0.0 | 0.06836461126005362 | 0.046139495993150405 |
 
 ### By Race Phase:
 | race_phase | samples | pit_count | brier_score | log_loss | accuracy | f1 | action_error | ece |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Early (0-33%) | 6908.0 | 202.0 | 0.02677670773258954 | 0.11441697715830629 | 0.9706137811233353 | 0.00975609756097561 | 0.029386218876664736 | 0.0023187049327764815 |
-| Middle (33-66%) | 7631.0 | 292.0 | 0.03481532734314689 | 0.13911638584584948 | 0.9602935395098938 | 0.0380952380952381 | 0.03970646049010615 | 0.006562229731581529 |
-| Late (66-100%) | 7839.0 | 159.0 | 0.018732828874968972 | 0.09116711463618499 | 0.9794616660288302 | 0.03592814371257485 | 0.020538333971169793 | 0.0012678779182093798 |
+| Early (0-33%) | 6908.0 | 202.0 | 0.02724862975089833 | 0.11950499085254701 | 0.9710480602200348 | 0.02912621359223301 | 0.02895193977996526 | 0.004253264465319065 |
+| Middle (33-66%) | 7631.0 | 292.0 | 0.03500625999823664 | 0.14693917039676208 | 0.9613418949023719 | 0.019933554817275746 | 0.0386581050976281 | 0.0038350840028247945 |
+| Late (66-100%) | 7839.0 | 159.0 | 0.01923055270955065 | 0.09574093886335543 | 0.9795892333205766 | 0.0 | 0.020410766679423396 | 0.002246694020789851 |
 
 **Key Takeaways:**
 1. High accuracy during early/mid stints when tyre life is comfortably below nominal windows.
@@ -129,10 +129,10 @@ The Bayesian layer incorporates compound-specific stint distributions ($L(\text{
 
 | Engineering Metric | Target | Achieved (2025 Test) | Status |
 |---|---|---|---|
-| ROC-AUC | > 0.7000 | 0.7949 | ✅ PASS |
-| Brier Score | < 0.0475 | 0.0267 | ✅ PASS |
-| ECE | < 0.0500 | 0.0021 | ✅ PASS |
-| Probability MAE | < 0.2000 | 0.0540 | ✅ PASS |
-| Action Accuracy | > Empirical | 97.02% | ✅ PASS |
+| ROC-AUC | > 0.7000 | 0.7661 | ✅ PASS |
+| Brier Score | < 0.0475 | 0.0271 | ✅ PASS |
+| ECE | < 0.0500 | 0.0018 | ✅ PASS |
+| Probability MAE | < 0.2000 | 0.0542 | ✅ PASS |
+| Action Accuracy | > Empirical | 97.07% | ✅ PASS |
 
 **Conclusion:** The Opponent Model satisfies all development criteria and is ready for integration into the Monte Carlo Strategy Engine.

@@ -242,6 +242,50 @@ class TestRaceScenarioSimulator(unittest.TestCase):
         self.assertIsNotNone(state_52.current_lap)
         self.assertEqual((state_52.current_lap or 0) + res_52.horizon_laps, 53)
 
+    def test_pitstop_adapter_integration_in_simulator(self):
+        """Verify that PitstopAdapter dynamically drives pit time loss in simulator rollouts."""
+        try:
+            from src.pitstop.adapter import PitstopAdapter
+        except ImportError:
+            from pitstop.adapter import PitstopAdapter
+
+        adapter = PitstopAdapter()
+        config = StrategyEngineConfig(default_n_rollouts=10)
+        sim = RaceScenarioSimulator(config=config, pitstop_adapter=adapter, random_seed=42)
+
+        # Candidate strategy that pits on lap 21
+        strat_pit = Strategy(
+            strategy_id="PIT_S01",
+            name="Pit Stop",
+            num_stops=1,
+            pit_laps=[21],
+            compounds=["MEDIUM", "HARD"],
+            stints=[
+                StintPlan(stint_number=1, compound="MEDIUM", target_laps=20, start_lap=1, end_lap=20),
+                StintPlan(stint_number=2, compound="HARD", target_laps=10, start_lap=21, end_lap=30),
+            ]
+        )
+
+        # 1. Simulate on Melbourne (fast pit lane: ~18s)
+        state_melb = self._create_sample_state(current_lap=20, total_laps=30)
+        state_melb.location = "Melbourne"
+        state_melb.grand_prix = "Australian Grand Prix"
+        res_melb = sim.simulate_strategy(state_melb, "VER", strat_pit, horizon_laps=5, n_rollouts=15, seed=42)
+
+        # 2. Simulate on Silverstone (slow pit lane: ~30s)
+        state_silver = self._create_sample_state(current_lap=20, total_laps=30)
+        state_silver.location = "Silverstone"
+        state_silver.grand_prix = "British Grand Prix"
+        res_silver = sim.simulate_strategy(state_silver, "VER", strat_pit, horizon_laps=5, n_rollouts=15, seed=42)
+
+        # Silverstone race time must be strictly longer due to physical pit lane length (~11s difference)
+        self.assertGreater(
+            res_silver.expected_time_seconds,
+            res_melb.expected_time_seconds + 5.0,
+            "Silverstone pit stop must take substantially longer than Melbourne in simulator.",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
+
