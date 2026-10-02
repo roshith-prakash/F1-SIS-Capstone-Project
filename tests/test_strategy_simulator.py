@@ -179,8 +179,12 @@ class TestRaceScenarioSimulator(unittest.TestCase):
             compounds=[],
         )
         res_stay = self.simulator.simulate_strategy(state, "VER", strat_stay, horizon_laps=5, n_rollouts=20, seed=42)
-        # Initial tyre age was 20. After 5 laps, should be 25
-        self.assertTrue(all(r.final_tyre_age == 25 for r in res_stay.rollouts))
+        # Initial tyre age was 20. Under clean green laps, advances to 25. Under SC/VSC, wear is discounted (< 25).
+        for r in res_stay.rollouts:
+            if not r.sc_deployed and not r.vsc_deployed:
+                self.assertEqual(r.final_tyre_age, 25)
+            else:
+                self.assertLess(r.final_tyre_age, 25)
 
     def test_opponent_action_sampling(self):
         """Opponent interface is invoked during rollout execution."""
@@ -284,6 +288,76 @@ class TestRaceScenarioSimulator(unittest.TestCase):
             res_melb.expected_time_seconds + 5.0,
             "Silverstone pit stop must take substantially longer than Melbourne in simulator.",
         )
+
+    def test_safety_car_wear_discount_and_lap_time_delta(self):
+        """Verify empirical SC (+40% base, 0.50 wear, 0.50 deg) and VSC (+24% base, 0.70 wear, 0.70 deg) logic."""
+        rng = np.random.default_rng(42)
+        car = {
+            "driver": "VER",
+            "team": "Red Bull Racing",
+            "compound": "MEDIUM",
+            "tyre_age": 10.0,
+            "cumulative_race_time": 1000.0,
+            "last_lap_time": 85.0,
+            "position": 1,
+            "pit_count": 0,
+        }
+        state = self._create_sample_state()
+
+        # 1. Base 85.0s circuit
+        lt_green = self.simulator._estimate_lap_pace(
+            car=car.copy(), lap_num=21, total_laps=57, circuit_base=85.0,
+            is_sc=False, is_vsc=False, is_pitting=False, rng=rng, state=state,
+        )
+
+        # SC pace: caution_delta = 85.0 * 0.40 = 34.0s, deg suppressed by 0.50
+        rng_sc = np.random.default_rng(42)
+        lt_sc = self.simulator._estimate_lap_pace(
+            car=car.copy(), lap_num=21, total_laps=57, circuit_base=85.0,
+            is_sc=True, is_vsc=False, is_pitting=False, rng=rng_sc, state=state,
+        )
+        self.assertGreater(lt_sc - lt_green, 33.0)
+        self.assertLess(lt_sc - lt_green, 35.0)
+
+        # VSC pace: caution_delta = 85.0 * 0.24 = 20.4s, deg suppressed by 0.70
+        rng_vsc = np.random.default_rng(42)
+        lt_vsc = self.simulator._estimate_lap_pace(
+            car=car.copy(), lap_num=21, total_laps=57, circuit_base=85.0,
+            is_sc=False, is_vsc=True, is_pitting=False, rng=rng_vsc, state=state,
+        )
+        self.assertGreater(lt_vsc - lt_green, 19.5)
+        self.assertLess(lt_vsc - lt_green, 21.5)
+
+        # 2. Verify circuit proportionality: short circuit (Austria 67.5s) vs long circuit (Spa 107.3s)
+        rng_austria = np.random.default_rng(42)
+        lt_sc_austria = self.simulator._estimate_lap_pace(
+            car=car.copy(), lap_num=21, total_laps=57, circuit_base=67.5,
+            is_sc=True, is_vsc=False, is_pitting=False, rng=rng_austria, state=state,
+        )
+        rng_austria_green = np.random.default_rng(42)
+        lt_green_austria = self.simulator._estimate_lap_pace(
+            car=car.copy(), lap_num=21, total_laps=57, circuit_base=67.5,
+            is_sc=False, is_vsc=False, is_pitting=False, rng=rng_austria_green, state=state,
+        )
+
+        rng_spa = np.random.default_rng(42)
+        lt_sc_spa = self.simulator._estimate_lap_pace(
+            car=car.copy(), lap_num=21, total_laps=57, circuit_base=107.3,
+            is_sc=True, is_vsc=False, is_pitting=False, rng=rng_spa, state=state,
+        )
+        rng_spa_green = np.random.default_rng(42)
+        lt_green_spa = self.simulator._estimate_lap_pace(
+            car=car.copy(), lap_num=21, total_laps=57, circuit_base=107.3,
+            is_sc=False, is_vsc=False, is_pitting=False, rng=rng_spa_green, state=state,
+        )
+
+        delta_austria = lt_sc_austria - lt_green_austria
+        delta_spa = lt_sc_spa - lt_green_spa
+
+        # Austria delta (~27s) must be substantially smaller than Spa delta (~43s)
+        self.assertAlmostEqual(delta_austria, 67.5 * 0.40, delta=1.5)
+        self.assertAlmostEqual(delta_spa, 107.3 * 0.40, delta=1.5)
+        self.assertGreater(delta_spa, delta_austria + 12.0)
 
 
 if __name__ == "__main__":

@@ -309,10 +309,20 @@ class StrategyEngineConfig:
     sc_duration_mean_laps: float = 3.2
     sc_duration_min_laps: int = 2
     sc_duration_max_laps: int = 5
-    vsc_duration_mean_laps: float = 2.0
-    # [Project Specification: Section 5.5 - SC lap time delta ~10-15s slower]
-    sc_lap_time_delta_seconds: float = 15.0
-    vsc_lap_time_delta_seconds: float = 8.0
+    # [Empirical Parameter: data shows +40% (+0.40x) circuit base pace slowdown under SC]
+    sc_lap_time_multiplier: float = 0.40
+    # [Empirical Parameter: data shows +24% (+0.24x) circuit base pace slowdown under VSC]
+    vsc_lap_time_multiplier: float = 0.24
+    # Optional absolute fallback (if explicitly set, overrides percentage multiplier)
+    sc_lap_time_delta_seconds: float | None = None
+    vsc_lap_time_delta_seconds: float | None = None
+    # [Empirical Parameter: v^2 speed model SC laps impose ~50% of green-flag wear]
+    sc_tyre_wear_fraction: float = 0.50
+    # [Empirical Parameter: v^2 speed model VSC laps impose ~70% of green-flag wear]
+    vsc_tyre_wear_fraction: float = 0.70
+    # [Empirical Parameter: caution lap tyre degradation penalty suppression]
+    sc_deg_suppression_fraction: float = 0.50
+    vsc_deg_suppression_fraction: float = 0.70
     # [Project Specification: Section 5.5 - Field compression under SC]
     sc_field_bunching_gap_seconds: float = 0.8
 

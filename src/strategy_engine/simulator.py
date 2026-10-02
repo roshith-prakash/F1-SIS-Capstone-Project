@@ -172,14 +172,20 @@ class RaceScenarioSimulator:
                 laps_since_last_pit=int(car["tyre_age"]),
                 is_active=True,
             )
-            # Lightweight synthetic RaceState for the current simulated lap
+            # Lightweight synthetic RaceState for the current simulated lap (clean condition for baseline deg)
             current_cond = getattr(state, "current_conditions", None) if state is not None else None
+            synth_cond = CurrentConditions(
+                track_temp=current_cond.track_temp if current_cond and current_cond.track_temp is not None else 30.0,
+                air_temp=current_cond.air_temp if current_cond and current_cond.air_temp is not None else 25.0,
+                has_safety_car=False,
+                has_vsc=False,
+            )
             synth_state = RaceState(
                 current_lap=sim_lap,
                 total_laps_expected=total_laps,
                 grand_prix=getattr(state, "grand_prix", None) if state is not None else None,
                 location=getattr(state, "location", None) if state is not None else None,
-                current_conditions=current_cond if isinstance(current_cond, CurrentConditions) else CurrentConditions(),
+                current_conditions=synth_cond,
             )
             synth_state.participants[car["driver"]] = synth_participant
             deg = self.tyre_deg_adapter.predict_degradation(synth_state, car["driver"])
@@ -425,12 +431,28 @@ class RaceScenarioSimulator:
             cliff_excess = tyre_age - max_age
             tyre_deg += 0.35 * (cliff_excess ** 1.5)
 
-        # 4. Caution regime delta
+        # Caution degradation suppression: reduced mechanical/thermal stress under SC/VSC
+        if is_sc:
+            tyre_deg *= self.config.sc_deg_suppression_fraction
+        elif is_vsc:
+            tyre_deg *= self.config.vsc_deg_suppression_fraction
+
+        # 4. Caution regime delta (proportional to circuit base pace)
         caution_delta = 0.0
         if is_sc:
-            caution_delta = self.config.sc_lap_time_delta_seconds
+            if self.config.sc_lap_time_delta_seconds is not None:
+                caution_delta = self.config.sc_lap_time_delta_seconds
+            else:
+                mult = self.config.sc_lap_time_multiplier
+                factor = (mult - 1.0) if mult >= 1.0 else mult
+                caution_delta = circuit_base * factor
         elif is_vsc:
-            caution_delta = self.config.vsc_lap_time_delta_seconds
+            if self.config.vsc_lap_time_delta_seconds is not None:
+                caution_delta = self.config.vsc_lap_time_delta_seconds
+            else:
+                mult = self.config.vsc_lap_time_multiplier
+                factor = (mult - 1.0) if mult >= 1.0 else mult
+                caution_delta = circuit_base * factor
 
         # 5. Pit lane time loss
         pit_delta = 0.0
@@ -643,7 +665,12 @@ class RaceScenarioSimulator:
                 lap_times[d_code] = lt
                 car["cumulative_race_time"] += lt
                 if not is_pitting:
-                    car["tyre_age"] += 1.0
+                    if is_sc:
+                        car["tyre_age"] += self.config.sc_tyre_wear_fraction
+                    elif is_vsc:
+                        car["tyre_age"] += self.config.vsc_tyre_wear_fraction
+                    else:
+                        car["tyre_age"] += 1.0
                 car["last_lap_time"] = lt
 
             # -------------------------------------------------------------

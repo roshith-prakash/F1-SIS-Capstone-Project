@@ -178,6 +178,40 @@ class TyreDegAdapterTests(unittest.TestCase):
         self.assertEqual(features["TrackTemp"], 30.0)
         self.assertEqual(features["AirTemp"], 25.0)
 
+    def test_safety_car_deg_suppression_and_lap_time(self):
+        """Verify TyreDegAdapter suppresses degradation and adds caution delta under SC/VSC."""
+        # 1. SC condition
+        cond_sc = CurrentConditions(has_safety_car=True)
+        state_sc = RaceState(current_lap=10, total_laps_expected=50, current_conditions=cond_sc)
+        state_sc.participants["VER"] = ParticipantState(driver="VER", tyre_life=20.0, compound="MEDIUM", is_active=True)
+
+        # Baseline deg with DummyModel is 0.05 * 20 = 1.0; with SC it is 1.0 * 0.50 = 0.50
+        deg_sc = self.adapter.predict_degradation(state_sc, "VER")
+        self.assertAlmostEqual(deg_sc, 0.50)
+
+        preds_sc = self.adapter.predict_all(state_sc)
+        self.assertAlmostEqual(preds_sc["VER"], 0.50)
+
+        # Lap time: base 80.0 + fuel (40*0.065=2.6) + deg 0.50 + SC delta (80.0 * 0.40 = 32.0) = 115.1
+        lt_sc = self.adapter.predict_lap_time(state_sc, "VER", base_pace=80.0)
+        self.assertAlmostEqual(lt_sc, 80.0 + 2.6 + 0.50 + (80.0 * 0.40))
+
+        # 2. VSC condition
+        cond_vsc = CurrentConditions(has_vsc=True)
+        state_vsc = RaceState(current_lap=10, total_laps_expected=50, current_conditions=cond_vsc)
+        state_vsc.participants["VER"] = ParticipantState(driver="VER", tyre_life=20.0, compound="MEDIUM", is_active=True)
+
+        # With VSC it is 1.0 * 0.70 = 0.70
+        deg_vsc = self.adapter.predict_degradation(state_vsc, "VER")
+        self.assertAlmostEqual(deg_vsc, 0.70)
+
+        preds_vsc = self.adapter.predict_all(state_vsc)
+        self.assertAlmostEqual(preds_vsc["VER"], 0.70)
+
+        # Lap time: base 80.0 + fuel (40*0.065=2.6) + deg 0.70 + VSC delta (80.0 * 0.24 = 19.2) = 102.5
+        lt_vsc = self.adapter.predict_lap_time(state_vsc, "VER", base_pace=80.0)
+        self.assertAlmostEqual(lt_vsc, 80.0 + 2.6 + 0.70 + (80.0 * 0.24))
+
 
 if __name__ == "__main__":
     unittest.main()
