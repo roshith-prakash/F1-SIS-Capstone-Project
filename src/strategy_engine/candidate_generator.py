@@ -180,7 +180,21 @@ class CandidateStrategyGenerator:
         total_laps = state.total_laps_expected or 57
         remaining_laps = max(0, total_laps - curr_lap)
         if remaining_laps <= 0:
-            return []
+
+
+
+            return [
+                Strategy(
+                    strategy_id="S01",
+                    name="Run to Checkered Flag",
+                    num_stops=0,
+                    pit_laps=[],
+                    compounds=[],
+                    horizon_laps=1,
+                    tactical_intent="track_position",
+                )
+            ]
+
 
         if horizon_laps is not None:
             h_laps = horizon_laps
@@ -204,91 +218,95 @@ class CandidateStrategyGenerator:
         candidates: list[Strategy] = []
         strat_counter = 1
 
+        # Maximum future stops permitted given prior pit stops
+        max_future_stops = max(0, max_stops - prior_pit_count)
+
         # ---------------------------------------------------------------------
-        # 1. ONE-STOP STRATEGY FAMILY
+        # 1. ONE-STOP STRATEGY FAMILY (Only if within total stop budget)
         # ---------------------------------------------------------------------
-        # Determine nominal pit window based on tyre wear
-        max_life = self.config.get_max_tyre_age(curr_compound)
-        remaining_life_on_curr = max(0, max_life - curr_tyre_age)
+        if max_future_stops >= 1:
+            # Determine nominal pit window based on tyre wear
+            max_life = self.config.get_max_tyre_age(curr_compound)
+            remaining_life_on_curr = max(0, max_life - curr_tyre_age)
 
-        # Pit lap offsets to test
-        pit_lap_offsets: list[tuple[int, str, str]] = []
+            # Pit lap offsets to test
+            pit_lap_offsets: list[tuple[int, str, str]] = []
 
-        # A. Undercut Now: Pit this exact lap
-        pit_lap_offsets.append((0, "undercut", "Undercut Now"))
+            # A. Undercut Now: Pit this exact lap
+            pit_lap_offsets.append((0, "undercut", "Undercut Now"))
 
-        # B. Nominal Window: Pit in 3-5 laps (or near half of remaining tyre life)
-        if remaining_life_on_curr >= 3:
-            nominal_offset = min(remaining_life_on_curr - 2, max(2, remaining_life_on_curr // 2))
-            if nominal_offset > 0:
-                pit_lap_offsets.append((nominal_offset, "nominal", f"Nominal Window (+{nominal_offset} laps)"))
+            # B. Nominal Window: Pit in 3-5 laps (or near half of remaining tyre life)
+            if remaining_life_on_curr >= 3:
+                nominal_offset = min(remaining_life_on_curr - 2, max(2, remaining_life_on_curr // 2))
+                if nominal_offset > 0:
+                    pit_lap_offsets.append((nominal_offset, "nominal", f"Nominal Window (+{nominal_offset} laps)"))
 
-        # C. Stint Extension / Overcut: Pit near the end of current tyre life
-        if remaining_life_on_curr >= 6:
-            ext_offset = max(1, remaining_life_on_curr - 2)
-            if all(ext_offset != o[0] for o in pit_lap_offsets):
-                pit_lap_offsets.append((ext_offset, "overcut", f"Overcut Extension (+{ext_offset} laps)"))
+            # C. Stint Extension / Overcut: Pit near the end of current tyre life
+            if remaining_life_on_curr >= 6:
+                ext_offset = max(1, remaining_life_on_curr - 2)
+                if all(ext_offset != o[0] for o in pit_lap_offsets):
+                    pit_lap_offsets.append((ext_offset, "overcut", f"Overcut Extension (+{ext_offset} laps)"))
 
-        for offset, intent, desc in pit_lap_offsets:
-            pit_lap = curr_lap + offset
-            if pit_lap >= total_laps:
-                continue
-
-            for next_comp in available_compounds:
-                # Hybrid check: verify second stint is viable under degradation model
-                stint2_length = total_laps - pit_lap
-                stint2_viable, _ = self._is_stint_viable_hybrid(
-                    compound=next_comp,
-                    stint_laps=stint2_length,
-                    start_age=0,
-                )
-                if not stint2_viable:
+            for offset, intent, desc in pit_lap_offsets:
+                pit_lap = curr_lap + offset
+                if pit_lap >= total_laps:
                     continue
 
-                strat_id = f"S{strat_counter:02d}"
-
-                stints = [
-                    StintPlan(
-                        stint_number=prior_pit_count + 1,
-                        compound=curr_compound,
-                        target_laps=curr_tyre_age + offset,
-                        start_lap=curr_lap - curr_tyre_age,
-                        end_lap=pit_lap,
-                    ),
-                    StintPlan(
-                        stint_number=prior_pit_count + 2,
+                for next_comp in available_compounds:
+                    # Hybrid check: verify second stint is viable under degradation model
+                    stint2_length = total_laps - pit_lap
+                    stint2_viable, _ = self._is_stint_viable_hybrid(
                         compound=next_comp,
-                        target_laps=stint2_length,
-                        start_lap=pit_lap,
-                        end_lap=total_laps,
-                    ),
-                ]
+                        stint_laps=stint2_length,
+                        start_age=0,
+                    )
+                    if not stint2_viable:
+                        continue
 
-                strat = Strategy(
-                    strategy_id=strat_id,
-                    name=f"1-Stop: {curr_compound[0]}->{next_comp[0]} ({desc})",
-                    num_stops=1,
-                    pit_laps=[pit_lap],
-                    compounds=[next_comp],
-                    stints=stints,
-                    horizon_laps=h_laps,
-                    tactical_intent=intent,
-                    assumptions={
-                        "pit_lap": pit_lap,
-                        "compound_switch": f"{curr_compound} -> {next_comp}",
-                        "stint_extension_laps": offset,
-                    },
-                )
+                    strat_id = f"S{strat_counter:02d}"
 
-                is_valid, _ = self.validate_strategy(strat, state, ego_driver)
-                if is_valid:
-                    candidates.append(strat)
-                    strat_counter += 1
+                    stints = [
+                        StintPlan(
+                            stint_number=prior_pit_count + 1,
+                            compound=curr_compound,
+                            target_laps=curr_tyre_age + offset,
+                            start_lap=curr_lap - curr_tyre_age,
+                            end_lap=pit_lap,
+                        ),
+                        StintPlan(
+                            stint_number=prior_pit_count + 2,
+                            compound=next_comp,
+                            target_laps=stint2_length,
+                            start_lap=pit_lap,
+                            end_lap=total_laps,
+                        ),
+                    ]
+
+                    strat = Strategy(
+                        strategy_id=strat_id,
+                        name=f"1-Stop: {curr_compound[0]}->{next_comp[0]} ({desc})",
+                        num_stops=1,
+                        pit_laps=[pit_lap],
+                        compounds=[next_comp],
+                        stints=stints,
+                        horizon_laps=h_laps,
+                        tactical_intent=intent,
+                        assumptions={
+                            "pit_lap": pit_lap,
+                            "compound_switch": f"{curr_compound} -> {next_comp}",
+                            "stint_extension_laps": offset,
+                        },
+                    )
+
+                    is_valid, _ = self.validate_strategy(strat, state, ego_driver)
+                    if is_valid:
+                        candidates.append(strat)
+                        strat_counter += 1
 
         # ---------------------------------------------------------------------
         # 2. TWO-STOP STRATEGY FAMILY (If race distance and laps permit)
         # ---------------------------------------------------------------------
-        if max_stops >= 2 and remaining_laps >= (self.config.minimum_stint_length * 2 + 2):
+        if max_future_stops >= 2 and remaining_laps >= (self.config.minimum_stint_length * 2 + 2):
             # Test 2-stop combinations: e.g. Pit soon, then sprint stint
             # Stop 1: curr_lap + 1 to 4 laps (or now)
             # Stop 2: mid-way through remaining distance

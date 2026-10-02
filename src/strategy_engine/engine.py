@@ -249,7 +249,22 @@ class StrategyEngine:
         )
 
         if not candidates:
-            raise RuntimeError(f"No valid candidate strategies could be generated for driver {ego_driver}.")
+            # Fallback guarantee: if candidate generator produced no strategies (e.g. edge case at end of race),
+            # provide a robust default 0-stop strategy rather than crashing the system
+            p_state = state.participants.get(normalize_driver(ego_driver) or "EGO")
+            curr_c = str(p_state.compound if p_state and p_state.compound else "MEDIUM").upper()
+            candidates = [
+                Strategy(
+                    strategy_id="S01",
+                    name=f"Run to Flag ({curr_c})",
+                    num_stops=0,
+                    pit_laps=[],
+                    compounds=[],
+                    horizon_laps=h_laps,
+                    tactical_intent="track_position",
+                )
+            ]
+
 
         # Step 2: Simulate Candidates with Monte Carlo Rollouts
         sim_results = self.simulator.simulate_all(
