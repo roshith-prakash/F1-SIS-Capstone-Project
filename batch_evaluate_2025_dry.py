@@ -119,6 +119,8 @@ def run_batch_evaluation(
                 "act_stops": act_stops,
                 "ai_stops": ai_stops,
                 "divergences": res["strategic_divergences"],
+                "rl_inferences": res.get("rl_inferences", 0),
+                "rl_fallbacks": res.get("rl_fallbacks", 0),
             })
         except Exception as e:
             print(f" FAILED: {e}")
@@ -164,6 +166,24 @@ def run_batch_evaluation(
     avg_act_stops = df_res["act_stops"].mean()
     avg_ai_stops = df_res["ai_stops"].mean()
 
+    total_rl_inferences = sum(r.get("rl_inferences", 0) for r in results)
+    total_rl_fallbacks = sum(r.get("rl_fallbacks", 0) for r in results)
+
+    model_info = {}
+    if policy == "rl":
+        model_file = Path(model_path) if model_path else (ROOT / "models" / "Decision Engine" / "decision_engine_dqn.pt")
+        if model_file.exists():
+            import torch
+            ckpt = torch.load(model_file, map_location="cpu", weights_only=False)
+            model_info = {
+                "path": str(model_file.resolve()),
+                "name": model_file.name,
+                "size_bytes": model_file.stat().st_size,
+                "size_kb": model_file.stat().st_size / 1024,
+                "architecture": ckpt.get("architecture", "dueling"),
+                "params": sum(p.numel() for p in ckpt.get("model_state_dict", {}).values()),
+            }
+
     print("\n---------------- AGGREGATE SUMMARY ----------------")
     print(f"Total Dry Races Simulated      : {n_races}")
     print(f"Net Season Time Delta          : {total_time_advantage:+.2f} s ({'Advantage' if total_time_advantage > 0 else 'Deficit'})")
@@ -178,6 +198,10 @@ def run_batch_evaluation(
     print(f"Points Finishes (P1-P10)       : AI {ai_points} vs Actual {act_points}")
     print(f"Average Finishing Position     : AI P{avg_ai_pos:.2f} vs Actual P{avg_act_pos:.2f}")
     print(f"Average Pit Stops per Race     : AI {avg_ai_stops:.2f} vs Actual {avg_act_stops:.2f}")
+    if model_info:
+        coverage = ((total_rl_inferences - total_rl_fallbacks) / max(1, total_rl_inferences)) * 100
+        print(f"RL Checkpoint Loaded           : {model_info['name']} ({model_info['size_kb']:.1f} KB, {model_info['params']:,} params)")
+        print(f"Total Neural Inferences        : {total_rl_inferences} (Fallbacks: {total_rl_fallbacks}, Coverage: {coverage:.1f}%)")
     print("---------------------------------------------------\n")
 
     # ---------------------------------------------------------
@@ -277,6 +301,19 @@ def run_batch_evaluation(
     md_lines.append(f"4. **Decision Policy**: {policy_desc_meth} to select the optimal tactical action (`STAY_OUT` vs `PIT_<COMPOUND>`).")
     md_lines.append("5. **Caution Dynamic Pit Loss**: Safety Car and VSC pit losses are calibrated to 14.0s (vs 21.0s–24.0s green flag), reflecting realistic delta pacings.")
     md_lines.append("")
+
+    if model_info:
+        coverage = ((total_rl_inferences - total_rl_fallbacks) / max(1, total_rl_inferences)) * 100
+        md_lines.append("### Neural RL Model Verification & Execution Audit")
+        md_lines.append("")
+        md_lines.append(f"- **Active Model Checkpoint**: `{model_info['path']}`")
+        md_lines.append(f"- **Neural Architecture**: `Dueling Candidate-Conditioned Double-DQN ({model_info['architecture'].title()})`")
+        md_lines.append(f"- **Trainable Parameters**: `{model_info['params']:,}`")
+        md_lines.append(f"- **Model Binary Size**: `{model_info['size_bytes']:,} bytes` ({model_info['size_kb']:.1f} KB)")
+        md_lines.append(f"- **Total Neural Decisions Made**: `{total_rl_inferences}` across {n_races} races")
+        md_lines.append(f"- **Heuristic Fallbacks**: `{total_rl_fallbacks}`")
+        md_lines.append(f"- **Neural Decision Coverage**: `{coverage:.1f}%`")
+        md_lines.append("")
     md_lines.append("---")
     md_lines.append(f"*Generated automatically by F1-SIS Strategy Backtesting Engine on 2026-10-04.*")
 

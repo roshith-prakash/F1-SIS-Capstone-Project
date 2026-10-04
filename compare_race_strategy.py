@@ -59,36 +59,78 @@ NOMINAL_STINT_LIFESPANS = {
     "WET": 30,
 }
 
+from tyre_deg.adapter import CIRCUIT_ALIASES
+
+CIRCUIT_DEG_MULTIPLIERS: dict[str, float] = {
+    "Bahrain": 1.45,
+    "Spain": 1.40,
+    "Qatar": 1.50,
+    "Brazil": 1.35,
+    "China": 1.30,
+    "Great_Britain": 1.30,
+    "Japan": 1.35,
+    "United_States": 1.30,
+    "Netherlands": 1.25,
+    "Belgium": 1.20,
+    "Austria": 1.15,
+    "Abu_Dhabi": 1.00,
+    "Emilia_Romagna": 1.05,
+    "Hungary": 1.10,
+    "Mexico": 0.95,
+    "Singapore": 1.00,
+    "Italy": 0.85,
+    "Canada": 0.85,
+    "Saudi_Arabia": 0.85,
+    "Azerbaijan": 0.80,
+    "Las_Vegas": 0.75,
+    "Monaco": 0.60,
+    "Miami": 1.00,
+    "Australia": 1.00,
+}
+
+
+def get_circuit_deg_multiplier(gp_name: str) -> float:
+    """Returns the circuit tyre wear multiplier based on asphalt abrasiveness and cornering loads."""
+    gp_lower = gp_name.lower().replace("_", " ")
+    for alias, standard in CIRCUIT_ALIASES.items():
+        if alias in gp_lower:
+            return CIRCUIT_DEG_MULTIPLIERS.get(standard, 1.0)
+    return 1.0
+
 
 def compute_tyre_pace_delta(
     ai_compound: str,
     ai_tyre_age: float,
     act_compound: str,
     act_tyre_age: float,
+    deg_multiplier: float = 1.0,
 ) -> float:
     """
     Computes lap pace delta (seconds) between AI tyre state and actual historical tyre state.
     Negative value means AI is faster; positive means AI is slower.
+    Includes non-linear thermal/tread cliff penalty when exceeding circuit-adjusted lifespan.
     """
     # 1. Base compound speed difference
     comp_delta = COMPOUND_PACE_OFFSETS.get(ai_compound, 0.0) - COMPOUND_PACE_OFFSETS.get(act_compound, 0.0)
 
-    # 2. Linear wear component
-    ai_deg = ai_tyre_age * COMPOUND_DEG_RATES.get(ai_compound, 0.045)
-    act_deg = act_tyre_age * COMPOUND_DEG_RATES.get(act_compound, 0.045)
+    # 2. Linear wear component scaled by circuit degradation multiplier
+    ai_deg = ai_tyre_age * (COMPOUND_DEG_RATES.get(ai_compound, 0.045) * deg_multiplier)
+    act_deg = act_tyre_age * (COMPOUND_DEG_RATES.get(act_compound, 0.045) * deg_multiplier)
 
-    # 3. Non-linear cliff penalty (calibrated to StrategyEngine: 0.008, NOT uncalibrated 0.25)
-    ai_nom = NOMINAL_STINT_LIFESPANS.get(ai_compound, 34)
+    # 3. Non-linear cliff penalty beyond circuit-adjusted nominal lifespan
+    ai_nom = max(12.0, NOMINAL_STINT_LIFESPANS.get(ai_compound, 34) / deg_multiplier)
     if ai_tyre_age > ai_nom:
-        ai_deg += 0.008 * ((ai_tyre_age - ai_nom) ** 1.3)
+        overshoot = ai_tyre_age - ai_nom
+        ai_deg += 0.035 * (overshoot ** 1.6)
 
-    act_nom = NOMINAL_STINT_LIFESPANS.get(act_compound, 34)
+    act_nom = max(12.0, NOMINAL_STINT_LIFESPANS.get(act_compound, 34) / deg_multiplier)
     if act_tyre_age > act_nom:
-        act_deg += 0.008 * ((act_tyre_age - act_nom) ** 1.3)
+        overshoot = act_tyre_age - act_nom
+        act_deg += 0.035 * (overshoot ** 1.6)
 
     delta = comp_delta + (ai_deg - act_deg)
-    # Physically clamp tyre pace delta to [-2.2s, +2.2s] (maximum possible F1 dry tyre pace delta)
-    return float(np.clip(delta, -2.2, 2.2))
+    # Physically clamp tyre pace delta to [-3.0s, +4.5s]
+    return float(np.clip(delta, -3.0, 4.5))
 
 
 def load_race_snapshots_or_csv(race_keyword: str, year: int = 2025, csv_path: Path | None = None) -> tuple[list[dict[str, Any]], pd.DataFrame, str]:
@@ -277,9 +319,14 @@ def simulate_and_compare(
 
     lap_records = []
     strategic_divergences = []
+    rl_inferences = 0
+    rl_fallbacks = 0
 
     # Typical pit loss in seconds (Silverstone ~21s, Monza ~24s)
     pit_loss_sec = 24.0 if "monza" in gp_name.lower() or "ital" in gp_name.lower() else 21.0
+    deg_multiplier = get_circuit_deg_multiplier(gp_name)
+    used_compounds = {ai_compound}
+    initial_compound = ai_compound
 
     if verbose:
         print("Simulating race lap-by-lap with Strategy & Decision Engine...\n")
@@ -346,7 +393,13 @@ def simulate_and_compare(
                 decision = decision_policy.select_action(se_result, race_state=rs)
                 ai_action = decision.immediate_action
                 target_compound = decision.target_compound or "HARD"
-            except Exception:
+                if policy.lower() == "rl":
+                    rl_inferences += 1
+            except Exception as e:
+                if policy.lower() == "rl":
+                    rl_fallbacks += 1
+                    if verbose:
+                        print(f"Warning: RL policy exception on lap {lap_num}: {e}")
                 ai_action = ImmediateAction.STAY_OUT
                 target_compound = ai_compound
 
@@ -355,27 +408,33 @@ def simulate_and_compare(
 
         min_stint = 9.0 if is_caution else 12.0
         laps_remaining = total_laps - lap_num
-        nominal_life = NOMINAL_STINT_LIFESPANS.get(ai_compound, 34)
+        nominal_life = max(12.0, NOMINAL_STINT_LIFESPANS.get(ai_compound, 34) / deg_multiplier)
         tyre_critical = ai_tyre_age >= nominal_life
 
         # Green flag discretionary pit stops not permitted in the final 8 laps
         can_pit_window = (laps_remaining >= 8) or is_caution
 
-        # Maximum stops budget:
-        # If already pitted, can only pit again if caution opens a cheap window, or tyre reaches structural cliff
-        can_pit_budget = (ai_pit_count < 2) or is_caution or tyre_critical
+        # Mandatory FIA 2-Compound / Minimum 1-Stop Rule (Sporting Regs Art. 30.5.m):
+        # In a 100% dry race, every driver must use at least 2 distinct dry compounds.
+        # If the AI has not pitted yet, pit wall mandates a stop as tyre nears lifespan or laps run out.
+        is_mandatory_pit = False
+        if ai_pit_count == 0:
+            if (ai_tyre_age >= nominal_life) or (laps_remaining <= max(8, int(total_laps * 0.22))):
+                is_mandatory_pit = True
 
-        # Payback Filter: For discretionary 2nd+ stops under green flag,
-        # verify that remaining laps can pay back the ~21-24s pit transit loss
-        if ai_pit_count >= 1 and not is_caution and not tyre_critical:
-            min_payback_laps = int(curr_pit_loss / 0.8)  # e.g. 21s / 0.8s = 26 laps
-            can_payback = laps_remaining >= min_payback_laps
-        else:
-            can_payback = True
+        # High degradation circuits allow multiple stops (up to 3 on extreme deg)
+        max_allowed_stops = 3 if deg_multiplier >= 1.35 else 2
+        can_pit_budget = (ai_pit_count < max_allowed_stops) or is_caution or tyre_critical
+
+        # Payback Filter: For discretionary stops under green flag,
+        # fresh tyres on racing pace can gain 1.20s-1.55s/lap
+        payback_rate = 1.40 if deg_multiplier >= 1.25 else 1.20
+        min_payback_laps = int(curr_pit_loss / payback_rate)
+        can_payback = (laps_remaining >= min_payback_laps) or is_mandatory_pit or tyre_critical
 
         is_ai_pitting = (
-            (ai_action != ImmediateAction.STAY_OUT)
-            and (ai_tyre_age >= min_stint)
+            (is_mandatory_pit or (ai_action != ImmediateAction.STAY_OUT))
+            and (ai_tyre_age >= min_stint or is_mandatory_pit)
             and can_pit_window
             and can_pit_budget
             and can_payback
@@ -384,13 +443,25 @@ def simulate_and_compare(
         if is_ai_pitting:
             ai_pit_count += 1
             old_comp = ai_compound
+
+            # Enforce distinct compound for mandatory FIA compliance
+            if target_compound == ai_compound or (ai_pit_count == 1 and target_compound == initial_compound):
+                if ai_compound == "MEDIUM":
+                    target_compound = "HARD"
+                elif ai_compound == "SOFT":
+                    target_compound = "MEDIUM" if deg_multiplier >= 1.1 else "HARD"
+                else:
+                    target_compound = "MEDIUM"
+
             ai_compound = target_compound
+            used_compounds.add(ai_compound)
             ai_tyre_age = 0.0
 
             # Base clean flying pace + pit loss
             ai_lap_time = last_clean_pace + curr_pit_loss
             caution_tag = " (CAUTION PIT)" if is_caution else ""
-            notes.append(f"AI BOX -> {ai_compound}{caution_tag}")
+            mand_tag = " [MANDATORY FIA STOP]" if is_mandatory_pit else ""
+            notes.append(f"AI BOX -> {ai_compound}{caution_tag}{mand_tag}")
 
             if not act_is_pitting:
                 notes.append("[AI UNDERCUT TRIGGERED]")
@@ -399,7 +470,7 @@ def simulate_and_compare(
                 )
         else:
             ai_tyre_age += 1.0
-            tyre_delta = compute_tyre_pace_delta(ai_compound, ai_tyre_age, act_compound, act_tyre_age)
+            tyre_delta = compute_tyre_pace_delta(ai_compound, ai_tyre_age, act_compound, act_tyre_age, deg_multiplier=deg_multiplier)
 
             if act_is_pitting:
                 # Actual driver entered pit lane (in-lap)
@@ -454,10 +525,15 @@ def simulate_and_compare(
             "notes": ", ".join(notes),
         })
 
-    # Final Grand Summary
     final_act_pos = lap_records[-1]["act_pos"]
     final_ai_pos = lap_records[-1]["ai_pos"]
     final_gap = lap_records[-1]["cum_gap_s"]
+
+    # FIA 2-Compound / Minimum 1-Stop Disqualification Rule check:
+    if ai_pit_count == 0 or len(used_compounds) < 2:
+        final_ai_pos = 20
+        final_gap = -999.0
+        strategic_divergences.append("FIA DSQ: Failed to use at least two distinct dry tyre compounds.")
 
     if verbose:
         # Print comparative table
@@ -524,6 +600,9 @@ def simulate_and_compare(
         "ai_pit_count": ai_pit_count,
         "strategic_divergences": strategic_divergences,
         "records": lap_records,
+        "rl_inferences": rl_inferences,
+        "rl_fallbacks": rl_fallbacks,
+        "policy_desc": policy_desc,
     }
 
 
