@@ -30,6 +30,7 @@ from race_state.models import CurrentConditions, ParticipantState, RaceState, no
 from strategy_engine.engine import StrategyEngine
 from strategy_engine.types import StrategyEngineConfig
 from decision_engine.baseline import BaselineDecisionPolicy
+from decision_engine.rl.dqn import RLDecisionPolicy
 from decision_engine.types import ImmediateAction
 
 
@@ -212,17 +213,12 @@ def simulate_and_compare(
     profile: str = "balanced",
     horizon_laps: int = 8,
     n_rollouts: int = 15,
+    policy: str = "rl",
+    model_path: str | Path | None = None,
     verbose: bool = True,
 ) -> dict[str, Any]:
     driver = normalize_driver(driver) or "VER"
     snapshots, df_laps, gp_name = load_race_snapshots_or_csv(race, year=year, csv_path=csv_path)
-
-    if verbose:
-        print(f"\n=========================================================================================")
-        print(f"  F1-SIS COUNTERFACTUAL RACE STRATEGY EVALUATION")
-        print(f"  Grand Prix : {gp_name}")
-        print(f"  Target Ego : {driver} | Risk Profile: {profile.upper()}")
-        print(f"=========================================================================================\n")
 
     # Configure Strategy Engine and Decision Policy
     cfg = StrategyEngineConfig(
@@ -231,7 +227,25 @@ def simulate_and_compare(
         default_random_seed=42,
     )
     engine = StrategyEngine(config=cfg)
-    decision_policy = BaselineDecisionPolicy(risk_profile=profile)
+
+    ckpt_path = Path(model_path) if model_path else (ROOT / "models" / "Decision Engine" / "decision_engine_dqn.pt")
+    if policy.lower() == "rl" and ckpt_path.exists():
+        try:
+            decision_policy = RLDecisionPolicy.from_checkpoint(ckpt_path)
+            policy_desc = f"RL {decision_policy.architecture.upper()} DQN ({ckpt_path.name})"
+        except Exception as e:
+            decision_policy = BaselineDecisionPolicy(risk_profile=profile)
+            policy_desc = f"Baseline Heuristic ({profile.upper()}, fallback: {e})"
+    else:
+        decision_policy = BaselineDecisionPolicy(risk_profile=profile)
+        policy_desc = f"Baseline Heuristic ({profile.upper()})"
+
+    if verbose:
+        print(f"\n=========================================================================================")
+        print(f"  F1-SIS COUNTERFACTUAL RACE STRATEGY EVALUATION")
+        print(f"  Grand Prix : {gp_name}")
+        print(f"  Target Ego : {driver} | Policy: {policy_desc}")
+        print(f"=========================================================================================\n")
 
     # Filter actual laps for ego driver
     ego_laps = df_laps[df_laps["Driver"] == driver].sort_values("LapNumber").copy()
@@ -329,7 +343,7 @@ def simulate_and_compare(
 
             try:
                 se_result = engine.evaluate_race_state(rs, ego_driver=driver)
-                decision = decision_policy.select_action(se_result)
+                decision = decision_policy.select_action(se_result, race_state=rs)
                 ai_action = decision.immediate_action
                 target_compound = decision.target_compound or "HARD"
             except Exception:
@@ -519,6 +533,8 @@ if __name__ == "__main__":
     parser.add_argument("--race", default="italian", help="Race name or keyword (e.g., italian, bahrain, austrian)")
     parser.add_argument("--year", type=int, default=2025, help="Championship season year (default: 2025)")
     parser.add_argument("--profile", default="balanced", choices=["balanced", "aggressive", "conservative"])
+    parser.add_argument("--policy", default="rl", choices=["rl", "baseline"], help="Decision Engine policy (default: rl)")
+    parser.add_argument("--model-path", default=None, help="Path to RL checkpoint (.pt)")
     parser.add_argument("--horizon", type=int, default=8, help="Strategy Engine horizon laps")
     parser.add_argument("--rollouts", type=int, default=15, help="Rollouts per candidate")
     args = parser.parse_args()
@@ -530,5 +546,7 @@ if __name__ == "__main__":
         profile=args.profile,
         horizon_laps=args.horizon,
         n_rollouts=args.rollouts,
+        policy=args.policy,
+        model_path=args.model_path,
     )
 

@@ -25,8 +25,8 @@ if str(SRC) not in sys.path:
 from compare_race_strategy import simulate_and_compare
 
 
-def get_2025_dry_race_files() -> list[Path]:
-    """Scans 2025 season laps directory and returns paths for 100% dry races."""
+def get_2025_dry_race_files(driver: str = "VER", finished_only: bool = True) -> list[Path]:
+    """Scans 2025 season laps directory and returns paths for 100% dry races where driver finished."""
     laps_dir = ROOT / "data_fastf1_v1" / "laps" / "2025"
     if not laps_dir.exists():
         raise FileNotFoundError(f"Directory not found: {laps_dir}")
@@ -40,6 +40,13 @@ def get_2025_dry_race_files() -> list[Path]:
             compounds = set(df["Compound"].dropna().str.upper().unique()) if "Compound" in df.columns else set()
             used_wet = any(c in compounds for c in ["INTERMEDIATE", "WET", "INTER"])
             if not has_rain and not used_wet:
+                if finished_only and driver:
+                    max_race_laps = int(df["LapNumber"].max()) if not df.empty else 0
+                    drv_laps = df[df["Driver"] == driver]
+                    drv_max_lap = int(drv_laps["LapNumber"].max()) if not drv_laps.empty else 0
+                    # Standard F1 90% classification rule for finishing
+                    if max_race_laps > 0 and (drv_max_lap < max_race_laps - 2 or drv_max_lap < 0.9 * max_race_laps):
+                        continue
                 dry_files.append(csv_file)
         except Exception as e:
             print(f"Warning: Could not process {csv_file.name}: {e}")
@@ -50,14 +57,19 @@ def get_2025_dry_race_files() -> list[Path]:
 def run_batch_evaluation(
     driver: str = "VER",
     profile: str = "balanced",
+    policy: str = "rl",
+    model_path: Path | str | None = None,
     output_md: Path | str = "2025_dry_races_net_advantage.md",
+    finished_only: bool = True,
 ) -> dict:
-    dry_files = get_2025_dry_race_files()
+    dry_files = get_2025_dry_race_files(driver=driver, finished_only=finished_only)
     total_races = len(dry_files)
 
+    scope_desc = "Finished Dry Races Only" if finished_only else "All Dry Races"
+    policy_label = f"RL DQN ({Path(model_path).name if model_path else 'decision_engine_dqn.pt'})" if policy == "rl" else f"Baseline ({profile.upper()})"
     print("=" * 90)
-    print(f" F1-SIS 2025 SEASON BATCH EVALUATION (DRY RACES ONLY)")
-    print(f" Target Driver: {driver} | Risk Profile: {profile.upper()} | Total Dry Races: {total_races}")
+    print(f" F1-SIS 2025 SEASON BATCH EVALUATION ({scope_desc.upper()})")
+    print(f" Target Driver: {driver} | Policy: {policy_label} | Total Races: {total_races}")
     print("=" * 90)
 
     results = []
@@ -77,6 +89,8 @@ def run_batch_evaluation(
                 profile=profile,
                 horizon_laps=8,
                 n_rollouts=15,
+                policy=policy,
+                model_path=model_path,
                 verbose=False,
             )
             elapsed = time.time() - t0
@@ -172,20 +186,22 @@ def run_batch_evaluation(
     md_lines = []
     md_lines.append("# F1-SIS 2025 Season Dry Races: Strategic Net Advantage Report")
     md_lines.append("")
-    md_lines.append(f"**Driver**: `{driver}` | **Risk Profile**: `{profile.upper()}` | **Season**: `2025` | **Conditions**: `100% Dry Only (21 Races)`")
+    scope_tag = f"100% Dry Finished Races ({n_races} Races)" if finished_only else f"100% Dry Races ({n_races} Races)"
+    policy_str = f"RL Dueling Double-DQN (`{Path(model_path).name if model_path else 'decision_engine_dqn.pt'}`)" if policy == "rl" else f"Baseline Heuristic (`{profile.upper()}`)"
+    md_lines.append(f"**Driver**: `{driver}` | **Decision Policy**: {policy_str} | **Season**: `2025` | **Conditions**: `{scope_tag}`")
     md_lines.append("")
     md_lines.append("## 1. Executive Summary")
     md_lines.append("")
-    md_lines.append("This report presents the complete counterfactual backtesting evaluation of the **F1 Strategic Intelligence System (F1-SIS)** Decision & Strategy Engine across all completely dry Grands Prix of the 2025 Formula 1 season. The AI system makes autonomous, lap-by-lap tactical decisions (box vs. stay out, undercut, tire compound selection) using Monte Carlo rollouts and multi-criteria utility ranking, without any future information leakage.")
+    md_lines.append(f"This report presents the complete counterfactual backtesting evaluation of the **F1 Strategic Intelligence System (F1-SIS)** Decision & Strategy Engine across all completely dry Grands Prix of the 2025 Formula 1 season where the driver finished the race. The AI system makes autonomous, lap-by-lap tactical decisions (box vs. stay out, undercut, tire compound selection) using Monte Carlo rollouts and multi-criteria utility ranking, without any future information leakage.")
     md_lines.append("")
 
     # Alert box
     if total_time_advantage >= 0:
         md_lines.append(f"> [!TIP]")
-        md_lines.append(f"> **Net Strategic Advantage**: Over the 21 dry races of the 2025 season, the F1-SIS Strategy Engine achieved a cumulative net advantage of **{total_time_advantage:+.2f} seconds** ({avg_time_advantage:+.2f}s average per race) and **{total_pos_gained:+d} net positions gained** relative to actual historical pit-wall executions.")
+        md_lines.append(f"> **Net Strategic Advantage**: Over the {n_races} dry finished races of the 2025 season, the F1-SIS Strategy Engine achieved a cumulative net advantage of **{total_time_advantage:+.2f} seconds** ({avg_time_advantage:+.2f}s average per race) and **{total_pos_gained:+d} net positions gained** relative to actual historical pit-wall executions.")
     else:
         md_lines.append(f"> [!NOTE]")
-        md_lines.append(f"> **Net Strategic Performance**: Over the 21 dry races, the AI achieved **{total_time_advantage:+.2f}s** cumulative time delta and **{total_pos_gained:+d} net positions** relative to actual historical outcomes.")
+        md_lines.append(f"> **Net Strategic Performance**: Over the {n_races} dry finished races, the AI achieved **{total_time_advantage:+.2f}s** cumulative time delta and **{total_pos_gained:+d} net positions** relative to actual historical outcomes.")
 
     md_lines.append("")
     md_lines.append("### Key Season Performance Indicators")
@@ -257,11 +273,12 @@ def run_batch_evaluation(
     md_lines.append("1. **Data Ingestion**: Session telemetry is loaded from FastF1 2025 season race data. Laps are grounded from Lap 1 cumulative race times against all 19 competitors.")
     md_lines.append("2. **Zero Future-Leakage**: The Strategy Engine only observes committed lap state $t$, never accessing laps $> t$.")
     md_lines.append("3. **Stochastic Rollouts**: 15 Monte Carlo rollouts per candidate strategy evaluate expected position, win/podium probability, tyre degradation cliff risk, and caution sensitivity.")
-    md_lines.append("4. **Decision Policy**: `BaselineDecisionPolicy` applies multi-criteria utility weighting to select the optimal tactical action (`STAY_OUT` vs `PIT_<COMPOUND>`).")
+    policy_desc_meth = f"RL Policy ({policy_str}) using Candidate-Conditioned Q-Network scoring" if policy == "rl" else f"`BaselineDecisionPolicy` applying {profile} multi-criteria utility weighting"
+    md_lines.append(f"4. **Decision Policy**: {policy_desc_meth} to select the optimal tactical action (`STAY_OUT` vs `PIT_<COMPOUND>`).")
     md_lines.append("5. **Caution Dynamic Pit Loss**: Safety Car and VSC pit losses are calibrated to 14.0s (vs 21.0s–24.0s green flag), reflecting realistic delta pacings.")
     md_lines.append("")
     md_lines.append("---")
-    md_lines.append(f"*Generated automatically by F1-SIS Strategy Backtesting Engine on 2026-10-02.*")
+    md_lines.append(f"*Generated automatically by F1-SIS Strategy Backtesting Engine on 2026-10-04.*")
 
     output_path = Path(output_md)
     with open(output_path, "w", encoding="utf-8") as f:
@@ -288,7 +305,17 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Batch Evaluate 2025 Dry Races")
     parser.add_argument("--driver", default="VER", help="Driver code (default: VER)")
     parser.add_argument("--profile", default="balanced", choices=["balanced", "aggressive", "conservative"])
+    parser.add_argument("--policy", default="rl", choices=["rl", "baseline"], help="Decision Engine policy (default: rl)")
+    parser.add_argument("--model-path", default=None, help="Path to RL checkpoint (.pt)")
     parser.add_argument("--output", default="2025_dry_races_net_advantage.md", help="Output markdown report path")
+    parser.add_argument("--all-races", action="store_true", default=False, help="Include all dry races including DNFs (default: False)")
     args = parser.parse_args()
 
-    run_batch_evaluation(driver=args.driver, profile=args.profile, output_md=args.output)
+    run_batch_evaluation(
+        driver=args.driver,
+        profile=args.profile,
+        policy=args.policy,
+        model_path=args.model_path,
+        output_md=args.output,
+        finished_only=not args.all_races,
+    )

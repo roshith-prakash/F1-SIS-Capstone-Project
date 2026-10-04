@@ -10,9 +10,20 @@ from .state_encoder import StateEncoder, COMPOUND_LIFESPANS, SUPPORTED_COMPOUNDS
 from .baseline import BaselineDecisionPolicy
 from .evaluator import PolicyEvaluator, PolicyEvaluationResult
 from .rl.reward import StrategyRewardCalculator, F1_POINTS_MAP
-from .rl.dqn import CandidateConditionedQNetwork, RLDecisionPolicy
-from .rl.replay_buffer import VariableCandidateReplayBuffer
+from .rl.dqn import (
+    CandidateConditionedQNetwork,
+    DuelingCandidateConditionedQNetwork,
+    RLDecisionPolicy,
+)
+from .rl.replay_buffer import (
+    VariableCandidateReplayBuffer,
+    PrioritizedVariableCandidateReplayBuffer,
+    SumTree,
+)
 from .rl.environment import F1StrategyEnv
+from .rl.trainer import DQNTrainer
+from .rl.opponent_policy import ReactiveOpponentPolicy, create_random_opponent_policies
+from .rl.curriculum import CurriculumScheduler
 
 __all__ = [
     "ImmediateAction",
@@ -27,7 +38,14 @@ __all__ = [
     "StrategyRewardCalculator",
     "F1_POINTS_MAP",
     "CandidateConditionedQNetwork",
+    "DuelingCandidateConditionedQNetwork",
     "RLDecisionPolicy",
     "VariableCandidateReplayBuffer",
+    "PrioritizedVariableCandidateReplayBuffer",
+    "SumTree",
     "F1StrategyEnv",
+    "DQNTrainer",
+    "ReactiveOpponentPolicy",
+    "create_random_opponent_policies",
+    "CurriculumScheduler",
 ]

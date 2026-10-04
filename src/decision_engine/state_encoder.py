@@ -21,15 +21,25 @@ class StateEncoder:
     numerical vectors for RL and policy evaluation.
     """
 
-    def __init__(self, max_grid_size: int = 20, max_gap_seconds: float = 20.0):
+    def __init__(
+        self,
+        max_grid_size: int = 20,
+        max_gap_seconds: float = 20.0,
+        extended: bool = False,
+    ):
         self.max_grid_size = float(max_grid_size)
         self.max_gap_seconds = float(max_gap_seconds)
+        self.extended = extended
+
+    @property
+    def state_dim(self) -> int:
+        return 16 if self.extended else 13
 
     def encode_state(self, race_state: Any, ego_driver: str | None = None) -> np.ndarray:
         """
         Extracts and normalizes features from a RaceState object or dictionary.
 
-        Vector components:
+        Base Vector components (13 dims):
         1. race_progress_pct [0, 1]
         2. is_safety_car (0 or 1)
         3. is_vsc (0 or 1)
@@ -40,7 +50,10 @@ class StateEncoder:
         12. gap_ahead_norm [0, 1] (clipped to max_gap_seconds)
         13. gap_behind_norm [0, 1] (clipped to max_gap_seconds)
 
-        Total dimensions: 13
+        Extended components (when extended=True, 16 dims total):
+        14. tyre_delta_vs_ahead [-1, 1] (positive = rival ahead has older tyres)
+        15. opponent_pit_threat (1.0 if rival ahead has tyre age >= nominal - 3)
+        16. undercut_window_open (1.0 if gap ahead <= 3.0s and ego has fresh enough rubber)
         """
         # Global features
         if hasattr(race_state, "current_lap"):
@@ -115,7 +128,7 @@ class StateEncoder:
         gap_ahead_norm = np.clip(ahead_val / self.max_gap_seconds, 0.0, 1.0)
         gap_behind_norm = np.clip(behind_val / self.max_gap_seconds, 0.0, 1.0)
 
-        feature_vector = np.array([
+        base_features = [
             progress,
             is_sc,
             is_vsc,
@@ -125,9 +138,32 @@ class StateEncoder:
             *compound_one_hot,
             gap_ahead_norm,
             gap_behind_norm,
-        ], dtype=np.float32)
+        ]
 
-        return feature_vector
+        if self.extended:
+            # Find car directly ahead
+            ahead_car_life = 0.0
+            if isinstance(participants, dict) and pos > 1.0:
+                for p in participants.values():
+                    p_pos = getattr(p, "position", None) or (p.get("position") if isinstance(p, dict) else None)
+                    if p_pos is not None and int(p_pos) == int(pos - 1):
+                        ahead_car_life = float(getattr(p, "tyre_life", 0.0) or (p.get("tyre_life", 0.0) if isinstance(p, dict) else 0.0))
+                        break
+
+            # 14. tyre_delta_vs_ahead: positive means car ahead has older tyres
+            tyre_delta_vs_ahead = np.clip((ahead_car_life - tyre_age) / 30.0, -1.0, 1.0)
+            # 15. opponent_pit_threat: car ahead has worn tyres and likely to pit
+            opponent_pit_threat = 1.0 if ahead_car_life >= 22.0 else 0.0
+            # 16. undercut_window_open: close behind and ego has reasonably fresh tyre
+            undercut_window_open = 1.0 if (ahead_val <= 3.0 and tyre_age <= 28.0) else 0.0
+
+            base_features.extend([
+                float(tyre_delta_vs_ahead),
+                float(opponent_pit_threat),
+                float(undercut_window_open),
+            ])
+
+        return np.array(base_features, dtype=np.float32)
 
     def encode_candidate(self, candidate: dict[str, Any], current_lap: int = 1) -> np.ndarray:
         """

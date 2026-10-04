@@ -2,7 +2,10 @@
 DQN Trainer for F1-SIS Candidate-Conditioned Decision Engine.
 Implements:
 - Warm-start Imitation Learning from Baseline Deterministic Policy
-- Double DQN / Target Network stabilization with soft Polyak updates
+- Dueling Q-Network architecture with Value/Advantage decoupling
+- Double DQN target decoupling for reduced overestimation bias
+- Prioritized Experience Replay (PER) with SumTree and importance-sampling weights
+- Polyak soft target network updates
 - Dynamic variable-candidate Bellman updates
 - Checkpointing and evaluation against baseline
 """
@@ -18,22 +21,37 @@ import torch.nn.functional as F
 
 from ..baseline import BaselineDecisionPolicy
 from .environment import F1StrategyEnv
-from .dqn import CandidateConditionedQNetwork, RLDecisionPolicy
-from .replay_buffer import VariableCandidateReplayBuffer
+from .dqn import (
+    CandidateConditionedQNetwork,
+    DuelingCandidateConditionedQNetwork,
+    RLDecisionPolicy,
+)
+from .replay_buffer import (
+    VariableCandidateReplayBuffer,
+    PrioritizedVariableCandidateReplayBuffer,
+)
 
 
 class DQNTrainer:
     """
-    Trains CandidateConditionedQNetwork using Deep Q-Learning with dynamic candidate sets.
+    Trains CandidateConditionedQNetwork / DuelingCandidateConditionedQNetwork using
+    Double-DQN and Prioritized Experience Replay (PER) with dynamic candidate sets.
     """
 
     def __init__(
         self,
         env: F1StrategyEnv | None = None,
+        policy_net: CandidateConditionedQNetwork | DuelingCandidateConditionedQNetwork | None = None,
         state_dim: int = 13,
         candidate_dim: int = 9,
         embed_dim: int = 64,
         hidden_dim: int = 64,
+        architecture: str = "dueling",
+        double_dqn: bool = True,
+        use_per: bool = True,
+        per_alpha: float = 0.6,
+        per_beta_start: float = 0.4,
+        per_beta_end: float = 1.0,
         learning_rate: float = 5e-4,
         gamma: float = 0.98,
         tau: float = 0.005,
@@ -46,20 +64,46 @@ class DQNTrainer:
         self.gamma = gamma
         self.tau = tau
         self.batch_size = batch_size
+        self.double_dqn = double_dqn
+        self.use_per = use_per
+        self.architecture = architecture
 
         # Networks: Policy Net and Target Net
-        self.policy_net = CandidateConditionedQNetwork(
-            state_dim=state_dim,
-            candidate_dim=candidate_dim,
-            embed_dim=embed_dim,
-            hidden_dim=hidden_dim,
-        ).to(self.device)
+        if policy_net is not None:
+            self.policy_net = policy_net.to(self.device)
+            self.architecture = (
+                "dueling" if isinstance(policy_net, DuelingCandidateConditionedQNetwork) else "standard"
+            )
+        elif architecture == "dueling":
+            self.policy_net = DuelingCandidateConditionedQNetwork(
+                state_dim=state_dim,
+                candidate_dim=candidate_dim,
+                embed_dim=embed_dim,
+                hidden_dim=hidden_dim,
+            ).to(self.device)
+        else:
+            self.policy_net = CandidateConditionedQNetwork(
+                state_dim=state_dim,
+                candidate_dim=candidate_dim,
+                embed_dim=embed_dim,
+                hidden_dim=hidden_dim,
+            ).to(self.device)
 
         self.target_net = copy.deepcopy(self.policy_net).to(self.device)
         self.target_net.eval()
 
         self.optimizer = torch.optim.Adam(self.policy_net.parameters(), lr=learning_rate)
-        self.replay_buffer = VariableCandidateReplayBuffer(capacity=buffer_capacity)
+
+        # Experience Replay Buffer (PER or Uniform)
+        if use_per:
+            self.replay_buffer = PrioritizedVariableCandidateReplayBuffer(
+                capacity=buffer_capacity,
+                alpha=per_alpha,
+                beta_start=per_beta_start,
+                beta_end=per_beta_end,
+            )
+        else:
+            self.replay_buffer = VariableCandidateReplayBuffer(capacity=buffer_capacity)
 
         # Baseline policy for warm-up imitation learning
         self.baseline_policy = BaselineDecisionPolicy(risk_profile="balanced")
@@ -125,27 +169,45 @@ class DQNTrainer:
         next_candidates = batch["next_candidates"]
         next_mask = batch["next_candidates_mask"]
         dones = batch["dones"]
+        is_weights = batch.get("is_weights", torch.ones_like(rewards))
+        indices = batch.get("indices")
 
         # Compute Q(S, C_a)
         q_vals = self.policy_net(states, candidates, mask)  # [B, K]
-        # Gather chosen action Q-value
         chosen_q = q_vals.gather(1, actions.unsqueeze(1)).squeeze(1)
 
-        # Compute Target Q: R + gamma * max_a' Q_target(S', C'_a') * (1 - Done)
+        # Compute Target Q
         with torch.no_grad():
-            next_q_vals = self.target_net(next_states, next_candidates, next_mask)  # [B, K_next]
-            # Replace -1e9 mask values with large negative for argmax safety
-            max_next_q = next_q_vals.max(dim=1)[0]
-            # Clamp to prevent invalid masking blowups
+            if self.double_dqn:
+                # Double-DQN: Online network selects best action
+                online_next_q = self.policy_net(next_states, next_candidates, next_mask)
+                best_actions = online_next_q.argmax(dim=1, keepdim=True)
+                # Target network evaluates selected action
+                target_next_q = self.target_net(next_states, next_candidates, next_mask)
+                max_next_q = target_next_q.gather(1, best_actions).squeeze(1)
+            else:
+                # Standard DQN: Target net selects and evaluates
+                next_q_vals = self.target_net(next_states, next_candidates, next_mask)
+                max_next_q = next_q_vals.max(dim=1)[0]
+
             max_next_q = torch.clamp(max_next_q, min=-10.0, max=50.0)
             target_q = rewards + (1.0 - dones) * self.gamma * max_next_q
 
-        loss = F.smooth_l1_loss(chosen_q, target_q)
+        # Compute TD error for PER priority updates
+        td_errors = (chosen_q - target_q).detach().abs()
+
+        # Weighted Smooth L1 loss using importance-sampling weights
+        elementwise_loss = F.smooth_l1_loss(chosen_q, target_q, reduction="none")
+        loss = (is_weights * elementwise_loss).mean()
 
         self.optimizer.zero_grad()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(self.policy_net.parameters(), max_norm=1.0)
         self.optimizer.step()
+
+        # Update PER buffer priorities
+        if indices is not None:
+            self.replay_buffer.update_priorities(indices, td_errors)
 
         # Polyak soft update for target network
         for param, target_param in zip(self.policy_net.parameters(), self.target_net.parameters()):
@@ -161,24 +223,34 @@ class DQNTrainer:
         epsilon_end: float = 0.05,
         epsilon_decay: float = 0.95,
         save_path: str | Path | None = None,
+        curriculum: Any | None = None,
     ) -> RLDecisionPolicy:
         """
-        Executes complete DQN training loop across n_episodes.
+        Executes complete DQN training loop across n_episodes with optional curriculum.
         """
         # Step 1: Warm-start replay buffer
         if warm_up_episodes > 0:
             self.warm_up_with_baseline(n_episodes=warm_up_episodes)
 
         epsilon = epsilon_start
+        total_steps = 0
+        estimated_total_steps = n_episodes * 20  # rough estimate for beta annealing
         print(f"--> Starting DQN Training Loop ({n_episodes} episodes)...")
+        print(f"    Architecture: {self.architecture} | Double-DQN: {self.double_dqn} | PER: {self.use_per}")
 
         for ep in range(1, n_episodes + 1):
+            if curriculum is not None:
+                stage_env = curriculum.get_env()
+                if stage_env is not None:
+                    self.env = stage_env
+
             obs, info = self.env.reset(seed=200 + ep)
             terminated = False
             total_reward = 0.0
             losses = []
 
             while not terminated:
+                total_steps += 1
                 cand_features = info.get("candidate_features", np.zeros((0, 9)))
                 candidates = info.get("candidates", [])
                 k = len(candidates)
@@ -214,9 +286,16 @@ class DQNTrainer:
                 if loss is not None:
                     losses.append(loss)
 
+                # Anneal PER beta
+                self.replay_buffer.anneal_beta(current_step=total_steps, total_steps=estimated_total_steps)
+
                 obs = next_obs
                 info = next_info
                 total_reward += reward
+
+            # Curriculum progression check
+            if curriculum is not None:
+                curriculum.maybe_advance(total_reward)
 
             # Decay epsilon
             epsilon = max(epsilon_end, epsilon * epsilon_decay)
@@ -235,21 +314,15 @@ class DQNTrainer:
         print("\n--> Training Complete!")
 
         # Create trained RL policy
-        trained_policy = RLDecisionPolicy(q_net=self.policy_net, device=str(self.device))
+        trained_policy = RLDecisionPolicy(
+            q_net=self.policy_net,
+            architecture=self.architecture,
+            device=str(self.device),
+        )
 
         # Save checkpoint if requested
         if save_path:
-            save_path = Path(save_path)
-            save_path.parent.mkdir(parents=True, exist_ok=True)
-            torch.save(
-                {
-                    "model_state_dict": self.policy_net.state_dict(),
-                    "state_dim": self.policy_net.state_dim,
-                    "candidate_dim": self.policy_net.candidate_dim,
-                    "embed_dim": self.policy_net.embed_dim,
-                },
-                save_path,
-            )
+            trained_policy.save_checkpoint(save_path)
             print(f"--> Saved trained RL checkpoint to: {save_path}")
 
         return trained_policy

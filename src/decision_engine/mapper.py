@@ -34,8 +34,10 @@ class ActionMapper:
             target_compound = None
             if target_pit_lap is not None:
                 idx = pit_laps.index(target_pit_lap)
-                if idx + 1 < len(compounds):
+                if len(compounds) == len(pit_laps) + 1 and idx + 1 < len(compounds):
                     target_compound = compounds[idx + 1]
+                elif idx < len(compounds):
+                    target_compound = compounds[idx]
 
             return ImmediateAction.STAY_OUT, target_pit_lap, target_compound
 
@@ -43,10 +45,12 @@ class ActionMapper:
         idx = pit_laps.index(current_lap)
         target_compound = None
         
-        # compounds array includes the starting compound at index 0. 
-        # The new compound for the i-th pit stop is at index i + 1.
-        if idx + 1 < len(compounds):
+        # compounds array may include the starting compound at index 0 (len = len(pit_laps) + 1)
+        # or only the target compounds (len = len(pit_laps))
+        if len(compounds) == len(pit_laps) + 1 and idx + 1 < len(compounds):
             target_compound = str(compounds[idx + 1]).strip().upper()
+        elif idx < len(compounds):
+            target_compound = str(compounds[idx]).strip().upper()
         else:
             target_compound = "MEDIUM" # Fallback if malformed
             

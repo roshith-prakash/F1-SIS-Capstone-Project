@@ -27,7 +27,11 @@ from strategy_engine.types import StrategyEngineConfig
 from decision_engine.baseline import BaselineDecisionPolicy
 from decision_engine.evaluator import PolicyEvaluator
 from decision_engine.rl.environment import F1StrategyEnv
-from decision_engine.rl.dqn import CandidateConditionedQNetwork, RLDecisionPolicy
+from decision_engine.rl.dqn import (
+    CandidateConditionedQNetwork,
+    DuelingCandidateConditionedQNetwork,
+    RLDecisionPolicy,
+)
 
 
 def build_sample_race_state(current_lap: int = 20) -> RaceState:
@@ -148,16 +152,21 @@ def run_benchmark(episodes: int = 5) -> None:
     print("=" * 65 + "\n")
 
 
-def run_rl_demo() -> None:
+def run_rl_demo(arch: str = "dueling", use_ml_physics: bool = False) -> None:
     print(f"\n=======================================================")
-    print(f"  F1-SIS REINFORCEMENT LEARNING DEMO (Candidate-Conditioned DQN)")
+    print(f"  F1-SIS REINFORCEMENT LEARNING DEMO ({arch.upper()} Architecture)")
     print(f"=======================================================")
+    print(f"ML Submodel Physics: {use_ml_physics}\n")
 
-    env = F1StrategyEnv(rollouts_per_step=10, horizon_laps=5, seed=42)
+    env = F1StrategyEnv(rollouts_per_step=10, horizon_laps=5, seed=42, use_ml_physics=use_ml_physics)
     obs, info = env.reset(seed=42)
 
-    q_net = CandidateConditionedQNetwork(state_dim=13, candidate_dim=9, embed_dim=32, hidden_dim=32)
-    rl_policy = RLDecisionPolicy(q_net=q_net)
+    if arch == "dueling":
+        q_net = DuelingCandidateConditionedQNetwork(state_dim=13, candidate_dim=9, embed_dim=32, hidden_dim=32)
+    else:
+        q_net = CandidateConditionedQNetwork(state_dim=13, candidate_dim=9, embed_dim=32, hidden_dim=32)
+
+    rl_policy = RLDecisionPolicy(q_net=q_net, architecture=arch)
 
     cand_features = info["candidate_features"]
     print(f"Initial State Observation Vector (13 dims): \n  {obs.round(3)}")
@@ -198,6 +207,17 @@ if __name__ == "__main__":
         default=3,
         help="Number of episodes for benchmark mode",
     )
+    parser.add_argument(
+        "--arch",
+        choices=["dueling", "standard"],
+        default="dueling",
+        help="Network architecture for rl-demo (default: dueling)",
+    )
+    parser.add_argument(
+        "--ml-physics",
+        action="store_true",
+        help="Enable ML submodel physics (XGBoost, empirical pitstops, hazard models)",
+    )
     args = parser.parse_args()
 
     if args.mode == "demo":
@@ -205,4 +225,4 @@ if __name__ == "__main__":
     elif args.mode == "benchmark":
         run_benchmark(episodes=args.episodes)
     elif args.mode == "rl-demo":
-        run_rl_demo()
+        run_rl_demo(arch=args.arch, use_ml_physics=args.ml_physics)

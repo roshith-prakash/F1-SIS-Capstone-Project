@@ -1,11 +1,12 @@
 """
 train_decision_engine.py
 ========================
-Trains the Candidate-Conditioned DQN Decision Policy and evaluates it against
-the deterministic Baseline Policy.
+Trains the Candidate-Conditioned DQN / Dueling Double-DQN Decision Policy and evaluates
+it against the deterministic Baseline Policy.
 
 Usage:
   python train_decision_engine.py --episodes 15 --warmup 5
+  python train_decision_engine.py --arch dueling --ml-physics --curriculum
 """
 
 from __future__ import annotations
@@ -22,6 +23,7 @@ from decision_engine.baseline import BaselineDecisionPolicy
 from decision_engine.evaluator import PolicyEvaluator
 from decision_engine.rl.trainer import DQNTrainer
 from decision_engine.rl.environment import F1StrategyEnv
+from decision_engine.rl.curriculum import CurriculumScheduler
 
 
 def main():
@@ -29,6 +31,11 @@ def main():
     parser.add_argument("--episodes", type=int, default=15, help="Number of training episodes")
     parser.add_argument("--warmup", type=int, default=5, help="Number of baseline warm-up demonstration episodes")
     parser.add_argument("--lr", type=float, default=5e-4, help="Learning rate")
+    parser.add_argument("--arch", choices=["dueling", "standard"], default="dueling", help="Network architecture")
+    parser.add_argument("--no-double", action="store_true", help="Disable Double-DQN decoupling")
+    parser.add_argument("--no-per", action="store_true", help="Disable Prioritized Experience Replay")
+    parser.add_argument("--ml-physics", action="store_true", help="Enable XGBoost and empirical ML submodel physics")
+    parser.add_argument("--curriculum", action="store_true", help="Enable progressive curriculum learning")
     parser.add_argument(
         "--output",
         type=str,
@@ -40,19 +47,37 @@ def main():
     print("\n=======================================================")
     print("  F1-SIS DECISION ENGINE: RL TRAINING PIPELINE")
     print("=======================================================")
-    print(f"Episodes: {args.episodes} | Warm-up Demos: {args.warmup} | LR: {args.lr}")
-    print(f"Checkpoint Target: {args.output}\n")
+    print(f"Architecture : {args.arch.upper()} | Double-DQN: {not args.no_double} | PER: {not args.no_per}")
+    print(f"ML Physics   : {args.ml_physics} | Curriculum: {args.curriculum}")
+    print(f"Episodes     : {args.episodes} | Warm-up Demos: {args.warmup} | LR: {args.lr}")
+    print(f"Checkpoint   : {args.output}\n")
+
+    env = F1StrategyEnv(
+        rollouts_per_step=10,
+        horizon_laps=6,
+        seed=42,
+        use_ml_physics=args.ml_physics,
+    )
 
     trainer = DQNTrainer(
+        env=env,
+        architecture=args.arch,
+        double_dqn=not args.no_double,
+        use_per=not args.no_per,
         learning_rate=args.lr,
         batch_size=32,
     )
+
+    curriculum = None
+    if args.curriculum:
+        curriculum = CurriculumScheduler(use_ml_physics=args.ml_physics)
 
     # Execute training
     trained_rl_policy = trainer.train(
         n_episodes=args.episodes,
         warm_up_episodes=args.warmup,
         save_path=ROOT / args.output,
+        curriculum=curriculum,
     )
 
     # Head-to-head benchmark: Baseline vs Trained RL Policy
@@ -60,12 +85,17 @@ def main():
     print("  HEAD-TO-HEAD EVALUATION: Baseline vs Trained RL")
     print("=======================================================")
     evaluator = PolicyEvaluator(
-        env_factory=lambda seed: F1StrategyEnv(rollouts_per_step=10, horizon_laps=6, seed=seed)
+        env_factory=lambda seed: F1StrategyEnv(
+            rollouts_per_step=10,
+            horizon_laps=6,
+            seed=seed,
+            use_ml_physics=args.ml_physics,
+        )
     )
 
     comparison_policies = [
         ("Baseline (Balanced)", BaselineDecisionPolicy(risk_profile="balanced")),
-        ("Trained RL (DQN)", trained_rl_policy),
+        (f"Trained RL ({args.arch.capitalize()})", trained_rl_policy),
     ]
 
     results = evaluator.compare_policies(comparison_policies, n_episodes=3, base_seed=500)

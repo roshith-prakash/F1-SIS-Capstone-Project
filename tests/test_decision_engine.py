@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import unittest
 from pathlib import Path
+import random
 import sys
 import numpy as np
 import torch
@@ -32,10 +33,23 @@ from decision_engine.mapper import ActionMapper
 from decision_engine.state_encoder import StateEncoder
 from decision_engine.baseline import BaselineDecisionPolicy
 from decision_engine.rl.reward import StrategyRewardCalculator, F1_POINTS_MAP
-from decision_engine.rl.dqn import CandidateConditionedQNetwork, RLDecisionPolicy
-from decision_engine.rl.replay_buffer import VariableCandidateReplayBuffer
+from decision_engine.rl.dqn import (
+    CandidateConditionedQNetwork,
+    DuelingCandidateConditionedQNetwork,
+    RLDecisionPolicy,
+)
+from decision_engine.rl.replay_buffer import (
+    VariableCandidateReplayBuffer,
+    PrioritizedVariableCandidateReplayBuffer,
+    SumTree,
+)
 from decision_engine.rl.environment import F1StrategyEnv
 from decision_engine.rl.trainer import DQNTrainer
+from decision_engine.rl.opponent_policy import (
+    ReactiveOpponentPolicy,
+    create_random_opponent_policies,
+)
+from decision_engine.rl.curriculum import CurriculumScheduler
 from decision_engine.evaluator import PolicyEvaluator, PolicyEvaluationResult
 
 
@@ -362,6 +376,382 @@ class TestGymEnvironmentAndEvaluator(unittest.TestCase):
         policy = trainer.train(n_episodes=1, warm_up_episodes=1)
         self.assertIsInstance(policy, RLDecisionPolicy)
 
+
+class TestPillar1DuelingDoubleDQNPER(unittest.TestCase):
+    """Unit tests for Phase 1.1 - 1.4: Dueling Architecture, Double-DQN, PER Buffer, and Checkpoints."""
+
+    def test_dueling_network_forward(self):
+        batch_size = 4
+        k_cands = 5
+        state_dim = 13
+        cand_dim = 9
+
+        net = DuelingCandidateConditionedQNetwork(
+            state_dim=state_dim,
+            candidate_dim=cand_dim,
+            embed_dim=32,
+            hidden_dim=32,
+        )
+
+        states = torch.randn(batch_size, state_dim)
+        candidates = torch.randn(batch_size, k_cands, cand_dim)
+        mask = torch.tensor([
+            [1, 1, 1, 0, 0],
+            [1, 1, 1, 1, 0],
+            [1, 1, 0, 0, 0],
+            [1, 1, 1, 1, 1],
+        ], dtype=torch.bool)
+
+        q_vals = net(states, candidates, mask)
+        self.assertEqual(q_vals.shape, (batch_size, k_cands))
+
+        # Padded candidate slots must be filled with -1e9
+        self.assertTrue(torch.all(q_vals[0, 3:] == -1e9))
+        self.assertTrue(q_vals[1, 4] == -1e9)
+        self.assertTrue(torch.all(q_vals[2, 2:] == -1e9))
+        # Valid slots must be finite
+        self.assertTrue(torch.all(torch.isfinite(q_vals[0, :3])))
+        self.assertTrue(torch.all(torch.isfinite(q_vals[3, :])))
+
+    def test_dueling_masked_advantage_mean(self):
+        net = DuelingCandidateConditionedQNetwork(state_dim=4, candidate_dim=3, embed_dim=16, hidden_dim=16)
+        states = torch.randn(1, 4)
+        candidates = torch.randn(1, 3, 3)
+        mask = torch.tensor([[1, 1, 0]], dtype=torch.bool)
+
+        # Forward pass should not error with masking
+        q_vals = net(states, candidates, mask)
+        self.assertEqual(q_vals.shape, (1, 3))
+        self.assertEqual(float(q_vals[0, 2].detach().item()), -1e9)
+
+    def test_sum_tree_operations(self):
+        capacity = 8
+        tree = SumTree(capacity=capacity)
+        self.assertEqual(tree.total(), 0.0)
+
+        # Add 4 dummy items
+        from decision_engine.rl.replay_buffer import Transition
+        for i in range(4):
+            t = Transition(
+                state=np.zeros(2),
+                candidates=np.zeros((1, 2)),
+                action=i,
+                reward=float(i),
+                next_state=np.zeros(2),
+                next_candidates=np.zeros((1, 2)),
+                done=False,
+            )
+            tree.add(priority=float(i + 1), data=t)  # priorities: 1, 2, 3, 4
+
+        self.assertEqual(tree.total(), 10.0)
+        self.assertEqual(tree.size, 4)
+
+        # Query prefix sum
+        tree_idx, p, trans = tree.get(0.5)
+        self.assertEqual(trans.action, 0)
+        self.assertEqual(p, 1.0)
+
+        tree_idx_last, p_last, trans_last = tree.get(9.5)
+        self.assertEqual(trans_last.action, 3)
+        self.assertEqual(p_last, 4.0)
+
+        # Update priority
+        tree.update(tree_idx, 5.0)  # change action 0 priority from 1 -> 5
+        self.assertEqual(tree.total(), 14.0)
+
+    def test_per_buffer_push_sample_update(self):
+        buffer = PrioritizedVariableCandidateReplayBuffer(capacity=50, alpha=0.6, beta_start=0.4, beta_end=1.0)
+
+        # Push 10 transitions
+        for i in range(10):
+            buffer.push(
+                state=np.ones(13) * i,
+                candidates=np.ones((3, 9)) * i,
+                action=i % 3,
+                reward=float(i),
+                next_state=np.ones(13) * (i + 1),
+                next_candidates=np.ones((3, 9)) * (i + 1),
+                done=False,
+            )
+
+        self.assertEqual(len(buffer), 10)
+
+        # Sample batch
+        batch = buffer.sample(batch_size=4)
+        self.assertIn("indices", batch)
+        self.assertIn("is_weights", batch)
+        self.assertEqual(batch["states"].shape, (4, 13))
+        self.assertEqual(batch["candidates"].shape, (4, 3, 9))
+        self.assertEqual(batch["is_weights"].shape, (4,))
+        # Weights should be normalized (max weight == 1.0)
+        self.assertAlmostEqual(float(batch["is_weights"].max()), 1.0, places=4)
+
+        # Update priorities with large TD errors
+        indices = batch["indices"]
+        td_errors = torch.tensor([5.0, 0.1, 10.0, 2.0])
+        buffer.update_priorities(indices, td_errors)
+
+        # Total priority should be updated
+        self.assertGreater(buffer.tree.total(), 10.0)
+
+    def test_per_beta_annealing(self):
+        buffer = PrioritizedVariableCandidateReplayBuffer(capacity=20, beta_start=0.4, beta_end=1.0)
+        self.assertEqual(buffer.beta, 0.4)
+        buffer.anneal_beta(current_step=50, total_steps=100)
+        self.assertAlmostEqual(buffer.beta, 0.7, places=5)
+        buffer.anneal_beta(current_step=100, total_steps=100)
+        self.assertAlmostEqual(buffer.beta, 1.0, places=5)
+
+    def test_checkpoint_roundtrip_dueling_and_standard(self, tmp_path=None):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Test dueling checkpoint
+            pol_dueling = RLDecisionPolicy(state_dim=13, candidate_dim=9, architecture="dueling")
+            save_path_d = Path(tmpdir) / "dueling.pt"
+            pol_dueling.save_checkpoint(save_path_d)
+
+            loaded_d = RLDecisionPolicy.from_checkpoint(save_path_d)
+            self.assertEqual(loaded_d.architecture, "dueling")
+            self.assertIsInstance(loaded_d.q_net, DuelingCandidateConditionedQNetwork)
+
+            # Test standard checkpoint
+            pol_standard = RLDecisionPolicy(state_dim=13, candidate_dim=9, architecture="standard")
+            save_path_s = Path(tmpdir) / "standard.pt"
+            pol_standard.save_checkpoint(save_path_s)
+
+            loaded_s = RLDecisionPolicy.from_checkpoint(save_path_s)
+            self.assertEqual(loaded_s.architecture, "standard")
+            self.assertIsInstance(loaded_s.q_net, CandidateConditionedQNetwork)
+
+    def test_double_dqn_trainer_run(self):
+        env = F1StrategyEnv(rollouts_per_step=10, horizon_laps=5, seed=42)
+        trainer = DQNTrainer(
+            env=env,
+            architecture="dueling",
+            double_dqn=True,
+            use_per=True,
+            batch_size=4,
+        )
+        self.assertTrue(trainer.double_dqn)
+        self.assertTrue(trainer.use_per)
+        self.assertIsInstance(trainer.policy_net, DuelingCandidateConditionedQNetwork)
+        self.assertIsInstance(trainer.replay_buffer, PrioritizedVariableCandidateReplayBuffer)
+
+        policy = trainer.train(n_episodes=1, warm_up_episodes=1)
+        self.assertIsInstance(policy, RLDecisionPolicy)
+        self.assertEqual(policy.architecture, "dueling")
+
+
+class TestPillar2SubmodelIntegration(unittest.TestCase):
+    """Unit tests for Phase 2: Submodel Integration into RL Environment."""
+
+    def test_env_with_ml_physics_flag(self):
+        env = F1StrategyEnv(rollouts_per_step=5, horizon_laps=3, seed=42, use_ml_physics=True)
+        self.assertTrue(env.use_ml_physics)
+        obs, info = env.reset(seed=42)
+        self.assertEqual(obs.shape, (13,))
+        self.assertGreater(len(info["candidates"]), 0)
+
+        # Execute 1 step with ML physics enabled
+        next_obs, reward, term, trunc, next_info = env.step(0)
+        self.assertEqual(next_obs.shape, (13,))
+        self.assertIsInstance(reward, float)
+
+    def test_env_fallback_on_adapter_error(self):
+        class BrokenDegAdapter:
+            def predict_degradation(self, state, driver):
+                raise RuntimeError("Submodel crashed unexpectedly!")
+
+        broken_adapter = BrokenDegAdapter()
+        env = F1StrategyEnv(
+            rollouts_per_step=5,
+            horizon_laps=3,
+            seed=42,
+            tyre_deg_adapter=broken_adapter,
+            use_ml_physics=True,
+        )
+        obs, info = env.reset(seed=42)
+        # step() should catch the error and fallback to linear degradation without throwing
+        next_obs, reward, term, trunc, next_info = env.step(0)
+        self.assertEqual(next_obs.shape, (13,))
+
+    def test_env_tyre_deg_adapter_mock(self):
+        class MockDegAdapter:
+            def __init__(self):
+                self.calls = 0
+
+            def predict_degradation(self, state, driver):
+                self.calls += 1
+                return 1.75  # Return fixed 1.75s degradation
+
+        mock_deg = MockDegAdapter()
+        env = F1StrategyEnv(
+            rollouts_per_step=5,
+            horizon_laps=3,
+            seed=42,
+            tyre_deg_adapter=mock_deg,
+            use_ml_physics=True,
+        )
+        env.reset(seed=42)
+        env.step(0)
+        self.assertGreater(mock_deg.calls, 0)
+
+    def test_env_pitstop_adapter_mock(self):
+        class MockPitstopAdapter:
+            def sample_pit_duration(self, circuit, team, is_sc, is_vsc, rng=None):
+                return 27.5  # Return slow Williams pit stop
+
+        mock_pit = MockPitstopAdapter()
+        env = F1StrategyEnv(
+            rollouts_per_step=5,
+            horizon_laps=3,
+            seed=42,
+            pitstop_adapter=mock_pit,
+            use_ml_physics=True,
+        )
+        env.reset(seed=42)
+        ego = env.current_state.participants[env.ego_driver]
+        loss = env._calc_pit_loss(ego, is_sc=False)
+        self.assertEqual(loss, 27.5)
+
+    def test_env_overtake_dynamics_dirty_air(self):
+        class MockOvertakeAdapter:
+            def __init__(self):
+                self.overtake_calls = 0
+                self.dirty_air_calls = 0
+
+            def predict_overtake_probability(self, **kwargs):
+                self.overtake_calls += 1
+                return 0.0  # Pass is completely blocked
+
+            def predict_dirty_air_penalty(self, gap_seconds, circuit):
+                self.dirty_air_calls += 1
+                return 0.45  # 0.45s turbulence wake penalty
+
+            def clear_cache(self):
+                pass
+
+        mock_ot = MockOvertakeAdapter()
+        env = F1StrategyEnv(
+            rollouts_per_step=5,
+            horizon_laps=3,
+            seed=42,
+            overtake_adapter=mock_ot,
+            use_ml_physics=True,
+        )
+        env.reset(seed=42)
+        # Advance 2 laps to create close racing gaps
+        env.step(0)
+        env.step(0)
+        self.assertGreater(mock_ot.overtake_calls + mock_ot.dirty_air_calls, 0)
+
+
+class TestPillar3CurriculumAndOpponents(unittest.TestCase):
+    """Unit tests for Phase 3: Curriculum Learning, Opponent Reactions, and Extended State Encoder."""
+
+    def test_curriculum_stages_initial_states(self):
+        # Stage 1: Sprint Endgame
+        s1 = F1StrategyEnv.create_stage_initial_state(1)
+        self.assertEqual(s1.current_lap, 42)
+        self.assertEqual(len(s1.participants), 3)
+
+        # Stage 2: Pit Window
+        s2 = F1StrategyEnv.create_stage_initial_state(2)
+        self.assertEqual(s2.current_lap, 16)
+        self.assertEqual(len(s2.participants), 5)
+
+        # Stage 3: SC Chaos
+        s3 = F1StrategyEnv.create_stage_initial_state(3)
+        self.assertEqual(s3.current_lap, 22)
+        self.assertTrue(s3.current_conditions.has_safety_car)
+
+        # Stage 4: Full GP
+        s4 = F1StrategyEnv.create_stage_initial_state(4)
+        self.assertEqual(s4.current_lap, 1)
+
+    def test_curriculum_advancement(self):
+        scheduler = CurriculumScheduler(start_stage=1, max_stage=4, window_size=2)
+        self.assertEqual(scheduler.current_stage, 1)
+
+        # Not enough episodes in window
+        advanced = scheduler.maybe_advance(6.0)
+        self.assertFalse(advanced)
+
+        # Mean reward 6.5 >= threshold 5.0 -> Advances to Stage 2
+        advanced = scheduler.maybe_advance(7.0)
+        self.assertTrue(advanced)
+        self.assertEqual(scheduler.current_stage, 2)
+
+        # Env config should match Stage 2
+        env = scheduler.get_env()
+        self.assertIsInstance(env, F1StrategyEnv)
+        self.assertEqual(env.base_state.current_lap, 16)
+
+    def test_reactive_opponent_undercut_defense(self):
+        # Aggressive opponent with 100% reaction probability
+        opp = ReactiveOpponentPolicy(personality="aggressive", reaction_probability=1.0)
+
+        # Ego driver attempts undercut (ego_pitted_this_lap=True), opponent is within 3.5s with worn tyres
+        should_pit = opp.decide_pit(
+            opp_driver="NOR",
+            opp_life=14.0,
+            opp_compound="MEDIUM",
+            opp_gap_ahead=0.0,
+            opp_gap_behind=1.8,
+            current_lap=20,
+            total_laps=52,
+            ego_driver="VER",
+            ego_pitted_this_lap=True,
+        )
+        self.assertTrue(should_pit, "Opponent should cover undercut when ego pits")
+
+        # When ego does not pit and tyres are fresh: opponent stays out
+        should_pit_fresh = opp.decide_pit(
+            opp_driver="NOR",
+            opp_life=5.0,
+            opp_compound="MEDIUM",
+            opp_gap_ahead=0.0,
+            opp_gap_behind=1.8,
+            current_lap=6,
+            total_laps=52,
+            ego_driver="VER",
+            ego_pitted_this_lap=False,
+        )
+        self.assertFalse(should_pit_fresh, "Opponent should stay out on fresh tyres")
+
+    def test_create_random_opponent_policies(self):
+        drivers = ["NOR", "HAM", "LEC", "PIA"]
+        policies = create_random_opponent_policies(drivers, rng=random.Random(42))
+        self.assertEqual(len(policies), 4)
+        for d in drivers:
+            self.assertIn(d, policies)
+            self.assertIn(policies[d].personality, ["aggressive", "balanced", "conservative"])
+
+    def test_extended_state_encoder_16dim(self):
+        state = F1StrategyEnv.create_stage_initial_state(2)
+
+        # Standard 13-dim encoder
+        enc13 = StateEncoder(extended=False)
+        vec13 = enc13.encode_state(state, ego_driver="VER")
+        self.assertEqual(enc13.state_dim, 13)
+        self.assertEqual(vec13.shape, (13,))
+
+        # Extended 16-dim encoder
+        enc16 = StateEncoder(extended=True)
+        vec16 = enc16.encode_state(state, ego_driver="VER")
+        self.assertEqual(enc16.state_dim, 16)
+        self.assertEqual(vec16.shape, (16,))
+
+        # Verify environment with extended encoder
+        env16 = F1StrategyEnv(
+            state_encoder=enc16,
+            rollouts_per_step=5,
+            horizon_laps=3,
+            seed=42,
+        )
+        self.assertEqual(env16.observation_space.shape, (16,))
+        obs, _ = env16.reset(seed=42)
+        self.assertEqual(obs.shape, (16,))
 
 
 if __name__ == "__main__":
