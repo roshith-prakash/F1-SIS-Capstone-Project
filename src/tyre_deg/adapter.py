@@ -171,6 +171,14 @@ FEATURE_COLS = [
     "Team_Median_Pace_Lag1",
 ]
 
+# Empirical parameters from race data analysis (101,290 laps, 92 races):
+SC_TYRE_DEG_SUPPRESSION_FRACTION: float = 0.50
+VSC_TYRE_DEG_SUPPRESSION_FRACTION: float = 0.70
+SC_LAP_TIME_MULTIPLIER: float = 0.40   # +40% of circuit base pace
+VSC_LAP_TIME_MULTIPLIER: float = 0.24  # +24% of circuit base pace
+SC_LAP_TIME_DELTA_SECONDS: float = 38.0
+VSC_LAP_TIME_DELTA_SECONDS: float = 19.0
+
 
 class TyreDegAdapter:
     """
@@ -402,6 +410,13 @@ class TyreDegAdapter:
         features = self.build_features(state, participant)
         df_row = pd.DataFrame([features])[self.feature_cols]
         pred_deg = float(self.model.predict(df_row)[0])
+
+        cond = state.current_conditions
+        if cond and cond.has_safety_car:
+            pred_deg *= SC_TYRE_DEG_SUPPRESSION_FRACTION
+        elif cond and cond.has_vsc:
+            pred_deg *= VSC_TYRE_DEG_SUPPRESSION_FRACTION
+
         return pred_deg
 
     def predict_all(self, state: RaceState) -> dict[str, float]:
@@ -428,12 +443,19 @@ class TyreDegAdapter:
         df_batch = pd.DataFrame(rows)[self.feature_cols]
         preds = self.model.predict(df_batch)
 
-        return {d: float(p) for d, p in zip(driver_codes, preds)}
+        cond = state.current_conditions
+        mult = 1.0
+        if cond and cond.has_safety_car:
+            mult = SC_TYRE_DEG_SUPPRESSION_FRACTION
+        elif cond and cond.has_vsc:
+            mult = VSC_TYRE_DEG_SUPPRESSION_FRACTION
+
+        return {d: float(p) * mult for d, p in zip(driver_codes, preds)}
 
     def predict_lap_time(self, state: RaceState, driver: str, base_pace: float | None = None) -> float | None:
         """
         Reconstruct total expected lap time:
-        predicted_lap_time = base_pace + fuel_weight_penalty + predicted_degradation
+        predicted_lap_time = base_pace + fuel_weight_penalty + predicted_degradation + caution_delta
         """
         deg = self.predict_degradation(state, driver)
         if deg is None:
@@ -444,4 +466,11 @@ class TyreDegAdapter:
         total_laps = state.total_laps_expected or 57
         fuel_penalty = max(0.0, (total_laps - current_lap) * 0.065)
 
-        return float(circuit_base + fuel_penalty + deg)
+        caution_delta = 0.0
+        cond = state.current_conditions
+        if cond and cond.has_safety_car:
+            caution_delta = circuit_base * SC_LAP_TIME_MULTIPLIER
+        elif cond and cond.has_vsc:
+            caution_delta = circuit_base * VSC_LAP_TIME_MULTIPLIER
+
+        return float(circuit_base + fuel_penalty + deg + caution_delta)
