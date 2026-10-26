@@ -122,11 +122,13 @@ class RaceScenarioSimulator:
         # Simulation memoization caches for model predictions across rollouts
         self._deg_cache: dict[tuple[str, str, int], float | None] = {}
         self._opp_pit_cache: dict[tuple[str, str, int, int, bool], float | None] = {}
+        self._overtake_cache: dict[tuple[Any, ...], float] = {}
 
     def clear_cache(self) -> None:
         """Clear model inference memoization caches."""
         self._deg_cache.clear()
         self._opp_pit_cache.clear()
+        self._overtake_cache.clear()
         if self.overtake_adapter is not None and hasattr(self.overtake_adapter, "clear_cache"):
             self.overtake_adapter.clear_cache()
 
@@ -224,7 +226,7 @@ class RaceScenarioSimulator:
             str(opp.get("driver", "")),
             str(opp.get("compound", "MEDIUM")),
             int(opp.get("tyre_age", 1)),
-            sim_lap,
+            sim_lap // 4,
             bool(sc_prob > 0.05),
         )
         if cache_key in self._opp_pit_cache:
@@ -709,7 +711,40 @@ class RaceScenarioSimulator:
         for rank_idx, c_dict in enumerate(final_sorted):
             c_dict["position"] = rank_idx + 1
 
-        final_ego_pos = cars[ego_driver]["position"]
+        remaining_to_flag = max(0, total_laps - (current_lap + horizon_laps))
+        if remaining_to_flag > 0:
+            # Receding horizon projection: adjust for unserved mandatory pit stops of rivals
+            # and pace parity so that early-stopping strategies are not artificially penalized
+            pit_loss = self.config.pit_loss_green_seconds
+            terminal_scores: dict[str, float] = {}
+            for d_code, car in cars.items():
+                if d_code == ego_driver:
+                    planned_stops = max(1, len(strategy.pit_laps))
+                    unserved_pits = max(0, planned_stops - car["pit_count"])
+                else:
+                    unserved_pits = max(0, 1 - car["pit_count"])
+                    nominal_life = {"SOFT": 18, "MEDIUM": 28, "HARD": 38}.get(car.get("compound", "MEDIUM"), 28)
+                    if remaining_to_flag > (nominal_life - car.get("tyre_age", 0.0)):
+                        unserved_pits += 1
+
+                comp = car.get("compound", "MEDIUM")
+                pace_offset = self._compound_pace_offset.get(comp, 0.0)
+                team_str = str(car.get("team", "")).lower()
+                team_tier_offset = (
+                    -0.45 if any(t in team_str for t in ["mclaren", "red bull", "ferrari", "mercedes"])
+                    else (0.40 if any(t in team_str for t in ["kick", "sauber", "haas", "williams"]) else 0.0)
+                )
+                terminal_scores[d_code] = (
+                    car["cumulative_race_time"]
+                    + unserved_pits * pit_loss
+                    + remaining_to_flag * (circuit_base + pace_offset + team_tier_offset)
+                )
+
+            projected_sorted = sorted(cars.keys(), key=lambda d: terminal_scores[d])
+            final_ego_pos = projected_sorted.index(ego_driver) + 1
+        else:
+            final_ego_pos = cars[ego_driver]["position"]
+
         pos_delta = initial_ego_pos - final_ego_pos
         final_ego_time = cars[ego_driver]["cumulative_race_time"]
 
@@ -927,9 +962,23 @@ class RaceScenarioSimulator:
         is_fresh = bool(car_behind.get("tyre_age", 0.0) <= 2.0)
         circuit = getattr(state, "location", "unknown") if state else "unknown"
 
+        ot_key = (
+            round(gap, 1),
+            round(pace_delta, 1),
+            int(tyre_age_delta),
+            compound_behind,
+            compound_ahead,
+            is_fresh,
+            circuit,
+            is_sc_restart,
+            is_sc,
+        )
+        if ot_key in self._overtake_cache:
+            return self._overtake_cache[ot_key]
+
         if self.overtake_adapter is not None:
             try:
-                return float(self.overtake_adapter.predict_overtake_probability(
+                prob = float(self.overtake_adapter.predict_overtake_probability(
                     gap_seconds=gap,
                     pace_delta=pace_delta,
                     tyre_age_delta=tyre_age_delta,
@@ -940,12 +989,16 @@ class RaceScenarioSimulator:
                     is_sc_restart=is_sc_restart,
                     is_sc=is_sc,
                 ))
+                self._overtake_cache[ot_key] = prob
+                return prob
             except Exception:
                 pass
 
         # Fallback: sigmoid on pace delta centred at threshold
         x = (pace_delta - self.config.overtake_pace_advantage_threshold) / 0.35
-        return float(1.0 / (1.0 + math.exp(-max(-6.0, min(6.0, x)))))
+        prob = float(1.0 / (1.0 + math.exp(-max(-6.0, min(6.0, x)))))
+        self._overtake_cache[ot_key] = prob
+        return prob
 
     def _get_dirty_air_penalty(
         self,

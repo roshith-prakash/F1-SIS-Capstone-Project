@@ -363,10 +363,10 @@ class RLDecisionPolicy:
             current_lap, best_candidate
         )
 
-        # Grab top Q-values for explainability payload
+        # Grab all candidate Q-values for explainability payload and downstream ranking
         top_candidates_q: dict[str, float] = {}
         sorted_indices = np.argsort(-q_vals) if len(q_vals) > 0 else [best_idx]
-        for idx in sorted_indices[:3]:
+        for idx in sorted_indices:
             if idx < len(strat_candidates):
                 cid = str(strat_candidates[idx].get("strategy_id", f"C{idx}"))
                 top_candidates_q[cid] = round(float(q_vals[idx]), 3)

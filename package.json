@@ -1,0 +1,9 @@
+{
+  "name": "f1-sis",
+  "version": "1.0.0",
+  "private": true,
+  "description": "F1-SIS Pit Wall Strategy Intelligence Dashboard and Backend",
+  "scripts": {
+    "dev": "npm --prefix ui run dev"
+  }
+}
