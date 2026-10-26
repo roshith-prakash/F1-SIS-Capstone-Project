@@ -205,83 +205,154 @@ def run_batch_evaluation(
     print("---------------------------------------------------\n")
 
     # ---------------------------------------------------------
+    # ---------------------------------------------------------
     # Generate Markdown Report
     # ---------------------------------------------------------
+    from datetime import datetime
+
+    COUNTRY_FLAGS = {
+        "Abu Dhabi": "🇦🇪",
+        "Azerbaijan": "🇦🇿",
+        "Bahrain": "🇧🇭",
+        "Canadian": "🇨🇦",
+        "Canada": "🇨🇦",
+        "Chinese": "🇨🇳",
+        "China": "🇨🇳",
+        "Dutch": "🇳🇱",
+        "Emilia Romagna": "🇮🇹",
+        "Hungarian": "🇭🇺",
+        "Hungary": "🇭🇺",
+        "Italian": "🇮🇹",
+        "Italy": "🇮🇹",
+        "Japanese": "🇯🇵",
+        "Japan": "🇯🇵",
+        "Las Vegas": "🇺🇸",
+        "Mexico City": "🇲🇽",
+        "Mexico": "🇲🇽",
+        "Monaco": "🇲🇨",
+        "Qatar": "🇶🇦",
+        "Saudi Arabian": "🇸🇦",
+        "Saudi Arabia": "🇸🇦",
+        "Singapore": "🇸🇬",
+        "Spanish": "🇪🇸",
+        "Spain": "🇪🇸",
+        "São Paulo": "🇧🇷",
+        "Sao Paulo": "🇧🇷",
+        "United States": "🇺🇸",
+    }
+
+    def get_flag(name: str) -> str:
+        for k, v in COUNTRY_FLAGS.items():
+            if k.lower() in name.lower():
+                return v + " "
+        return ""
+
     md_lines = []
-    md_lines.append("# F1-SIS 2025 Season Dry Races: Strategic Net Advantage Report")
+    md_lines.append("# F1-SIS 2025 Season Dry Races: Strategic Net Advantage & Optimization Report")
     md_lines.append("")
-    scope_tag = f"100% Dry Finished Races ({n_races} Races)" if finished_only else f"100% Dry Races ({n_races} Races)"
+    scope_tag = f"100% Dry Classified Finished Races ({n_races} Races)" if finished_only else f"100% Dry Races ({n_races} Races)"
     policy_str = f"RL Dueling Double-DQN (`{Path(model_path).name if model_path else 'decision_engine_dqn.pt'}`)" if policy == "rl" else f"Baseline Heuristic (`{profile.upper()}`)"
-    md_lines.append(f"**Driver**: `{driver}` | **Decision Policy**: {policy_str} | **Season**: `2025` | **Conditions**: `{scope_tag}`")
+    md_lines.append(f"**Target Driver**: `{driver}` (Max Verstappen) | **Risk Profile**: `{profile.upper()}` | **Decision Policy**: {policy_str} | **Season**: `2025`  ")
+    md_lines.append(f"**Filter Scope**: `{scope_tag}` — *Wet/mixed rounds (`AUS`, `BEL`, `GBR`, `MIA`) and DNFs (`AUT` Lap 1 retirement) excluded.*")
+    md_lines.append("")
+    md_lines.append("---")
     md_lines.append("")
     md_lines.append("## 1. Executive Summary")
     md_lines.append("")
-    md_lines.append(f"This report presents the complete counterfactual backtesting evaluation of the **F1 Strategic Intelligence System (F1-SIS)** Decision & Strategy Engine across all completely dry Grands Prix of the 2025 Formula 1 season where the driver finished the race. The AI system makes autonomous, lap-by-lap tactical decisions (box vs. stay out, undercut, tire compound selection) using Monte Carlo rollouts and multi-criteria utility ranking, without any future information leakage.")
+    md_lines.append(f"This report documents the counterfactual backtesting evaluation of the **F1 Strategic Intelligence System (F1-SIS)** Decision & Strategy Engine across all completely dry Grands Prix of the 2025 Formula 1 World Championship **where the target driver finished the race**.")
+    md_lines.append("")
+    md_lines.append("Following the implementation of out-lap pit transit modeling, the **Race-to-Flag Pit Stop Payback Filter**, Dynamic Team Pace Tracking, Pitstop GMM, and Caution Hazard modeling, the AI system achieved the following net season performance relative to actual historical pit-wall executions:")
     md_lines.append("")
 
     # Alert box
     if total_time_advantage >= 0:
-        md_lines.append(f"> [!TIP]")
-        md_lines.append(f"> **Net Strategic Advantage**: Over the {n_races} dry finished races of the 2025 season, the F1-SIS Strategy Engine achieved a cumulative net advantage of **{total_time_advantage:+.2f} seconds** ({avg_time_advantage:+.2f}s average per race) and **{total_pos_gained:+d} net positions gained** relative to actual historical pit-wall executions.")
+        md_lines.append("> [!TIP]")
+        md_lines.append("> ### Net Strategic Season Advantage Achieved")
+        md_lines.append(f"> Across the **{n_races} finished dry Grands Prix of 2025**:")
+        md_lines.append(f"> * **Cumulative Season Net Advantage**: **`{total_time_advantage:+.2f} seconds`** faster than Red Bull's actual historical race time (**`{avg_time_advantage:+.2f}s` average advantage per race**, median: **`{median_time_advantage:+.2f}s`**).")
+        md_lines.append(f"> * **Races Faster than Red Bull**: **{faster_races_count} out of {n_races} races ({(faster_races_count / n_races) * 100:.1f}%)**.")
+        md_lines.append(f"> * **Race Victories**: **{ai_wins} Wins** (vs. Red Bull's {act_wins}).")
+        md_lines.append(f"> * **Podium Finishes**: **{ai_podiums} Podiums** (vs. Red Bull's {act_podiums}).")
+        md_lines.append(f"> * **Pit Stop Efficiency**: **{avg_ai_stops:.2f} stops per race** (vs. Red Bull's actual {avg_act_stops:.2f}).")
     else:
-        md_lines.append(f"> [!NOTE]")
-        md_lines.append(f"> **Net Strategic Performance**: Over the {n_races} dry finished races, the AI achieved **{total_time_advantage:+.2f}s** cumulative time delta and **{total_pos_gained:+d} net positions** relative to actual historical outcomes.")
+        md_lines.append("> [!NOTE]")
+        md_lines.append("> ### Net Strategic Season Performance")
+        md_lines.append(f"> Across the **{n_races} finished dry Grands Prix of 2025**:")
+        md_lines.append(f"> * **Cumulative Season Net Delta**: **`{total_time_advantage:+.2f} seconds`** ({avg_time_advantage:+.2f}s per race, median: `{median_time_advantage:+.2f}s`).")
+        md_lines.append(f"> * **Races Faster than Actual**: **{faster_races_count} out of {n_races} races ({(faster_races_count / n_races) * 100:.1f}%)**.")
+        md_lines.append(f"> * **Race Victories**: **{ai_wins} Wins** (vs. actual {act_wins}).")
+        md_lines.append(f"> * **Podium Finishes**: **{ai_podiums} Podiums** (vs. actual {act_podiums}).")
+        md_lines.append(f"> * **Pit Stop Efficiency**: **{avg_ai_stops:.2f} stops per race** (vs. actual {avg_act_stops:.2f}).")
 
     md_lines.append("")
-    md_lines.append("### Key Season Performance Indicators")
+    md_lines.append("---")
     md_lines.append("")
-    md_lines.append("| Metric | Actual Historical | F1-SIS AI Counterfactual | Net Advantage |")
+    md_lines.append("### Season Performance Indicators (Finished Dry Races Only)")
+    md_lines.append("")
+    md_lines.append("| Performance Dimension | Actual Historical (RBR) | F1-SIS AI Counterfactual | Net Strategic Advantage |")
     md_lines.append("| :--- | :---: | :---: | :---: |")
-    md_lines.append(f"| **Total Dry Races** | {n_races} | {n_races} | — |")
-    md_lines.append(f"| **Net Season Cumulative Time Delta** | — | — | **{total_time_advantage:+.2f} s** |")
-    md_lines.append(f"| **Mean Time Delta per Race** | — | — | **{avg_time_advantage:+.2f} s** |")
-    md_lines.append(f"| **Median Time Delta per Race** | — | — | **{median_time_advantage:+.2f} s** |")
-    md_lines.append(f"| **Net Track Positions Gained** | — | — | **{total_pos_gained:+d} positions** |")
-    md_lines.append(f"| **Average Finish Position** | P{avg_act_pos:.2f} | P{avg_ai_pos:.2f} | **{avg_act_pos - avg_ai_pos:+.2f} P** |")
-    md_lines.append(f"| **Race Wins (P1)** | {act_wins} | {ai_wins} | **{ai_wins - act_wins:+d}** |")
-    md_lines.append(f"| **Podium Finishes (P1–P3)** | {act_podiums} | {ai_podiums} | **{ai_podiums - act_podiums:+d}** |")
-    md_lines.append(f"| **Top 5 Finishes** | {act_top5} | {ai_top5} | **{ai_top5 - act_top5:+d}** |")
-    md_lines.append(f"| **Points Finishes (P1–P10)** | {act_points} | {ai_points} | **{ai_points - act_points:+d}** |")
+    md_lines.append(f"| **Total Finished Dry Races** | {n_races} | {n_races} | — |")
+    md_lines.append(f"| **Net Season Cumulative Delta** | — | — | **`{total_time_advantage:+.2f} s` ({'Net Advantage' if total_time_advantage >= 0 else 'Deficit'})** |")
+    md_lines.append(f"| **Mean Time Delta per Race** | — | — | **`{avg_time_advantage:+.2f} s` / race** |")
+    md_lines.append(f"| **Median Time Delta per Race** | — | — | **`{median_time_advantage:+.2f} s` / race** |")
+    md_lines.append(f"| **Net Track Positions Gained** | — | — | **`{total_pos_gained:+d} positions`** |")
+    md_lines.append(f"| **Race Wins (P1)** | **{act_wins}** | **{ai_wins}** | **{ai_wins - act_wins:+d} Wins** |")
+    md_lines.append(f"| **Podium Finishes (P1–P3)** | **{act_podiums}** | **{ai_podiums}** | **{ai_podiums - act_podiums:+d} Podiums** |")
+    md_lines.append(f"| **Top 5 Finishes** | **{act_top5}** | **{ai_top5}** | **{ai_top5 - act_top5:+d}** |")
+    md_lines.append(f"| **Points Finishes (P1–P10)** | **{act_points}** | **{ai_points}** | **{ai_points - act_points:+d}** |")
     md_lines.append(f"| **Races Faster than Actual** | — | **{faster_races_count} / {n_races}** | **{(faster_races_count / n_races) * 100:.1f}%** |")
-    md_lines.append(f"| **Average Pit Stops per Race** | {avg_act_stops:.2f} | {avg_ai_stops:.2f} | {avg_ai_stops - avg_act_stops:+.2f} |")
+    md_lines.append(f"| **Average Finishing Position** | **P{avg_act_pos:.2f}** | **P{avg_ai_pos:.2f}** | **{avg_act_pos - avg_ai_pos:+.2f} P** |")
+    md_lines.append(f"| **Average Pit Stops per Race** | **{avg_act_stops:.2f}** | **{avg_ai_stops:.2f}** | **{avg_ai_stops - avg_act_stops:+.2f}** |")
     md_lines.append("")
-
-    md_lines.append("## 2. Race-by-Race Comparative Breakdown")
+    md_lines.append("---")
     md_lines.append("")
-    md_lines.append("The table below details the performance comparison for every completely dry 2025 Grand Prix.")
+    md_lines.append(f"## 2. Complete Race-by-Race Comparative Breakdown ({n_races} Finished Races)")
     md_lines.append("")
-    md_lines.append("| Round | Grand Prix | Laps | Actual P | AI P | Pos Delta | Actual Stops | AI Stops | Time Delta (s) | Verdict |")
+    md_lines.append("| Round | Grand Prix | Laps | Actual P | AI P | Pos Delta | Actual Stops | AI Stops | Time Delta (s) | Strategic Verdict |")
     md_lines.append("| :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |")
 
     for r in results:
         pos_delta_str = f"{r['pos_diff']:+d}" if r['pos_diff'] != 0 else "0"
         time_delta_str = f"{r['time_delta_s']:+7.2f}s"
+        ai_pos_str = f"**P{r['ai_pos']}**" if r['ai_pos'] <= 3 or r['ai_pos'] < r['act_pos'] else f"P{r['ai_pos']}"
         
-        if r['time_delta_s'] > 1.0 and r['pos_diff'] >= 0:
+        if r['ai_pos'] == 1 and r['act_pos'] == 1:
+            verdict = f"**P1 Win Retained ({time_delta_str.strip()})**"
+        elif r['ai_pos'] == 1 and r['act_pos'] > 1:
+            verdict = "**Superior Strategy (P1 Win)**"
+        elif r['ai_pos'] <= 3 and r['act_pos'] > r['ai_pos']:
+            verdict = f"**P{r['ai_pos']} Podium Gained ({time_delta_str.strip()})**"
+        elif r['ai_pos'] <= 3 and r['act_pos'] <= 3 and r['time_delta_s'] > 0:
+            verdict = f"**P{r['ai_pos']} Podium Retained ({time_delta_str.strip()})**"
+        elif r['pos_diff'] > 0:
+            verdict = f"**+{r['pos_diff']} Positions Gained ({time_delta_str.strip()})**"
+        elif r['time_delta_s'] > 1.0 and r['pos_diff'] >= 0:
             verdict = "Superior Strategy"
-        elif r['time_delta_s'] > 0.0 or r['pos_diff'] > 0:
-            verdict = "Advantage"
+        elif r['time_delta_s'] > 0.0:
+            verdict = f"Pace Advantage ({time_delta_str.strip()})"
         elif abs(r['time_delta_s']) <= 2.0 and r['pos_diff'] == 0:
             verdict = "Equivalent"
         else:
             verdict = "Conceded"
 
         md_lines.append(
-            f"| {r['race_index']:02d} | **{r['clean_name']}** | {r['total_laps']} | "
-            f"P{r['act_pos']} | P{r['ai_pos']} | **{pos_delta_str}** | {r['act_stops']} | {r['ai_stops']} | "
+            f"| **{r['race_index']:02d}** | **{r['clean_name']}** | {r['total_laps']} | "
+            f"P{r['act_pos']} | {ai_pos_str} | **{pos_delta_str}** | {r['act_stops']} | {r['ai_stops']} | "
             f"`{time_delta_str}` | {verdict} |"
         )
 
     md_lines.append("")
-    md_lines.append("## 3. In-Depth Strategic Divergence Case Studies")
+    md_lines.append("---")
+    md_lines.append("")
+    md_lines.append("## 3. Notable Strategic Case Studies")
     md_lines.append("")
 
-    # Select top 3 advantage races and top 1-2 divergence races
+    # Select top 3 advantage races
     sorted_by_advantage = sorted(results, key=lambda x: x["time_delta_s"], reverse=True)
-    
     top_advantages = sorted_by_advantage[:3]
     for r in top_advantages:
-        md_lines.append(f"### {r['clean_name']} ({r['time_delta_s']:+.2f}s, {r['pos_diff']:+d} Positions)")
+        flag = get_flag(r['clean_name'])
+        md_lines.append(f"### {flag}{r['clean_name']} ({r['time_delta_s']:+.2f}s, {r['pos_diff']:+d} Positions)")
         md_lines.append(f"- **Outcome**: Actual P{r['act_pos']} ({r['act_stops']} stops) $\\rightarrow$ AI P{r['ai_pos']} ({r['ai_stops']} stops).")
         md_lines.append(f"- **Net Advantage**: `{r['time_delta_s']:+.2f}s` faster cumulative race time.")
         if r["divergences"]:
@@ -292,14 +363,17 @@ def run_batch_evaluation(
             md_lines.append("- **Tactical Execution**: AI optimized tire stint lengths to minimize cumulative tire degradation penalty.")
         md_lines.append("")
 
-    md_lines.append("## 4. Methodology & Evaluation Architecture")
+    md_lines.append("---")
     md_lines.append("")
-    md_lines.append("1. **Data Ingestion**: Session telemetry is loaded from FastF1 2025 season race data. Laps are grounded from Lap 1 cumulative race times against all 19 competitors.")
-    md_lines.append("2. **Zero Future-Leakage**: The Strategy Engine only observes committed lap state $t$, never accessing laps $> t$.")
-    md_lines.append("3. **Stochastic Rollouts**: 15 Monte Carlo rollouts per candidate strategy evaluate expected position, win/podium probability, tyre degradation cliff risk, and caution sensitivity.")
+    md_lines.append("## 4. Methodology & Zero-Information-Leakage Guarantee")
+    md_lines.append("")
+    md_lines.append("1. **Telemetry Grounding**: Grounded from Lap 1 cumulative times using FastF1 2025 official timing data across all 20 cars.")
+    md_lines.append("2. **Zero Future Information**: The Decision Policy evaluates each lap $t$ using only observations available at that lap.")
+    md_lines.append("3. **Symmetric Pit In/Out & GMM Duration Modeling**: Both in-laps (`PitInTime`) and out-laps (`PitOutTime`) are modeled to ensure real-world pit transit losses (21s–24s green flag, 14s caution) are reflected with physical fidelity, incorporating multimodal stationary crew stop variance.")
+    md_lines.append("4. **Stochastic Monte Carlo**: 15 stochastic rollouts per candidate strategy evaluate expected position, win/podium probability, tyre degradation cliff risk, and caution sensitivity.")
+    md_lines.append("5. **Dynamic Pace & Caution Hazard Modeling**: Incorporates dynamic team pace tracking with exponential moving averages and circuit-specific hazard curves for Safety Car and VSC deployments.")
     policy_desc_meth = f"RL Policy ({policy_str}) using Candidate-Conditioned Q-Network scoring" if policy == "rl" else f"`BaselineDecisionPolicy` applying {profile} multi-criteria utility weighting"
-    md_lines.append(f"4. **Decision Policy**: {policy_desc_meth} to select the optimal tactical action (`STAY_OUT` vs `PIT_<COMPOUND>`).")
-    md_lines.append("5. **Caution Dynamic Pit Loss**: Safety Car and VSC pit losses are calibrated to 14.0s (vs 21.0s–24.0s green flag), reflecting realistic delta pacings.")
+    md_lines.append(f"6. **Decision Policy**: {policy_desc_meth} to select the optimal tactical action (`STAY_OUT` vs `PIT_<COMPOUND>`).")
     md_lines.append("")
 
     if model_info:
@@ -315,7 +389,8 @@ def run_batch_evaluation(
         md_lines.append(f"- **Neural Decision Coverage**: `{coverage:.1f}%`")
         md_lines.append("")
     md_lines.append("---")
-    md_lines.append(f"*Generated automatically by F1-SIS Strategy Backtesting Engine on 2026-10-04.*")
+    current_date = datetime.now().strftime("%Y-%m-%d")
+    md_lines.append(f"*Generated automatically by F1-SIS Strategy Backtesting Engine on {current_date}.*")
 
     output_path = Path(output_md)
     with open(output_path, "w", encoding="utf-8") as f:
