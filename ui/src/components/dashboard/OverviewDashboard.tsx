@@ -17,10 +17,11 @@ export function OverviewDashboard() {
   const strategies = lapData?.strategies || [];
   const topStrat = strategies[0];
 
-  const position = ego?.position ?? 1;
+  const positionStr = ego?.position ? `P${ego.position}` : "--";
+  const positionNum = ego?.position ?? 1;
   const gap = ego?.gap_to_leader;
-  const compound = ego?.compound || "MEDIUM";
-  const tyreLife = ego?.tyre_life || 1;
+  const compound = ego?.compound || null;
+  const tyreLifeStr = ego?.tyre_life != null ? `${Math.round(ego.tyre_life)} Laps on current set` : "Awaiting telemetry...";
   const lastLap = ego?.last_lap_time;
 
   return (
@@ -29,7 +30,7 @@ export function OverviewDashboard() {
       <MetricGrid columns={4}>
         <Metric
           label="Track Position"
-          value={`P${position}`}
+          value={positionStr}
           highlight={true}
           size="xl"
           subValue={ego?.team || "Focus Car"}
@@ -45,13 +46,17 @@ export function OverviewDashboard() {
         <Metric
           label="Current Tyre Compound"
           value={
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <CompoundBadge compound={compound} size="lg" />
-              <span>{compound}</span>
-            </div>
+            compound ? (
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <CompoundBadge compound={compound} size="lg" />
+                <span>{compound}</span>
+              </div>
+            ) : (
+              <span>--</span>
+            )
           }
           size="lg"
-          subValue={`${Math.round(tyreLife)} Laps on current set`}
+          subValue={tyreLifeStr}
         />
 
         <Metric
@@ -115,7 +120,7 @@ export function OverviewDashboard() {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>Pit Window Undercut Threat</span>
                   <RiskIndicator
-                    level={position > 1 && (ego?.interval_ahead || 5.0) < 2.0 ? "HIGH" : "LOW"}
+                    level={positionNum > 1 && (ego?.interval_ahead || 5.0) < 2.0 ? "HIGH" : "LOW"}
                     size="sm"
                   />
                 </div>

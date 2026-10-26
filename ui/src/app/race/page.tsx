@@ -25,7 +25,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 
 export default function LiveRaceDashboard() {
   const router = useRouter();
-  const { isConfigured, currentLap, totalLaps, lapData } = useRaceStore();
+  const { isConfigured, currentLap, totalLaps, lapData, isCalculating } = useRaceStore();
   const { advance } = useRaceSocket();
 
   // If user accesses directly without configuring, redirect to setup
@@ -37,10 +37,10 @@ export default function LiveRaceDashboard() {
 
   // Initial trigger for Lap 1 if not yet started
   useEffect(() => {
-    if (isConfigured && currentLap === 0 && !lapData) {
+    if (isConfigured && !lapData && !isCalculating) {
       advance();
     }
-  }, [isConfigured, currentLap, lapData, advance]);
+  }, [isConfigured, lapData, isCalculating, advance]);
 
   const topStrat = lapData?.strategies?.[0];
 

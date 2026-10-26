@@ -18,19 +18,42 @@ router = APIRouter(prefix="/api/race", tags=["race"])
 
 ROOT = Path(__file__).resolve().parent.parent.parent.parent
 DATA_DIR = ROOT / "data_fastf1_v1" / "laps"
+_DRY_RACES_CACHE: list[dict[str, Any]] | None = None
+WET_COMPOUNDS = {"INTERMEDIATE", "WET", "WETS", "INTERMEDIATES"}
+
+
+def _is_wet_race(csv_path: Path) -> bool:
+    """Check whether a Grand Prix CSV contains wet tyre compounds or sustained rainfall."""
+    try:
+        df_sample = pd.read_csv(csv_path, usecols=lambda c: c in ["Compound", "Rainfall"])
+        if "Compound" in df_sample.columns:
+            compounds = set(df_sample["Compound"].dropna().astype(str).str.upper().unique())
+            if any(c in compounds for c in WET_COMPOUNDS):
+                return True
+        if "Rainfall" in df_sample.columns:
+            if (df_sample["Rainfall"] == True).sum() >= 2:
+                return True
+        return False
+    except Exception:
+        return False
 
 
 @router.get("/available")
 def get_available_races() -> list[dict[str, Any]]:
     """
-    Returns available race CSV files from data_fastf1_v1/laps,
+    Returns available dry race CSV files from data_fastf1_v1/laps,
     with year, grand prix name, file path, and participating drivers.
+    Wet races (with intermediate/wet tyres or rainfall) are filtered out.
     """
+    global _DRY_RACES_CACHE
+    if _DRY_RACES_CACHE is not None:
+        return _DRY_RACES_CACHE
+
     if not DATA_DIR.exists():
         return []
 
     races = []
-    # Scan years in descending order (e.g. 2024, 2023, ...)
+    # Scan years in descending order (e.g. 2025, 2024, 2023, ...)
     for year_dir in sorted(DATA_DIR.iterdir(), reverse=True):
         if not year_dir.is_dir():
             continue
@@ -40,15 +63,23 @@ def get_available_races() -> list[dict[str, Any]]:
             continue
 
         for csv_file in sorted(year_dir.glob("*.csv")):
+            # Filter out wet races
+            if _is_wet_race(csv_file):
+                continue
+
             gp_name = csv_file.stem.replace("_", " ")
             rel_path = f"{year_dir.name}/{csv_file.name}"
 
-            # Fast extract drivers
+            # Extract all drivers participating in this specific Grand Prix
             try:
-                sample_df = pd.read_csv(csv_file, usecols=["Driver"], nrows=500)
-                drivers = sorted(sample_df["Driver"].dropna().unique().tolist())
+                driver_df = pd.read_csv(csv_file, usecols=["Driver"])
+                drivers = sorted([
+                    str(d).strip().upper()
+                    for d in driver_df["Driver"].dropna().unique()
+                    if str(d).strip() != "" and str(d).strip().lower() != "nan"
+                ])
             except Exception:
-                drivers = ["VER", "HAM", "LEC", "NOR", "PIA", "SAI", "RUS", "ALO", "PER"]
+                drivers = []
 
             races.append({
                 "year": year,
@@ -57,6 +88,7 @@ def get_available_races() -> list[dict[str, Any]]:
                 "drivers": drivers,
             })
 
+    _DRY_RACES_CACHE = races
     return races
 
 

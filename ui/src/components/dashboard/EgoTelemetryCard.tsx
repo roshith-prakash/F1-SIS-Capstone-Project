@@ -9,12 +9,28 @@ export function EgoTelemetryCard() {
   const { lapData, config } = useRaceStore();
   const ego = lapData?.participants ? lapData.participants[config.driver] : null;
 
-  const compound = ego?.compound || "MEDIUM";
-  const tyreLife = ego?.tyre_life || 1;
-  const position = ego?.position || 1;
-  const lastLap = ego?.last_lap_time || null;
-  const interval = ego?.interval_ahead || null;
-  const stint = (ego?.pit_count || 0) + 1;
+  if (!ego) {
+    return (
+      <div className="sis-card" style={{ marginTop: "12px", padding: "16px" }}>
+        <div className="sis-card-header" style={{ marginBottom: "12px" }}>
+          <div className="sis-card-title">
+            <span>🏎</span>
+            <span>Ego Car Telemetry · {config.driver}</span>
+          </div>
+        </div>
+        <div style={{ padding: "20px 0", textAlign: "center", color: "var(--text-muted)", fontSize: "0.85rem" }}>
+          Awaiting telemetry for Lap 1...
+        </div>
+      </div>
+    );
+  }
+
+  const compound = ego.compound || "UNKNOWN";
+  const tyreLife = ego.tyre_life || 0;
+  const position = ego.position || "--";
+  const lastLap = ego.last_lap_time || null;
+  const interval = ego.interval_ahead || null;
+  const stint = (ego.pit_count || 0) + 1;
 
   // Approximate cliff limit per compound
   const cliffLimits: Record<string, number> = {
