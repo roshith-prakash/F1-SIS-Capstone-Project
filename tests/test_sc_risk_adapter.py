@@ -92,6 +92,41 @@ class SCRiskAdapterTests(unittest.TestCase):
         h_t = self.adapter.build_H_t(state)
         self.assertIn("logit_p_sc_hist", h_t)
 
+    def test_lap_hazard_multiplier_phases(self):
+        from sc_risk.adapter import get_lap_hazard_multiplier
+        # Lap 1 Turn 1 incident spike
+        self.assertEqual(get_lap_hazard_multiplier(1, is_sc_restart=False), 5.5)
+        # Safety Car restart spike
+        self.assertEqual(get_lap_hazard_multiplier(15, is_sc_restart=True), 2.2)
+        # Cold tyre pack racing (Laps 2-3)
+        self.assertEqual(get_lap_hazard_multiplier(2, is_sc_restart=False), 1.8)
+        self.assertEqual(get_lap_hazard_multiplier(3, is_sc_restart=False), 1.8)
+        # Mid-race field stasis (Lap 25 of 57)
+        self.assertEqual(get_lap_hazard_multiplier(25, is_sc_restart=False, total_laps=57), 0.60)
+        # Late-race tyre degradation punctures (Lap 55 of 57)
+        self.assertEqual(get_lap_hazard_multiplier(55, is_sc_restart=False, total_laps=57), 1.1)
+
+    def test_compute_modulated_hazard_prob(self):
+        from sc_risk.adapter import compute_modulated_hazard_prob
+        base_hazard = 0.028
+        # Lap 1: 0.028 * 5.5 = 0.154
+        p_lap1 = compute_modulated_hazard_prob(base_hazard, lap_number=1)
+        self.assertAlmostEqual(p_lap1, 0.154, places=3)
+
+        # Mid-race: 0.028 * 0.60 = 0.0168
+        p_mid = compute_modulated_hazard_prob(base_hazard, lap_number=30, total_laps=57)
+        self.assertAlmostEqual(p_mid, 0.0168, places=4)
+
+        # Extreme clamping test
+        self.assertLessEqual(compute_modulated_hazard_prob(0.50, lap_number=1), 0.35)
+        self.assertGreaterEqual(compute_modulated_hazard_prob(0.00001, lap_number=30), 0.002)
+
+    def test_adapter_instance_methods(self):
+        self.assertEqual(self.adapter.get_lap_hazard_multiplier(1), 5.5)
+        p = self.adapter.compute_modulated_hazard_prob(0.028, lap_number=1)
+        self.assertAlmostEqual(p, 0.154, places=3)
+
 
 if __name__ == "__main__":
     unittest.main()
+

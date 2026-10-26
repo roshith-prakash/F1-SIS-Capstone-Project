@@ -146,5 +146,30 @@
   "sc_adjustment": -0.562,
   "vsc_adjustment": 0.883,
   "min_clip": 15.0,
-  "max_clip": 55.0
+  "max_clip": 55.0,
+  "gmm": {
+    "enabled": true,
+    "clean": {
+      "weight": 0.7597,
+      "mean_offset": -0.6521,
+      "std": 0.8096
+    },
+    "botched": {
+      "weight": 0.2403,
+      "mean_offset": 2.0620,
+      "std": 6.0997
+    },
+    "team_botched_probs": {
+      "McLaren": 0.208,
+      "Aston Martin": 0.211,
+      "Ferrari": 0.220,
+      "Mercedes": 0.229,
+      "Red Bull Racing": 0.233,
+      "Racing Bulls": 0.237,
+      "Williams": 0.249,
+      "Alpine": 0.250,
+      "Sauber": 0.280,
+      "Haas F1 Team": 0.312
+    }
+  }
 }

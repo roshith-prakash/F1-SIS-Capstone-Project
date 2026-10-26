@@ -215,8 +215,21 @@ class PitstopAdapter:
         self.min_clip: float = float(self.params.get("min_clip", 15.0))
         self.max_clip: float = float(self.params.get("max_clip", 55.0))
 
+        # 2-Component Gaussian Mixture Model (GMM) parameters for clean vs botched pit stops
+        self.gmm: dict[str, Any] = self.params.get("gmm", {})
+        self.gmm_enabled: bool = bool(self.gmm.get("enabled", False))
+        gmm_clean = self.gmm.get("clean", {})
+        gmm_botched = self.gmm.get("botched", {})
+        self.gmm_clean_weight: float = float(gmm_clean.get("weight", 0.7597))
+        self.gmm_clean_mean: float = float(gmm_clean.get("mean_offset", -0.6521))
+        self.gmm_clean_std: float = float(gmm_clean.get("std", 0.8096))
+        self.gmm_botched_weight: float = float(gmm_botched.get("weight", 0.2403))
+        self.gmm_botched_mean: float = float(gmm_botched.get("mean_offset", 2.0620))
+        self.gmm_botched_std: float = float(gmm_botched.get("std", 6.0997))
+        self.team_botched_probs: dict[str, float] = self.gmm.get("team_botched_probs", {})
+
         # Cache for stats queries
-        self._stats_cache: dict[tuple[str, str, bool, bool], tuple[float, float]] = {}
+        self._stats_cache: dict[tuple[str, str, bool, bool, str], tuple[float, float]] = {}
 
     def _load_params(self, path: Path) -> dict[str, Any]:
         if path.exists():
@@ -236,6 +249,9 @@ class PitstopAdapter:
             "vsc_adjustment": 0.9,
             "min_clip": 15.0,
             "max_clip": 55.0,
+            "gmm": {
+                "enabled": False,
+            },
         }
 
     def get_pit_stats(
@@ -244,6 +260,7 @@ class PitstopAdapter:
         team: str | None,
         is_sc: bool = False,
         is_vsc: bool = False,
+        mode: str = "clean",
     ) -> tuple[float, float]:
         """
         Returns (mean_seconds, std_seconds) for a pit stop.
@@ -258,6 +275,9 @@ class PitstopAdapter:
             True if pit stop occurs under full Safety Car.
         is_vsc : bool
             True if pit stop occurs under Virtual Safety Car.
+        mode : str
+            "clean" (default modal execution), "expected" (unconditional mean),
+            "botched" (delayed execution), or "base" (circuit + team baseline).
 
         Returns
         -------
@@ -266,7 +286,7 @@ class PitstopAdapter:
         """
         canon_circ = resolve_circuit(circuit)
         canon_team = resolve_team(team)
-        cache_key = (canon_circ, canon_team, bool(is_sc), bool(is_vsc))
+        cache_key = (canon_circ, canon_team, bool(is_sc), bool(is_vsc), str(mode))
 
         if cache_key in self._stats_cache:
             return self._stats_cache[cache_key]
@@ -287,7 +307,19 @@ class PitstopAdapter:
         elif is_vsc:
             mean += self.vsc_adjustment
 
-        res = (float(np.clip(mean, self.min_clip, self.max_clip)), max(1.0, std))
+        if self.gmm_enabled:
+            if mode == "clean":
+                mean += self.gmm_clean_mean
+                std = self.gmm_clean_std
+            elif mode == "botched":
+                mean += self.gmm_botched_mean
+                std = self.gmm_botched_std
+            elif mode == "expected":
+                mean += (self.gmm_clean_weight * self.gmm_clean_mean + self.gmm_botched_weight * self.gmm_botched_mean)
+            elif mode == "base":
+                pass
+
+        res = (float(np.clip(mean, self.min_clip, self.max_clip)), max(0.5, std))
         self._stats_cache[cache_key] = res
         return res
 
@@ -297,9 +329,10 @@ class PitstopAdapter:
         team: str | None,
         is_sc: bool = False,
         is_vsc: bool = False,
+        mode: str = "clean",
     ) -> float:
         """Return expected deterministic pit duration (seconds)."""
-        mean, _ = self.get_pit_stats(circuit, team, is_sc=is_sc, is_vsc=is_vsc)
+        mean, _ = self.get_pit_stats(circuit, team, is_sc=is_sc, is_vsc=is_vsc, mode=mode)
         return mean
 
     def sample_pit_duration(
@@ -311,7 +344,7 @@ class PitstopAdapter:
         rng: Any = None,
     ) -> float:
         """
-        Sample a single pit stop duration from the fitted parametric distribution.
+        Sample a single pit stop duration using the 2-component GMM (clean vs botched stop).
 
         Parameters
         ----------
@@ -331,16 +364,52 @@ class PitstopAdapter:
         float
             Simulated pit stop duration in seconds, clipped to [min_clip, max_clip].
         """
-        mean, std = self.get_pit_stats(circuit, team, is_sc=is_sc, is_vsc=is_vsc)
+        canon_circ = resolve_circuit(circuit)
+        canon_team = resolve_team(team)
 
+        base_mean, base_std = self.get_pit_stats(circuit, team, is_sc=is_sc, is_vsc=is_vsc, mode="base")
+
+        if self.gmm_enabled:
+            p_botch = float(self.team_botched_probs.get(canon_team, self.gmm_botched_weight))
+
+            # Draw uniform random number to choose clean vs botched component
+            if rng is None:
+                u = float(np.random.uniform(0.0, 1.0))
+            elif hasattr(rng, "uniform"):
+                u = float(rng.uniform(0.0, 1.0))
+            elif hasattr(rng, "random"):
+                u = float(rng.random())
+            else:
+                u = float(np.random.uniform(0.0, 1.0))
+
+            if u < p_botch:
+                comp_offset = self.gmm_botched_mean
+                comp_std = self.gmm_botched_std
+            else:
+                comp_offset = self.gmm_clean_mean
+                comp_std = self.gmm_clean_std
+
+            if rng is None:
+                noise = float(np.random.normal(comp_offset, comp_std))
+            elif hasattr(rng, "normal"):
+                noise = float(rng.normal(comp_offset, comp_std))
+            elif hasattr(rng, "gauss"):
+                noise = float(rng.gauss(comp_offset, comp_std))
+            else:
+                noise = float(np.random.normal(comp_offset, comp_std))
+
+            sampled = base_mean + noise
+            return float(np.clip(sampled, self.min_clip, self.max_clip))
+
+        # Fallback to single Gaussian
         if rng is None:
-            noise = float(np.random.normal(0.0, std))
+            noise = float(np.random.normal(0.0, base_std))
         elif hasattr(rng, "normal"):
-            noise = float(rng.normal(0.0, std))
+            noise = float(rng.normal(0.0, base_std))
         elif hasattr(rng, "gauss"):
-            noise = float(rng.gauss(0.0, std))
+            noise = float(rng.gauss(0.0, base_std))
         else:
-            noise = float(np.random.normal(0.0, std))
+            noise = float(np.random.normal(0.0, base_std))
 
-        sampled = mean + noise
+        sampled = base_mean + noise
         return float(np.clip(sampled, self.min_clip, self.max_clip))

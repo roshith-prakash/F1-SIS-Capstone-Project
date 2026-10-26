@@ -111,5 +111,38 @@ def test_adapter_throughput():
     for _ in range(10000):
         _ = adapter.sample_pit_duration("Monza", "Ferrari", rng=rng)
     elapsed = time.perf_counter() - start
-    # 10,000 samples should take well under 100ms
-    assert elapsed < 0.15, f"Expected < 150ms for 10k samples, took {elapsed*1000:.1f}ms"
+    # 10,000 2-component GMM samples should take well under 600ms (>16k samples/sec)
+    assert elapsed < 0.60, f"Expected < 600ms for 10k samples, took {elapsed*1000:.1f}ms"
+
+
+def test_gmm_parameters_and_modes():
+    adapter = PitstopAdapter()
+    assert adapter.gmm_enabled is True
+    assert 0.70 <= adapter.gmm_clean_weight <= 0.85
+    assert 0.15 <= adapter.gmm_botched_weight <= 0.30
+    assert adapter.gmm_clean_mean < 0.0  # Clean stops are faster than the naive mean
+    assert adapter.gmm_botched_mean > 0.0  # Botched stops are slower than the naive mean
+
+    # Clean mode vs Botched mode
+    clean_mean, clean_std = adapter.get_pit_stats("Monza", "Ferrari", mode="clean")
+    botch_mean, botch_std = adapter.get_pit_stats("Monza", "Ferrari", mode="botched")
+    assert clean_mean < botch_mean
+    assert clean_std < botch_std
+
+
+def test_gmm_stochastic_sampling_distribution():
+    adapter = PitstopAdapter()
+    rng = np.random.RandomState(42)
+    samples = np.array([
+        adapter.sample_pit_duration("Monza", "Ferrari", rng=rng)
+        for _ in range(5000)
+    ])
+
+    # Clean modal peak should be around ~24.2s (Monza base 25.42 - team 0.5 - clean 0.65)
+    clean_median = np.median(samples[samples < 27.0])
+    assert 23.0 <= clean_median <= 25.5
+
+    # Delayed/botched tail (> 30s) should occur in non-zero frequency consistent with GMM
+    botched_count = np.sum(samples > 28.5)
+    botched_pct = (botched_count / len(samples)) * 100
+    assert 5.0 <= botched_pct <= 35.0

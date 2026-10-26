@@ -14,6 +14,11 @@ try:
 except ImportError:
     from src.race_state.models import ParticipantState, RaceState, normalize_driver
 
+try:
+    from lap_time.pace_tracker import DynamicTeamPaceTracker
+except ImportError:
+    from src.lap_time.pace_tracker import DynamicTeamPaceTracker
+
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_MODEL_PATH = PROJECT_ROOT / "models" / "Lap Time Estimation" / "laptime_model.pkl"
@@ -162,6 +167,8 @@ class LapTimeAdapter:
         meta: dict[str, Any] | None = None,
         model_path: str | Path | None = None,
         meta_path: str | Path | None = None,
+        pace_tracker: DynamicTeamPaceTracker | None = None,
+        use_pace_tracker: bool = True,
     ) -> None:
         if model is not None and meta is not None:
             self.model = model
@@ -189,6 +196,14 @@ class LapTimeAdapter:
         self.auto_calibrate: bool = True
         self.calibrated_bases: dict[str, float] = {}
         self.implied_history: dict[str, list[float]] = {}
+        if pace_tracker is not None:
+            self.pace_tracker = pace_tracker
+        else:
+            # LapTimeAdapter's model already has Team_encoded in its trees.
+            # DynamicTeamPaceTracker therefore tracks residual drift relative to the model,
+            # initialized at 0.0s so initial predictions match the base model.
+            self.pace_tracker = DynamicTeamPaceTracker(priors={t: 0.0 for t in self.teams_set})
+        self.use_pace_tracker: bool = use_pace_tracker
 
     def resolve_circuit(self, state: RaceState) -> str:
         """Resolve the canonical circuit name from RaceState attributes."""
@@ -272,6 +287,16 @@ class LapTimeAdapter:
             # 15th percentile of implied base across clean top-half laps locks onto true dry base
             est_base = float(np.percentile(history, 15))
             self.calibrated_bases[circuit] = est_base
+            if self.use_pace_tracker and self.pace_tracker is not None:
+                preds: dict[str, float] = {}
+                for d_code, p in state.participants.items():
+                    if not p.is_active:
+                        continue
+                    f = self.build_features(state, p, use_calibrated=True)
+                    if f is not None:
+                        d_row = pd.DataFrame([f])[self.feature_cols]
+                        preds[d_code] = float(est_base + self.model.predict(d_row)[0])
+                self.pace_tracker.update_from_race_state(state, predicted_lap_times=preds, circuit_base=est_base)
             return est_base
 
         return self.calibrated_bases.get(circuit)
@@ -368,7 +393,12 @@ class LapTimeAdapter:
         df_row = pd.DataFrame([features])[self.feature_cols]
         event_dry_base = features["Event_Dry_Base"]
         predicted_delta = float(self.model.predict(df_row)[0])
-        return float(event_dry_base + predicted_delta)
+        team_offset = (
+            self.pace_tracker.get_team_offset(participant.team)
+            if self.use_pace_tracker and self.pace_tracker is not None
+            else 0.0
+        )
+        return float(event_dry_base + predicted_delta + team_offset)
 
     def predict_all(self, state: RaceState) -> dict[str, float]:
         """
@@ -382,6 +412,7 @@ class LapTimeAdapter:
         rows: list[dict[str, Any]] = []
         driver_codes: list[str] = []
         bases: list[float] = []
+        teams: list[str] = []
 
         for driver_code, participant in state.participants.items():
             if not participant.is_active:
@@ -391,6 +422,7 @@ class LapTimeAdapter:
                 rows.append(features)
                 driver_codes.append(driver_code)
                 bases.append(features["Event_Dry_Base"])
+                teams.append(participant.team or "Red Bull Racing")
 
         if not rows:
             return {}
@@ -399,7 +431,12 @@ class LapTimeAdapter:
         deltas = self.model.predict(df_batch)
 
         predictions: dict[str, float] = {}
-        for driver_code, base, delta in zip(driver_codes, bases, deltas):
-            predictions[driver_code] = float(base + delta)
+        for driver_code, base, delta, p_team in zip(driver_codes, bases, deltas, teams):
+            team_offset = (
+                self.pace_tracker.get_team_offset(p_team)
+                if self.use_pace_tracker and self.pace_tracker is not None
+                else 0.0
+            )
+            predictions[driver_code] = float(base + delta + team_offset)
 
         return predictions
