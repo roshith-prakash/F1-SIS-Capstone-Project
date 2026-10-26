@@ -5,12 +5,12 @@
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-ee4c2c.svg)](https://pytorch.org/)
 [![XGBoost](https://img.shields.io/badge/XGBoost-GPU%2FCPU-green.svg)](https://xgboost.readthedocs.io/)
 [![FastF1](https://img.shields.io/badge/FastF1-Telemetry-red.svg)](https://github.com/theOehrly/Fast-F1)
-[![Tests](https://img.shields.io/badge/Tests-104%20Passing-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-162%20Passing-brightgreen.svg)]()
 [![Status](https://img.shields.io/badge/Status-Complete%20%26%20Validated-success.svg)]()
 
 > [!IMPORTANT]
 > **CAPSTONE PROJECT STATUS: FULL STACK DECISION & REINFORCEMENT LEARNING ENGINE COMPLETE ✅**
-> **F1-SIS** has completed end-to-end integration and rigorous counterfactual validation. Evaluated across all **19 finished dry Grands Prix of the 2025 Formula 1 World Championship**, the autonomous RL Decision Engine achieved a cumulative net strategic advantage of **+89.60 seconds**, **+2 net race victories**, and **100% neural decision execution** against actual historical pit-wall operations.
+> **F1-SIS** has completed end-to-end integration and rigorous counterfactual validation. Evaluated across all **19 finished dry Grands Prix of the 2025 Formula 1 World Championship**, the autonomous RL Decision Engine achieved a cumulative net strategic advantage of **+108.79 seconds**, **+4 net race victories** (12 Wins vs. Red Bull's 8), **15 Podiums**, **89.5% faster races (17/19)**, and **100% neural decision execution (1,145/1,145 decisions)** against actual historical pit-wall operations.
 
 ---
 
@@ -84,10 +84,11 @@ flowchart TD
 
 F1-SIS decomposes the complex racing environment into specialized, production-calibrated machine learning modules:
 
-### 1. Multi-Circuit Lap Time Predictor (`src/lap_time`)
+### 1. Multi-Circuit Lap Time Predictor & Dynamic Team Pace Tracker (`src/lap_time`)
 * **Algorithm**: Optimized XGBoost Regressor with histogram tree building.
 * **Coverage**: All **25 circuits** on the FIA Formula 1 World Championship calendar.
 * **Driver-Independent Dynamics**: Decouples chassis/aerodynamic performance from driver identity, enabling universal applicability across all 10 constructor teams.
+* **Dynamic Team Pace Tracker (`src/lap_time/pace_tracker.py`)**: Uses a residual Exponential Moving Average (EMA) to track in-season constructor development drift and team-specific relative pace adjustments on the fly, avoiding driver confounding.
 * **Performance Metrics**:
   * **Training RMSE (2022–2024)**: `0.2523 s` (Academic literature baseline: `1.3200 s`, IEEE INDISCON 2024: `0.6600 s`).
   * **Training MAE**: `0.1538 s`
@@ -100,27 +101,33 @@ F1-SIS decomposes the complex racing environment into specialized, production-ca
 * **Circuit Abrasiveness Multipliers**: Track asphalt macro-roughness calibrated from $1.50\times$ (Qatar), $1.45\times$ (Bahrain), $1.40\times$ (Spain) down to $0.60\times$ (Monaco).
 * **Safety Car Thermal Recovery**: Empirically accounts for tyre cooling and reduced mechanical degradation under Safety Car and Virtual Safety Car deltas.
 
-### 3. Safety Car & VSC Hazard Estimation (`src/sc_risk`)
-* **Formulation**: Multi-horizon calibrated XGBoost classifiers combined with track-specific historical empirical priors.
-* **Horizons**: 1-lap, 3-lap, 5-lap, and 10-lap lookaheads predicting incident probabilities based on weather, grid clustering, sector speeds, and historical circuit accident distributions.
+### 3. Safety Car & VSC Dynamic Hazard Estimation (`src/sc_risk`)
+* **Formulation**: Multi-horizon calibrated XGBoost classifiers combined with track-specific empirical hazard curves and historical incident priors.
+* **Horizons**: 1-lap, 3-lap, 5-lap, and 10-lap lookaheads predicting incident probabilities based on weather, grid clustering, sector speed variances, and circuit-specific risk profiles.
 
 ### 4. Opponent Behavior & Pit Stop Likelihood (`src/opponent_model`)
 * **Formulation**: Calibrated XGBoost classifier trained on 2018–2024 telemetry with **Isotonic Regression** and **Platt Scaling**.
 * **Output**: Produces well-calibrated per-lap probabilities $P(\text{PIT} \mid \text{state}_t)$ for all 19 competitor cars on track, anticipating undercut/overcut attempts before they materialize.
 
-### 5. Overtake Difficulty & Pit Stop Durations (`src/overtake`, `src/pitstop`)
+### 5. DRS Train & Turbulent Wake Overtake Difficulty (`src/overtake`)
 * **Overtake Difficulty**: Circuit-specific resistance index incorporating DRS zones, cornering profiles, and delta speed requirements.
-* **Pit Stop Models**: Circuit-specific pit lane speed limits, pit transit delta times, and crew stationary service distributions.
+* **Dirty Air & DRS Trains**: Features aerodynamic turbulent wake penalties and DRS train congestion dampening, realistically suppressing overtake probability when trailing cars are bunched within 1.0s of each other.
+
+### 6. Pit Stop Duration Modeling & Multimodal GMM (`src/pitstop`)
+* **Transit Loss**: Circuit-specific pit lane speed limit profiling, pit entry/exit layout deltas, and symmetric in-lap/out-lap transit modeling.
+* **Multimodal GMM**: Employs a Gaussian Mixture Model to accurately characterize real-world stationary pit stops, separating clean routine stops ($\mu \approx 2.4\text{s}$) from stuck-wheel/delay stops ($\mu \approx 4.2\text{s}$).
 
 ---
 
-## 🧠 Reinforcement Learning Decision Engine
+## 🧠 Reinforcement Learning Decision Engine & Tactical Strategy
 
-The selection layer uses a **Candidate-Conditioned Dueling Double-DQN** architecture trained via multi-stage curriculum learning to master strategic trade-offs under uncertainty:
+The selection layer uses a **Candidate-Conditioned Dueling Double-DQN** architecture combined with physics-constrained tactical filters:
 
 * **State Representation**: 22-dimensional normalized vector capturing track evolution, stint wear, fuel load, caution status, opponent pit windows, and clean air availability.
 * **Candidate Conditioning**: Rather than choosing from a fixed discrete set of pit laps, the network evaluates variable-length candidate strategy feature vectors generated by the Strategy Engine's Monte Carlo rollouts.
 * **Network Architecture**: Dueling DQN separating value $V(s)$ and advantage $A(s, c)$ streams across 22,594 trainable parameters.
+* **Race-to-Flag Pit Stop Payback Filter**: Discretionary green-flag stops are disallowed unless remaining laps can mathematically repay the ~21–24s pit transit deficit through fresher tyre pace before the checkered flag ($\ge 15\text{–}18$ laps).
+* **Symmetric In/Out Lap Pit Transit**: Prevents pit transit leakage across both in-laps (`PitInTime`, ~4–8s) and out-laps (`PitOutTime`, ~15–19s), accurately assessing true on-track net time.
 * **4-Stage Curriculum Learning**:
   1. *Stage 1 — Stint Pacing & Tyre Preservation*: Basic tyre management and cliff avoidance.
   2. *Stage 2 — Pit Window Execution*: Optimal pit stop timing under dynamic clean air.
@@ -144,15 +151,17 @@ The engine was evaluated via historical counterfactual replay across all **19 co
 | Metric | Actual Historical Pit Wall | F1-SIS AI (New Neural Model) | Net Strategic Advantage |
 | :--- | :---: | :---: | :---: |
 | **Total Finished Dry Races** | 19 | 19 | — |
-| **Cumulative Season Time Delta** | — | — | **`+89.60 s`** |
-| **Mean Time Delta per Race** | — | — | **`+4.72 s`** |
-| **Median Time Delta per Race** | — | — | **`+5.96 s`** |
-| **Net Positions Gained** | — | — | **`+2 positions`** (8 gained, 8 equal, 3 conceded) |
-| **Race Victories (P1)** | 8 | **10** | **+2 wins** |
+| **Cumulative Season Time Delta** | — | — | **`+108.79 s`** |
+| **Mean Time Delta per Race** | — | — | **`+5.73 s`** |
+| **Median Time Delta per Race** | — | — | **`+6.00 s`** |
+| **Net Positions Gained** | — | — | **`+4 positions`** (9 gained, 8 equal, 2 conceded) |
+| **Race Victories (P1)** | 8 | **12** | **+4 wins** |
 | **Podium Finishes (P1–P3)** | 14 | **15** | **+1 podium** |
-| **Average Finishing Position** | P2.63 | **P2.53** | **+0.11 P** |
-| **Average Pit Stops per Race** | 1.63 | **1.26** | Fully realistic stop rate |
-| **Races Faster than Actual** | — | **15 / 19** | **78.9%** |
+| **Top 5 Finishes** | 17 | **17** | **+0** |
+| **Points Finishes (P1–P10)** | 19 | **18** | **-1** |
+| **Average Finishing Position** | P2.63 | **P2.42** | **+0.21 P** |
+| **Average Pit Stops per Race** | 1.63 | **1.21** | Fully realistic stop rate |
+| **Races Faster than Actual** | — | **17 / 19** | **89.5%** |
 
 ### Neural Execution & Integrity Audit
 * **Active Model Checkpoint**: [`models/Decision Engine/decision_engine_dqn.pt`](file:///c:/Roshith/Projects/F1-SIS/models/Decision%20Engine/decision_engine_dqn.pt)
@@ -163,29 +172,28 @@ The engine was evaluated via historical counterfactual replay across all **19 co
 
 | Round | Grand Prix | Laps | Actual P | AI P | Pos Delta | Actual Stops | AI Stops | Time Delta (s) | Strategic Verdict |
 | :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
-| 01 | **Abu Dhabi Grand Prix** | 58 | P1 | P1 | **0** | 1 | 1 | `+11.91s` | Superior Strategy |
-| 02 | **Azerbaijan Grand Prix** | 51 | P1 | P1 | **0** | 1 | 1 | ` +0.96s` | Advantage (1-stop compliant) |
-| 03 | **Bahrain Grand Prix** | 57 | P6 | P13 | **-7** | 2 | 1 | `+18.37s` | Advantage (Abrasive deg cliff) |
-| 04 | **Canadian Grand Prix** | 70 | P2 | P1 | **+1** | 2 | 2 | ` +7.80s` | Superior Strategy (P1 Win) |
-| 05 | **Chinese Grand Prix** | 56 | P4 | P1 | **+3** | 1 | 1 | `+17.12s` | Superior Strategy (P1 Win) |
-| 06 | **Dutch Grand Prix** | 72 | P2 | P2 | **0** | 2 | 2 | ` -0.07s` | Equivalent |
+| 01 | **Abu Dhabi Grand Prix** | 58 | P1 | P1 | **0** | 1 | 1 | `+11.91s` | **P1 Win Retained (+11.91s)** |
+| 02 | **Azerbaijan Grand Prix** | 51 | P1 | P1 | **0** | 1 | 1 | ` +6.00s` | **P1 Win Retained (+6.00s)** |
+| 03 | **Bahrain Grand Prix** | 57 | P6 | P13 | **-7** | 2 | 1 | ` +1.65s` | Pace Advantage (+1.65s) |
+| 04 | **Canadian Grand Prix** | 70 | P2 | P1 | **+1** | 2 | 2 | ` +7.80s` | **Superior Strategy (P1 Win)** |
+| 05 | **Chinese Grand Prix** | 56 | P4 | P1 | **+3** | 1 | 1 | `+17.12s` | **Superior Strategy (P1 Win)** |
+| 06 | **Dutch Grand Prix** | 72 | P2 | P1 | **+1** | 2 | 1 | ` +2.33s` | **Superior Strategy (P1 Win)** |
 | 07 | **Emilia Romagna GP** | 63 | P1 | P4 | **-3** | 2 | 1 | `-16.53s` | Conceded |
-| 08 | **Hungarian Grand Prix** | 70 | P9 | P6 | **+3** | 2 | 2 | ` +8.90s` | Superior Strategy |
-| 09 | **Italian Grand Prix** | 53 | P1 | P1 | **0** | 1 | 1 | ` +5.96s` | Superior Strategy |
-| 10 | **Japanese Grand Prix** | 53 | P1 | P1 | **0** | 1 | 1 | ` +2.39s` | Superior Strategy |
-| 11 | **Las Vegas Grand Prix** | 50 | P1 | P1 | **0** | 1 | 1 | ` +6.78s` | Superior Strategy |
-| 12 | **Mexico City Grand Prix** | 71 | P3 | P2 | **+1** | 1 | 1 | ` +7.22s` | Superior Strategy |
-| 13 | **Monaco Grand Prix** | 78 | P4 | P4 | **0** | 2 | 1 | ` +4.39s` | Superior Strategy |
-| 14 | **Qatar Grand Prix** | 57 | P1 | P2 | **-1** | 2 | 2 | `-11.29s` | Conceded |
-| 15 | **Saudi Arabian Grand Prix** | 50 | P2 | P1 | **+1** | 1 | 1 | `+10.39s` | Superior Strategy (P1 Win) |
-| 16 | **Singapore Grand Prix** | 62 | P2 | P1 | **+1** | 1 | 1 | ` +7.85s` | Superior Strategy (P1 Win) |
-| 17 | **Spanish Grand Prix** | 66 | P5 | P3 | **+2** | 4 | 2 | ` +5.60s` | Superior Strategy (Podium) |
-| 18 | **São Paulo Grand Prix** | 71 | P3 | P2 | **+1** | 3 | 1 | ` +2.02s` | Superior Strategy |
-| 19 | **United States Grand Prix** | 56 | P1 | P1 | **0** | 1 | 1 | ` -0.16s` | Equivalent |
+| 08 | **Hungarian Grand Prix** | 70 | P9 | P6 | **+3** | 2 | 2 | ` +8.90s` | **+3 Positions Gained (+8.90s)** |
+| 09 | **Italian Grand Prix** | 53 | P1 | P1 | **0** | 1 | 1 | ` +5.96s` | **P1 Win Retained (+5.96s)** |
+| 10 | **Japanese Grand Prix** | 53 | P1 | P1 | **0** | 1 | 1 | ` +2.39s` | **P1 Win Retained (+2.39s)** |
+| 11 | **Las Vegas Grand Prix** | 50 | P1 | P1 | **0** | 1 | 1 | `+12.43s` | **P1 Win Retained (+12.43s)** |
+| 12 | **Mexico City Grand Prix** | 71 | P3 | P2 | **+1** | 1 | 1 | `+12.04s` | **P2 Podium Gained (+12.04s)** |
+| 13 | **Monaco Grand Prix** | 78 | P4 | P4 | **0** | 2 | 1 | `+11.77s` | Superior Strategy |
+| 14 | **Qatar Grand Prix** | 57 | P1 | P1 | **0** | 2 | 2 | ` -7.75s` | **P1 Win Retained (-7.75s)** |
+| 15 | **Saudi Arabian Grand Prix** | 50 | P2 | P1 | **+1** | 1 | 1 | `+10.39s` | **Superior Strategy (P1 Win)** |
+| 16 | **Singapore Grand Prix** | 62 | P2 | P1 | **+1** | 1 | 1 | ` +7.85s` | **Superior Strategy (P1 Win)** |
+| 17 | **Spanish Grand Prix** | 66 | P5 | P3 | **+2** | 4 | 2 | ` +5.60s` | **P3 Podium Gained (+5.60s)** |
+| 18 | **São Paulo Grand Prix** | 71 | P3 | P2 | **+1** | 3 | 1 | ` +5.62s` | **P2 Podium Gained (+5.62s)** |
+| 19 | **United States Grand Prix** | 56 | P1 | P1 | **0** | 1 | 1 | ` +3.31s` | **P1 Win Retained (+3.31s)** |
 
-Detailed race-by-race reports:
-* [Max Verstappen 2025 Evaluation Report](file:///c:/Roshith/Projects/F1-SIS/2025_dry_races_net_advantage_VER_updated.md)
-* [Charles Leclerc 2025 Evaluation Report](file:///c:/Roshith/Projects/F1-SIS/2025_dry_races_net_advantage_LEC.md)
+Detailed race-by-race report:
+* [Max Verstappen 2025 Grounded Season Evaluation Report](file:///c:/Roshith/Projects/F1-SIS/2025_dry_races_net_advantage.md)
 
 ---
 
@@ -207,9 +215,11 @@ pip install -r requirements.txt
 ### 2. Running Unit & Integration Tests
 
 ```bash
+pytest tests/
+# or
 python -m unittest discover tests
 ```
-*(All 104 unit and integration tests validate the Strategy Engine, Decision Engine, RL environment, and ML adapters).*
+*(All 162 unit and integration tests validate the Strategy Engine, Decision Engine, RL environment, and ML adapters).*
 
 ### 3. Real-Time Strategy Evaluation Demo
 
@@ -235,7 +245,7 @@ Simulate and compare the AI strategy against actual historical race results:
 python compare_race_strategy.py --driver VER --race spanish --year 2025 --policy rl
 
 # Run full season batch evaluation across all 2025 dry finished races
-python batch_evaluate_2025_dry.py --driver VER --policy rl --output 2025_dry_races_net_advantage_VER_updated.md
+python batch_evaluate_2025_dry.py --driver VER --policy rl --output 2025_dry_races_net_advantage.md
 ```
 
 ### 5. Training the RL Decision Engine
@@ -272,7 +282,7 @@ F1-SIS-Capstone-Project/
 │   └── opponent_model/cache/          # Cached precomputed feature parquets
 ├── docs/                              # Project specifications & research papers
 │   ├── project_spec.md                # Complete F1 Strategic AI Specification
-│   └── opponent_model_implementation_plan
+│   └── race_state.md                  # Race state architecture documentation
 ├── models/                            # Production serialized ML & RL models
 │   ├── Decision Engine/               # Trained RL Dueling Double-DQN (.pt)
 │   ├── Lap Time Estimation/           # Multi-circuit XGBoost model & metadata (.pkl)
@@ -283,23 +293,24 @@ F1-SIS-Capstone-Project/
 │   └── Tyre Degradation Estimation/   # Tyre deg model & JSON metadata
 ├── outputs/                           # Evaluation reports, predictions & plots
 ├── src/                               # Core production source code
+│   ├── api/                           # FastAPI backend server & WebSocket telemetry
 │   ├── decision_engine/               # Reinforcement learning selection layer
 │   │   ├── rl/                        # Dueling DQN, PER buffer, curriculum, trainer
 │   │   ├── baseline.py                # Deterministic multi-criteria utility policy
 │   │   ├── mapper.py                  # Immediate tactical action mapper
 │   │   ├── state_encoder.py           # Unified state & candidate feature encoder
 │   │   └── types.py                   # Actions, explanations & dataclasses
-│   ├── lap_time/                      # Lap time prediction adapter
+│   ├── lap_time/                      # Lap time prediction & team pace tracking
 │   ├── opponent_model/                # Opponent pit prediction adapter
-│   ├── overtake/                      # Overtake probability adapter
-│   ├── pitstop/                       # Pit duration adapter
+│   ├── overtake/                      # Overtake probability & DRS wake adapter
+│   ├── pitstop/                       # Pit duration & multimodal GMM adapter
 │   ├── race_state/                    # Live telemetry snapshot & state structures
-│   ├── sc_risk/                       # Safety Car hazard adapter
+│   ├── sc_risk/                       # Safety Car hazard & curve adapter
 │   ├── strategy_engine/               # Candidate generator, simulator & evaluator
 │   └── tyre_deg/                      # Non-linear tyre degradation adapter
-├── tests/                             # 104 unit and integration test suites
-├── 2025_dry_races_net_advantage_VER_updated.md  # Grounded 2025 season report (VER)
-├── 2025_dry_races_net_advantage_LEC.md          # 2025 season report (LEC)
+├── tests/                             # 162 unit and integration test suites
+├── ui/                                # Real-time pit wall web interface (Next.js)
+├── 2025_dry_races_net_advantage.md    # Grounded 2025 season evaluation report (VER)
 ├── batch_evaluate_2025_dry.py         # Full season counterfactual runner
 ├── compare_race_strategy.py           # Single-race strategy comparison CLI
 ├── run_decision_engine.py             # Interactive Decision Engine demo & benchmark
