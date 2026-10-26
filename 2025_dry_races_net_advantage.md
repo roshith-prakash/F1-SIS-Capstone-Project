@@ -92,20 +92,28 @@ Following the implementation of out-lap pit transit modeling, the **Race-to-Flag
 
 ## 4. Methodology & Zero-Information-Leakage Guarantee
 
-1. **Telemetry Grounding**: Grounded from Lap 1 cumulative times using FastF1 2025 official timing data across all 20 cars.
-2. **Zero Future Information**: The Decision Policy evaluates each lap $t$ using only observations available at that lap.
-3. **Symmetric Pit In/Out & GMM Duration Modeling**: Both in-laps (`PitInTime`) and out-laps (`PitOutTime`) are modeled to ensure real-world pit transit losses (21s–24s green flag, 14s caution) are reflected with physical fidelity, incorporating multimodal stationary crew stop variance.
-4. **Stochastic Monte Carlo**: 15 stochastic rollouts per candidate strategy evaluate expected position, win/podium probability, tyre degradation cliff risk, and caution sensitivity.
-5. **Dynamic Pace & Caution Hazard Modeling**: Incorporates dynamic team pace tracking with exponential moving averages and circuit-specific hazard curves for Safety Car and VSC deployments.
-6. **Decision Policy**: RL Policy (RL Dueling Double-DQN (`decision_engine_dqn.pt`)) using Candidate-Conditioned Q-Network scoring to select the optimal tactical action (`STAY_OUT` vs `PIT_<COMPOUND>`).
+The evaluation methodology enforces strict physical, regulatory, and causal realism across 10 core architectural pillars:
+
+1. **Telemetry Grounding & Zero-Information Leakage**: Grounded from Lap 1 cumulative times using FastF1 2025 official timing data across all 20 cars. The Decision Policy evaluates each lap $t$ strictly observing data available at or before lap $t$; all future laps $t' > t$ are unseen, eliminating any retrospective or post-hoc leakage.
+2. **Dynamic Team Pace Tracker (Residual EMA)**: Tracks constructor-level aerodynamic and power-unit development drift across the season without driver confounding. Employs an Exponential Moving Average (EMA) on lap pace residuals (`src/lap_time/pace_tracker.py`) to dynamically recalibrate expected competitor and team pace in real time.
+3. **Multimodal Pit Stop Duration Modeling (Pitstop GMM)**: Replaces static pit stop constants with a Gaussian Mixture Model (`src/pitstop/adapter.py`) calibrated on real-world stationary pit stops. Accurately distinguishes clean stops ($\mu \approx 2.4\text{s}$) from slow/stuck stops ($\mu \approx 4.2\text{s}$), paired with circuit-specific pit lane speed limit transit times.
+4. **Symmetric In-Lap & Out-Lap Pit Transit Modeling**: Both in-laps (`PitInTime`, ~4–8s loss) and out-laps (`PitOutTime`, ~15–19s loss) are modeled symmetrically. When staying out, clean flying pace is maintained, capturing realistic green-flag pit transit losses (21.0s–24.0s) and caution discounts (14.0s under SC/VSC).
+5. **DRS Train & Turbulent Wake Overtake Modeling**: Models track-specific overtaking resistance (`src/overtake/adapter.py`) from cornering profiles and DRS zones, while factoring in aerodynamic dirty-air wake penalties and DRS train congestion dampening (suppressing pass probabilities when cars queue within 1.0s).
+6. **Dynamic Safety Car & VSC Hazard Curves**: Calibrated multi-horizon XGBoost classifiers (`src/sc_risk/adapter.py`) combined with empirical track priors predict incident likelihoods. Accounts for tyre cooling and reduced mechanical degradation (thermal recovery) under caution deltas.
+7. **Race-to-Flag Pit Stop Payback Filter**: Discretionary green-flag stops are disallowed unless remaining laps can mathematically repay the ~21–24s pit transit deficit through fresher tyre pace before the checkered flag:
+   $$\text{Laps Remaining} \ge \frac{\text{Pit Transit Loss (21–24s)}}{\text{Expected Delta Pace (1.20–1.40s/lap)}} \approx 15\text{ to }18\text{ laps}$$
+   This prevents counterproductive late-race stops unless tyres reach their structural cliff.
+8. **FIA Sporting Regulations Safeguard (Art. 30.5.m)**: Strict enforcement requiring at least 1 pit stop and usage of at least two distinct dry tyre compound specifications in 100% dry races (disqualification penalty active).
+9. **Stochastic Monte Carlo Rollouts**: 15 stochastic rollouts across an 8-lap receding horizon evaluate expected finishing position, win/podium probability, tyre degradation cliff risk, and caution sensitivity.
+10. **Neural RL Decision Policy**: Candidate-Conditioned Dueling Double-DQN (`decision_engine_dqn.pt`) evaluating candidate strategy feature vectors with 100% neural decision coverage (0 fallbacks).
 
 ### Neural RL Model Verification & Execution Audit
 
-- **Active Model Checkpoint**: `C:\Roshith\Projects\F1-SIS\models\Decision Engine\decision_engine_dqn.pt`
+- **Active Model Checkpoint**: `models/Decision Engine/decision_engine_dqn.pt`
 - **Neural Architecture**: `Dueling Candidate-Conditioned Double-DQN (Dueling)`
 - **Trainable Parameters**: `22,594`
 - **Model Binary Size**: `98,801 bytes` (96.5 KB)
-- **Total Neural Decisions Made**: `1145` across 19 races
+- **Total Neural Decisions Made**: `1,145` across 19 races
 - **Heuristic Fallbacks**: `0`
 - **Neural Decision Coverage**: `100.0%`
 
