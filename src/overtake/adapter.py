@@ -21,6 +21,9 @@ import xgboost as xgb
 
 from .features import (
     DEFAULT_CIRCUIT_DIFFICULTY,
+    DRS_TRAIN_DIRTY_AIR_MULTIPLIER,
+    DRS_TRAIN_PROB_DAMPENING,
+    DRS_TRAIN_TYRE_WEAR_MULTIPLIER,
     FEATURES_MODEL_C,
     compute_overtake_features,
     load_circuit_overtake_difficulty,
@@ -116,6 +119,8 @@ class OvertakeAdapter:
         predicted_lap_time_ahead: float | None = None,
         predicted_deg_behind: float | None = None,
         predicted_deg_ahead: float | None = None,
+        is_drs_train: bool | int = False,
+        gap_ahead_to_lead: float | None = None,
     ) -> float:
         """
         Compute calibrated P(overtake) in [0.0, 1.0].
@@ -140,6 +145,12 @@ class OvertakeAdapter:
             True if lap is 1 or 2 laps post Safety Car restart.
         is_sc : bool
             True if Safety Car is active.
+        is_drs_train : bool
+            True if defending car has DRS from a car ahead (< 1.0s gap),
+            neutralizing the trailing car's straight-line speed delta.
+        gap_ahead_to_lead : float, optional
+            Interval from the car ahead to its predecessor. If < 1.0s and gap_seconds < 1.0s,
+            automatically triggers DRS train dampening.
         """
         # Under Safety Car, overtaking is illegal
         if is_sc:
@@ -152,6 +163,11 @@ class OvertakeAdapter:
         # Fast pruning: if trailing car has severe pace disadvantage and no tyre advantage, pass is impossible
         if pace_delta < -0.7 and tyre_age_delta <= 0:
             return 0.001
+
+        # Detect DRS train state
+        in_drs_train = bool(is_drs_train) or (
+            gap_ahead_to_lead is not None and gap_ahead_to_lead < 1.0 and gap_seconds < 1.0
+        )
 
         canon_circuit = resolve_circuit_name(circuit)
         # Quantize inputs for high-performance Monte Carlo memoization
@@ -168,6 +184,7 @@ class OvertakeAdapter:
             bool(is_fresh_tyre_behind),
             canon_circuit,
             bool(is_sc_restart),
+            in_drs_train,
         )
         if cache_key in self._cache:
             return self._cache[cache_key]
@@ -192,6 +209,8 @@ class OvertakeAdapter:
                     predicted_deg_behind=predicted_deg_behind,
                     predicted_deg_ahead=predicted_deg_ahead,
                     circuit_difficulty_map=self.circuit_difficulties,
+                    gap_ahead_to_lead=gap_ahead_to_lead,
+                    is_drs_train=in_drs_train,
                 )
                 df_row = pd.DataFrame([feat_dict])[self.feature_names].fillna(0.0)
 
@@ -199,6 +218,10 @@ class OvertakeAdapter:
                     p_overtake = float(self.calibrator.predict_proba(df_row)[0, 1])
                 else:
                     p_overtake = float(self.model.predict_proba(df_row)[0, 1])
+
+                # If trapped in a DRS train, apply empirical 54.6% dampening
+                if in_drs_train:
+                    p_overtake *= DRS_TRAIN_PROB_DAMPENING
 
                 prob = float(np.clip(p_overtake, 0.001, 0.999))
                 self._cache[cache_key] = prob
@@ -212,6 +235,10 @@ class OvertakeAdapter:
         base_p = 1.0 / (1.0 + math.exp(-max(-6.0, min(6.0, x))))
         gap_penalty = max(0.1, 1.0 - (g_bucket / 1.5))
         prob = float(np.clip(base_p * gap_penalty, 0.001, 0.95))
+
+        if in_drs_train:
+            prob = float(np.clip(prob * DRS_TRAIN_PROB_DAMPENING, 0.001, 0.95))
+
         self._cache[cache_key] = prob
         return prob
 
@@ -219,19 +246,21 @@ class OvertakeAdapter:
         self,
         gap_seconds: float,
         circuit: str,
+        is_drs_train: bool = False,
     ) -> float:
         """
         Returns estimated pace penalty (seconds) suffered by the trailing car
         from dirty air turbulence when following closely without passing.
 
         Replaces the hardcoded constant 0.35s with a circuit-aware, proximity-modulated penalty.
+        If following in a multi-car DRS train, compound wake amplifies dirty air loss (+30%).
         """
         if gap_seconds >= 1.5:
             return 0.0
 
         canon_circuit = resolve_circuit_name(circuit)
         g_bucket = round(gap_seconds * 10) / 10.0
-        dirty_key = (g_bucket, canon_circuit)
+        dirty_key = (g_bucket, canon_circuit, bool(is_drs_train))
         if dirty_key in self._dirty_air_cache:
             return self._dirty_air_cache[dirty_key]
 
@@ -242,7 +271,35 @@ class OvertakeAdapter:
 
         # Modulated by circuit difficulty (twisty circuits incur harsher dirty air disruption)
         circuit_multiplier = 0.5 + 0.6 * difficulty
-        penalty = float(np.clip(0.40 * (proximity_factor ** 0.8) * circuit_multiplier, 0.05, 0.65))
+        base_penalty = 0.40 * (proximity_factor ** 0.8) * circuit_multiplier
 
+        # Multi-car compound wake penalty in a DRS train
+        if is_drs_train:
+            base_penalty *= DRS_TRAIN_DIRTY_AIR_MULTIPLIER
+
+        penalty = float(np.clip(base_penalty, 0.05, 0.85))
         self._dirty_air_cache[dirty_key] = penalty
         return penalty
+
+    def predict_tyre_wake_multiplier(
+        self,
+        gap_seconds: float,
+        is_drs_train: bool = False,
+    ) -> float:
+        """
+        Returns thermal wear multiplier for the trailing car's front tyres.
+        Running in turbulent dirty air causes aerodynamic front downforce loss,
+        leading to understeer scrub and accelerated thermal surface degradation.
+
+        - Clean air (gap >= 1.5s): 1.00x baseline
+        - Single car dirty air (gap < 1.0s): 1.15x (+15% accelerated wear)
+        - DRS Train wake (gap < 1.0s and trapped behind DRS): 1.30x (+30% accelerated wear)
+        """
+        if gap_seconds >= 1.5:
+            return 1.0
+        if is_drs_train or (gap_seconds < 1.0 and is_drs_train):
+            return DRS_TRAIN_TYRE_WEAR_MULTIPLIER
+        if gap_seconds < 1.0:
+            return 1.15
+        # Smooth linear transition between 1.0s and 1.5s
+        return float(1.0 + 0.15 * (1.5 - gap_seconds) / 0.5)

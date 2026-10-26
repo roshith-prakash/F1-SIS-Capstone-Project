@@ -14,6 +14,14 @@ try:
 except ImportError:
     from src.race_state.models import ParticipantState, RaceState, normalize_driver
 
+try:
+    from lap_time.pace_tracker import DynamicTeamPaceTracker
+except ImportError:
+    try:
+        from src.lap_time.pace_tracker import DynamicTeamPaceTracker
+    except ImportError:
+        DynamicTeamPaceTracker = None
+
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_MODEL_PATHS = [
@@ -131,29 +139,32 @@ CIRCUIT_ALIASES: dict[str, str] = {
 }
 
 TEAM_PACE_PRIORS: dict[str, float] = {
-    "Red Bull": -1.1012,
-    "Red Bull Racing": -1.1012,
-    "Mercedes": -0.6200,
-    "Mercedes-AMG": -0.6200,
-    "Ferrari": -0.6080,
-    "Scuderia Ferrari": -0.6080,
-    "Alpine": -0.0638,
-    "Alpine F1 Team": -0.0638,
-    "McLaren": 0.0585,
-    "McLaren F1 Team": 0.0585,
-    "Aston Martin": 0.1680,
-    "Aston Martin F1 Team": 0.1680,
-    "VCARB": 0.1783,
-    "RB": 0.1783,
-    "Racing Bulls": 0.1783,
-    "AlphaTauri": 0.1783,
-    "Sauber": 0.1940,
-    "Kick Sauber": 0.1940,
-    "Alfa Romeo": 0.1940,
-    "Haas": 0.4630,
-    "Haas F1 Team": 0.4630,
-    "Williams": 0.7173,
-    "Williams Racing": 0.7173,
+    "McLaren": -0.95,
+    "McLaren F1 Team": -0.95,
+    "Ferrari": -0.80,
+    "Scuderia Ferrari": -0.80,
+    "Red Bull": -0.75,
+    "Red Bull Racing": -0.75,
+    "Mercedes": -0.65,
+    "Mercedes-AMG": -0.65,
+    "Mercedes AMG": -0.65,
+    "Aston Martin": 0.10,
+    "Aston Martin F1 Team": 0.10,
+    "VCARB": 0.25,
+    "RB": 0.25,
+    "Racing Bulls": 0.25,
+    "AlphaTauri": 0.25,
+    "Scuderia AlphaTauri": 0.25,
+    "Haas": 0.35,
+    "Haas F1 Team": 0.35,
+    "Alpine": 0.45,
+    "Alpine F1 Team": 0.45,
+    "Williams": 0.55,
+    "Williams Racing": 0.55,
+    "Sauber": 0.85,
+    "Kick Sauber": 0.85,
+    "Alfa Romeo": 0.85,
+    "Alfa Romeo Racing": 0.85,
 }
 
 FEATURE_COLS = [
@@ -191,10 +202,12 @@ class TyreDegAdapter:
         model: Any | None = None,
         model_path: str | Path | None = None,
         circuit_base_pace: float | None = None,
+        pace_tracker: Any | None = None,
     ) -> None:
         self.feature_cols = list(FEATURE_COLS)
         self.default_base_pace = circuit_base_pace
         self.circuit_base_pace = circuit_base_pace or 85.0
+        self.pace_tracker = pace_tracker
 
         # In-memory stint history tracker: driver -> list of pace residuals in current stint
         self._driver_residuals: dict[str, list[float]] = {}
@@ -336,7 +349,10 @@ class TyreDegAdapter:
 
         # 8. Team historical context
         team_str = str(participant.team or "Red Bull Racing").strip()
-        team_median_lag1 = TEAM_PACE_PRIORS.get(team_str, 0.0)
+        if self.pace_tracker is not None and hasattr(self.pace_tracker, "get_team_offset"):
+            team_median_lag1 = float(self.pace_tracker.get_team_offset(team_str))
+        else:
+            team_median_lag1 = TEAM_PACE_PRIORS.get(team_str, 0.0)
 
         return {
             "TyreAge": tyre_age,
@@ -390,6 +406,9 @@ class TyreDegAdapter:
             residual = float(last_lap_time - expected_non_tyre)
             self._driver_residuals.setdefault(driver_code, []).append(residual)
             self._last_recorded_lap[driver_code] = current_lap
+
+        if self.pace_tracker is not None and hasattr(self.pace_tracker, "update_from_race_state"):
+            self.pace_tracker.update_from_race_state(state, circuit_base=base_pace)
 
     def predict_degradation(self, state: RaceState, driver: str) -> float | None:
         """

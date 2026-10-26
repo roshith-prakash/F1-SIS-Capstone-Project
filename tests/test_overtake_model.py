@@ -242,3 +242,74 @@ def test_engine_load_with_default_models():
     engine = StrategyEngine.load_with_default_models()
     assert hasattr(engine.simulator, "overtake_adapter")
     assert engine.simulator.overtake_adapter is not None
+
+
+def test_drs_train_probability_dampening():
+    adapter = OvertakeAdapter()
+    p_solo = adapter.predict_overtake_probability(
+        gap_seconds=0.45,
+        pace_delta=0.80,
+        tyre_age_delta=6.0,
+        compound_behind="SOFT",
+        compound_ahead="HARD",
+        is_fresh_tyre_behind=True,
+        circuit="Monza",
+        is_drs_train=False,
+    )
+    p_train = adapter.predict_overtake_probability(
+        gap_seconds=0.45,
+        pace_delta=0.80,
+        tyre_age_delta=6.0,
+        compound_behind="SOFT",
+        compound_ahead="HARD",
+        is_fresh_tyre_behind=True,
+        circuit="Monza",
+        is_drs_train=True,
+    )
+    assert p_train < p_solo, "Overtake probability in a DRS train must be strictly lower than solo battle"
+    # Should reflect ~54.6% dampening
+    assert p_train <= p_solo * 0.60, f"Expected substantial DRS train dampening, got p_solo={p_solo}, p_train={p_train}"
+
+
+def test_drs_train_gap_ahead_lead_detection():
+    adapter = OvertakeAdapter()
+    p_solo = adapter.predict_overtake_probability(
+        gap_seconds=0.50,
+        pace_delta=0.70,
+        tyre_age_delta=4.0,
+        compound_behind="MEDIUM",
+        compound_ahead="HARD",
+        is_fresh_tyre_behind=False,
+        circuit="Silverstone",
+        gap_ahead_to_lead=3.5,  # Car ahead has clean air
+    )
+    p_train = adapter.predict_overtake_probability(
+        gap_seconds=0.50,
+        pace_delta=0.70,
+        tyre_age_delta=4.0,
+        compound_behind="MEDIUM",
+        compound_ahead="HARD",
+        is_fresh_tyre_behind=False,
+        circuit="Silverstone",
+        gap_ahead_to_lead=0.6,  # Car ahead is within DRS of lead car
+    )
+    assert p_train < p_solo, "Automatic gap_ahead_to_lead < 1.0s detection must dampen pass probability"
+
+
+def test_drs_train_dirty_air_penalty():
+    adapter = OvertakeAdapter()
+    pen_solo = adapter.predict_dirty_air_penalty(gap_seconds=0.5, circuit="Spa", is_drs_train=False)
+    pen_train = adapter.predict_dirty_air_penalty(gap_seconds=0.5, circuit="Spa", is_drs_train=True)
+    assert pen_train > pen_solo, "DRS train compound wake penalty must exceed single car wake"
+    assert pen_train <= 0.85, "Dirty air penalty must respect upper clamp"
+
+
+def test_tyre_wake_multiplier():
+    adapter = OvertakeAdapter()
+    # Clean air
+    assert adapter.predict_tyre_wake_multiplier(gap_seconds=2.0) == 1.0
+    # Single car dirty air (< 1.0s)
+    assert adapter.predict_tyre_wake_multiplier(gap_seconds=0.6, is_drs_train=False) == 1.15
+    # DRS train wake (< 1.0s trapped in train)
+    assert adapter.predict_tyre_wake_multiplier(gap_seconds=0.6, is_drs_train=True) == 1.30
+
